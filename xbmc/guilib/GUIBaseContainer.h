@@ -49,6 +49,7 @@ public:
   virtual void OnLeft();
   virtual void OnRight();
   virtual bool OnMouseOver(const CPoint &point);
+  virtual bool CanFocus() const;
   virtual bool OnMessage(CGUIMessage& message);
   virtual void SetFocus(bool bOnOff);
   virtual void AllocResources();
@@ -96,7 +97,7 @@ protected:
   virtual bool OnMouseEvent(const CPoint &point, const CMouseEvent &event);
   bool OnClick(int actionID);
   virtual void Render();
-  virtual void RenderItem(float posX, float posY, CGUIListItem *item, bool focused);
+  virtual void RenderItem(float posX, float posY, CGUIListItemPtr& item, bool focused);
   virtual void Scroll(int amount);
   virtual bool MoveDown(bool wrapAround);
   virtual bool MoveUp(bool wrapAround);
@@ -113,6 +114,7 @@ protected:
   virtual unsigned int GetNumItems() const { return m_items.size(); };
   virtual int GetCurrentPage() const;
   bool InsideLayout(const CGUIListItemLayout *layout, const CPoint &point) const;
+  void UpdateStaticItems(bool refreshItems = false);
 
   inline float Size() const;
   void MoveToRow(int row);
@@ -132,7 +134,7 @@ protected:
 
   std::vector< CGUIListItemPtr > m_items;
   typedef std::vector<CGUIListItemPtr> ::iterator iItems;
-  CGUIListItem *m_lastItem;
+  CGUIListItemPtr m_lastItem;
 
   int m_pageControl;
 
