@@ -159,71 +159,6 @@ bool CGUIDialogContentSettings::OnMessage(CGUIMessage &message)
   return CGUIDialogSettings::OnMessage(message);
 }
 
-void CGUIDialogContentSettings::OnWindowLoaded()
-{
-  CGUIDialogSettings::OnWindowLoaded();
-  
-  CFileItemList items;
-  CStdString baseDir = GetScraperDirectory(m_info);
-  if (!baseDir.IsEmpty())
-    CDirectory::GetDirectory(baseDir, items, ".xml", false);
-
-  for (int i=0;i<items.Size();++i)
-  {
-    CScraperParser parser;
-    if (parser.Load(items[i]->GetPath()))
-    {
-      bool IsDefaultScraper = false;
-
-      SScraperInfo info;
-      info.strTitle = parser.GetName();
-      info.strPath = URIUtils::GetFileName(items[i]->GetPath());
-      info.strThumb = parser.GetThumb();
-      info.strContent = parser.GetContent();
-      info.strLanguage = parser.GetLanguage();
-      info.settings = m_scraperSettings;
-
-      if ( info.strPath == g_guiSettings.GetString("musiclibrary.scraper")
-        || info.strPath == g_guiSettings.GetString("scrapers.moviedefault")
-        || info.strPath == g_guiSettings.GetString("scrapers.tvshowdefault")
-        || info.strPath == g_guiSettings.GetString("scrapers.musicvideodefault"))
-      {
-         IsDefaultScraper = true;
-      }
-
-      map<CStdString,vector<SScraperInfo> >::iterator iter=m_scrapers.find(info.strContent);
-      if (iter != m_scrapers.end())
-      {
-        if (IsDefaultScraper)
-          iter->second.insert(iter->second.begin(),info);
-        else
-          iter->second.push_back(info);
-      }
-
-      vector<SScraperInfo> vec;
-      vec.push_back(info);
-      m_scrapers.insert(make_pair(info.strContent,vec));
-    }
-  }
-
-  // now select the correct scraper
-  if (!m_info.strContent.IsEmpty())
-  {
-    map<CStdString,vector<SScraperInfo> >::iterator iter = m_scrapers.find(m_info.strContent);
-    if (iter != m_scrapers.end())
-    {
-      for (vector<SScraperInfo>::iterator iter2 = iter->second.begin();iter2 != iter->second.end();++iter2)
-      {
-        if (iter2->strPath == m_info.strPath)
-        {
-          m_info = *iter2;
-          break;
-        }
-      }
-    }
-  }
-}
-
 void CGUIDialogContentSettings::SetupPage()
 {
   CGUIDialogSettings::SetupPage();
@@ -366,6 +301,65 @@ void CGUIDialogContentSettings::OnCancel()
 
 void CGUIDialogContentSettings::OnInitWindow()
 {
+  CFileItemList items;
+  CStdString baseDir = GetScraperDirectory(m_info);
+  if (!baseDir.IsEmpty())
+    CDirectory::GetDirectory(baseDir, items, ".xml", false);
+
+  for (int i=0;i<items.Size();++i)
+  {
+    CScraperParser parser;
+    if (parser.Load(items[i]->GetPath()))
+    {
+      bool IsDefaultScraper = false;
+
+      SScraperInfo info;
+      info.strTitle = parser.GetName();
+      info.strPath = URIUtils::GetFileName(items[i]->GetPath());
+      info.strThumb = parser.GetThumb();
+      info.strContent = parser.GetContent();
+      info.strLanguage = parser.GetLanguage();
+      info.settings = m_scraperSettings;
+
+      if ( info.strPath == g_guiSettings.GetString("musiclibrary.scraper")
+        || info.strPath == g_guiSettings.GetString("scrapers.moviedefault")
+        || info.strPath == g_guiSettings.GetString("scrapers.tvshowdefault")
+        || info.strPath == g_guiSettings.GetString("scrapers.musicvideodefault"))
+      {
+         IsDefaultScraper = true;
+      }
+
+      map<CStdString,vector<SScraperInfo> >::iterator iter=m_scrapers.find(info.strContent);
+      if (iter != m_scrapers.end())
+      {
+        if (IsDefaultScraper)
+          iter->second.insert(iter->second.begin(),info);
+        else
+          iter->second.push_back(info);
+      }
+
+      vector<SScraperInfo> vec;
+      vec.push_back(info);
+      m_scrapers.insert(make_pair(info.strContent,vec));
+    }
+  }
+
+  // now select the correct scraper
+  if (!m_info.strContent.IsEmpty())
+  {
+    map<CStdString,vector<SScraperInfo> >::iterator iter = m_scrapers.find(m_info.strContent);
+    if (iter != m_scrapers.end())
+    {
+      for (vector<SScraperInfo>::iterator iter2 = iter->second.begin();iter2 != iter->second.end();++iter2)
+      {
+        if (iter2->strPath == m_info.strPath)
+        {
+          m_info = *iter2;
+          break;
+        }
+      }
+    }
+  }
   m_bNeedSave = false;
 
   CGUIDialogSettings::OnInitWindow();

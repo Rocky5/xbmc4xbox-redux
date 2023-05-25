@@ -43,7 +43,6 @@ public:
   virtual CFileItemPtr GetCurrentListItem(int offset = 0);
 protected:
   virtual void OnCancel();
-  virtual void OnWindowLoaded();
   virtual void OnInitWindow();
   virtual void SetupPage();
   virtual void CreateSettings();
