@@ -20,6 +20,7 @@
  */
 
 #include "utils/Archive.h"
+#include "XBDateTime.h"
 #include "utils/ScraperUrl.h"
 #include "utils/Fanart.h"
 #include "utils/StreamDetails.h"
@@ -83,6 +84,7 @@ public:
   CStdString m_strAlbum;
   CDateTime m_lastPlayed;
   std::vector<std::string> m_showLink;
+  CStdString m_strShowPath;
   int m_playCount;
   int m_iTop250;
   int m_iYear;
@@ -100,6 +102,7 @@ public:
   CFanart m_fanart;
   CStreamDetails m_streamDetails;
   CBookmark m_resumePoint;
+  CDateTime m_dateAdded;
   CStdString m_type;
 
 private:
