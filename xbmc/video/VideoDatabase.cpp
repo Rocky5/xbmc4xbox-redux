@@ -286,10 +286,10 @@ bool CVideoDatabase::CreateTables()
     m_pDS->exec("CREATE UNIQUE INDEX ix_setlinkmovie_2 ON setlinkmovie ( idMovie, idSet)\n");
 
     // create basepath indices
-    m_pDS->exec("CREATE index ixMovieBasePath on movie(c22)");
-    m_pDS->exec("CREATE index ixMusicVideoBasePath on musicvideo(c13)");
-    m_pDS->exec("CREATE index ixEpisodeBasePath on episode(c18)");
-    m_pDS->exec("CREATE index ixTVShowBasePath on tvshow(c16)");
+    m_pDS->exec("CREATE INDEX ixMovieBasePath ON movie ( c23(12) )");
+    m_pDS->exec("CREATE INDEX ixMusicVideoBasePath ON musicvideo ( c14(12) )");
+    m_pDS->exec("CREATE INDEX ixEpisodeBasePath ON episode ( c19(12) )");
+    m_pDS->exec("CREATE INDEX ixTVShowBasePath on tvshow ( c17(12) )");
 
     // we create views last to ensure all indexes are rolled in
     CreateViews();
@@ -576,7 +576,10 @@ int CVideoDatabase::AddPath(const CStdString& strPath, const CStdString &strDate
   CStdString strSQL;
   try
   {
-    int idPath;
+    int idPath = GetPathId(strPath);
+    if (idPath >= 0)
+      return idPath; // already have the path
+
     if (NULL == m_pDB.get()) return -1;
     if (NULL == m_pDS.get()) return -1;
 
@@ -637,10 +640,7 @@ int CVideoDatabase::AddFile(const CStdString& strFileNameAndPath)
     CStdString strFileName, strPath;
     SplitPath(strFileNameAndPath,strPath,strFileName);
 
-    int idPath=GetPathId(strPath);
-    if (idPath < 0)
-      idPath = AddPath(strPath);
-
+    int idPath = AddPath(strPath);
     if (idPath < 0)
       return -1;
 
@@ -715,9 +715,7 @@ bool CVideoDatabase::SetPathHash(const CStdString &path, const CStdString &hash)
       if (!CDirectory::Exists(path))
         return false;
     }
-    int idPath = GetPathId(path);
-    if (idPath < 0)
-      idPath = AddPath(path);
+    int idPath = AddPath(path);
     if (idPath < 0) return false;
 
     CStdString strSQL=PrepareSQL("update path set strHash='%s' where idPath=%ld", hash.c_str(), idPath);
@@ -1079,20 +1077,16 @@ int CVideoDatabase::AddTvShow(const CStdString& strPath)
     m_pDS->exec(strSQL.c_str());
     int idTvShow = (int)m_pDS->lastinsertid();
 
-    int idPath = GetPathId(strPath);
-    if (idPath < 0)
-    {
-      // Get the creation datetime of the tvshow directory
-      CDateTime dateAdded;
-      struct __stat64 buffer;
-      if (XFILE::CFile::Stat(strPath, &buffer) == 0)
-        dateAdded = *localtime((const time_t*)&buffer.st_ctime);
+    // Get the creation datetime of the tvshow directory
+    CDateTime dateAdded;
+    struct __stat64 buffer;
+    if (XFILE::CFile::Stat(strPath, &buffer) == 0)
+      dateAdded = *localtime((const time_t*)&buffer.st_ctime);
 
-      if (!dateAdded.IsValid())
-        dateAdded = CDateTime::GetCurrentDateTime();
+    if (!dateAdded.IsValid())
+      dateAdded = CDateTime::GetCurrentDateTime();
 
-      idPath = AddPath(strPath, dateAdded.GetAsDBDateTime());
-    }
+    int idPath = AddPath(strPath, dateAdded.GetAsDBDateTime());
     strSQL=PrepareSQL("insert into tvshowlinkpath values (%i,%i)",idTvShow,idPath);
     m_pDS->exec(strSQL.c_str());
 
@@ -3316,12 +3310,9 @@ void CVideoDatabase::SetScraperForPath(const CStdString& filePath, const SScrape
   {
     if (NULL == m_pDB.get()) return ;
     if (NULL == m_pDS.get()) return ;
-    int idPath = GetPathId(filePath);
+    int idPath = AddPath(filePath);
     if (idPath < 0)
-    { // no path found - we have to add one
-      idPath = AddPath(filePath);
-      if (idPath < 0) return ;
-    }
+      return;
 
     // Update
     CStdString strSQL=PrepareSQL("update path set strContent='%s',strScraper='%s', scanRecursive=%i, useFolderNames=%i, strSettings='%s', noUpdate=%i where idPath=%i", info.strContent.c_str(), info.strPath.c_str(),settings.recurse,settings.parent_name,info.settings.GetSettings().c_str(),settings.noupdate, idPath);
@@ -3924,6 +3915,19 @@ bool CVideoDatabase::UpdateOldVersion(int iVersion)
   return true;
 }
 
+bool CVideoDatabase::LookupByFolders(const CStdString &path, bool shows)
+{
+  SScanSettings settings;
+  bool foundDirectly = false;
+  int iFound = -1;
+  SScraperInfo scraper;
+  GetScraperForPath(path, scraper, settings, iFound);
+  foundDirectly = iFound == 1 ? true : false;
+  if (scraper.strContent == "tvshows" && !shows)
+    return false; // episodes
+  return settings.parent_name_root; // shows, movies, musicvids
+}
+
 void CVideoDatabase::UpdateBasePath(const char *table, const char *id, int column, bool shows)
 {
   CStdString query;
@@ -3940,16 +3944,7 @@ void CVideoDatabase::UpdateBasePath(const char *table, const char *id, int colum
     map<CStdString, bool>::iterator i = paths.find(path);
     if (i == paths.end())
     {
-      SScanSettings settings;
-      bool foundDirectly = false;
-      int iFound = -1;
-      SScraperInfo scraper;
-      GetScraperForPath(path, scraper, settings, iFound);
-      foundDirectly = iFound ? true : false;
-      if (!scraper.strContent.IsEmpty() && scraper.strContent == "tvshows" && !shows)
-        paths.insert(make_pair(path, false)); // episodes
-      else
-        paths.insert(make_pair(path, settings.parent_name_root)); // shows, movies, musicvids
+      paths.insert(make_pair(path, LookupByFolders(path, shows)));
       i = paths.find(path);
     }
     CStdString filename;
@@ -3961,6 +3956,26 @@ void CVideoDatabase::UpdateBasePath(const char *table, const char *id, int colum
     path = item.GetBaseMoviePath(i->second);
     CStdString sql = PrepareSQL("UPDATE %s set c%02d='%s' where %s.%s=%i", table, column, path.c_str(), table, id, m_pDS2->fv(0).get_asInt());
     m_pDS->exec(sql.c_str());
+    m_pDS2->next();
+  }
+  m_pDS2->close();
+}
+
+void CVideoDatabase::UpdateBasePathID(const char *table, const char *id, int column, int idColumn)
+{
+  CStdString query = PrepareSQL("SELECT %s,c%02d from %s", id, column, table);
+  m_pDS2->query(query.c_str());
+  while (!m_pDS2->eof())
+  {
+    int rowID = m_pDS2->fv(0).get_asInt();
+    CStdString path(m_pDS2->fv(1).get_asString());
+    // find the parent path of this item
+    int pathID = AddPath(URIUtils::GetParentPath(path));
+    if (pathID >= 0)
+    {
+      CStdString sql = PrepareSQL("UPDATE %s SET c%02d=%d WHERE %s=%d", table, idColumn, pathID, id, rowID);
+      m_pDS->exec(sql.c_str());
+    }
     m_pDS2->next();
   }
   m_pDS2->close();
@@ -7838,6 +7853,24 @@ void CVideoDatabase::ImportFromXML(const CStdString &path)
     CStdString tvshowsDir(URIUtils::AddFileToFolder(path, "tvshows"));
     CVideoInfoScanner scanner;
     set<CStdString> actors;
+    // add paths first (so we have scraper settings available)
+    TiXmlElement *path = root->FirstChildElement("paths");
+    path = path->FirstChildElement();
+    while (path)
+    {
+      CStdString strPath;
+      if (XMLUtils::GetString(path,"url",strPath))
+        AddPath(strPath);
+        
+      SScraperInfo info;
+      SScanSettings settings;
+      XMLUtils::GetString(path,"content",info.strContent);
+      XMLUtils::GetString(path,"scraperpath",info.strPath);
+      XMLUtils::GetInt(path,"scanrecursive",settings.recurse);
+      XMLUtils::GetBoolean(path,"usefoldernames",settings.parent_name);
+      SetScraperForPath(strPath,info,settings);
+      path = path->NextSiblingElement();
+    }
     movie = root->FirstChildElement();
     while (movie)
     {
@@ -7846,7 +7879,8 @@ void CVideoDatabase::ImportFromXML(const CStdString &path)
       {
         info.Load(movie);
         CFileItem item(info);
-        scanner.AddMovie(&item,"movies",info);
+        bool useFolders = info.m_basePath.IsEmpty() ? LookupByFolders(item.GetPath()) : false;
+        scanner.AddMovie(&item,"movies",info,useFolders);
         SetPlayCount(item, info.m_playCount, info.m_lastPlayed);
         CStdString file(GetSafeFile(moviesDir, info.m_strTitle));
         CFile::Cache(file + ".tbn", item.GetCachedVideoThumb());
@@ -7859,7 +7893,8 @@ void CVideoDatabase::ImportFromXML(const CStdString &path)
       {
         info.Load(movie);
         CFileItem item(info);
-        scanner.AddMovie(&item,"musicvideos",info);
+        bool useFolders = info.m_basePath.IsEmpty() ? LookupByFolders(item.GetPath()) : false;
+        scanner.AddMovie(&item,"musicvideos",info,useFolders);
         SetPlayCount(item, info.m_playCount, info.m_lastPlayed);
         CStdString file(GetSafeFile(musicvideosDir, StringUtils::Join(info.m_artist, g_advancedSettings.m_videoItemSeparator) + "." + info.m_strTitle));
         CFile::Cache(file + ".tbn", item.GetCachedVideoThumb());
@@ -7873,7 +7908,8 @@ void CVideoDatabase::ImportFromXML(const CStdString &path)
         URIUtils::AddSlashAtEnd(info.m_strPath);
         DeleteTvShow(info.m_strPath);
         CFileItem item(info);
-        int showID = scanner.AddMovie(&item,"tvshows",info);
+        bool useFolders = info.m_basePath.IsEmpty() ? LookupByFolders(item.GetPath(), true) : false;
+        int showID = scanner.AddMovie(&item,"tvshows",info,useFolders);
         current++;
         CStdString showDir(GetSafeFile(tvshowsDir, info.m_strTitle));
         CFile::Cache(URIUtils::AddFileToFolder(showDir, "folder.jpg"), item.GetCachedVideoThumb());
@@ -7899,23 +7935,6 @@ void CVideoDatabase::ImportFromXML(const CStdString &path)
         }
         // and fetch season thumbs
         scanner.FetchSeasonThumbs(showID, showDir, false, true);
-      }
-      else if (strnicmp(movie->Value(), "paths", 5) == 0)
-      {
-        const TiXmlElement* path = movie->FirstChildElement("path");
-        while (path)
-        {
-          CStdString strPath;
-          XMLUtils::GetString(path,"url",strPath);
-          SScraperInfo info;
-          SScanSettings settings;
-          XMLUtils::GetString(path,"content",info.strContent);
-          XMLUtils::GetString(path,"scraperpath",info.strPath);
-          XMLUtils::GetInt(path,"scanrecursive",settings.recurse);
-          XMLUtils::GetBoolean(path,"usefoldernames",settings.parent_name);
-          SetScraperForPath(strPath,info,settings);
-          path = path->NextSiblingElement();
-        }
       }
       movie = movie->NextSiblingElement();
       if (progress && total)
@@ -8179,4 +8198,40 @@ bool CVideoDatabase::GetItemForPath(const CStdString &content, const CStdString 
     return true;
   }
   return false;
+}
+
+bool CVideoDatabase::GetItemsForPath(const CStdString &content, const CStdString &strPath, CFileItemList &items)
+{
+  CStdString path(strPath);
+
+  if(URIUtils::IsMultiPath(path))
+    path = CMultiPathDirectory::GetFirstPath(path);
+
+  int pathID = GetPathId(path);
+  if (pathID < 0)
+    return false;
+
+  if (content == "movies")
+  {
+    CStdString where = PrepareSQL("where c%02d=%d", VIDEODB_ID_PARENTPATHID, pathID);
+    GetMoviesByWhere("", where, "", items);
+  }
+  else if (content == "episodes")
+  {
+    CStdString where = PrepareSQL("where c%02d=%d", VIDEODB_ID_EPISODE_PARENTPATHID, pathID);
+    GetEpisodesByWhere("", where, items);
+  }
+  else if (content == "tvshows")
+  {
+    CStdString where = PrepareSQL("where c%02d=%d", VIDEODB_ID_TV_PARENTPATHID, pathID);
+    GetTvShowsByWhere("", where, items);
+  }
+  else if (content == "musicvideos")
+  {
+    CStdString where = PrepareSQL("where c%02d=%d", VIDEODB_ID_MUSICVIDEO_PARENTPATHID, pathID);
+    GetMusicVideosByWhere("", where, items);
+  }
+  for (int i = 0; i < items.Size(); i++)
+    items[i]->SetPath(items[i]->GetVideoInfoTag()->m_basePath);
+  return items.Size() > 0;
 }

@@ -420,32 +420,51 @@ void CGUIWindowVideoNav::LoadVideoInfo(CFileItemList &items)
 {
   // TODO: this could possibly be threaded as per the music info loading,
   //       we could also cache the info
+  if (!items.GetContent().IsEmpty())
+    return; // don't load for listings that have content set
+
   CStdString content = m_database.GetContentForPath(items.GetPath());
-  items.SetContent(content);
-  if (!content.IsEmpty())
-  {
-    for (int i = 0; i < items.Size(); i++)
-    {
-      CFileItemPtr pItem = items[i];
-      CFileItem item;
-      if (m_database.GetItemForPath(content, pItem->GetPath(), item))
-      { // copy info across
-        pItem->UpdateInfo(item);
-        // TODO: we may wish to use a playable_url parameter here rather than
-        //       switching the path of the item (eg movie as a folder)
-        pItem->SetPath(item.GetPath());
-        pItem->m_bIsFolder = item.m_bIsFolder;
-      }
-    }
-  }
+  items.SetContent(content.IsEmpty() ? "files" : content);
+
+  bool clean = (g_guiSettings.GetBool("myvideos.cleanstrings") &&
+                !items.IsVirtualDirectoryRoot() &&
+                m_stackingAvailable);
+
+  CFileItemList dbItems;
+  if (content.IsEmpty())
+    m_database.GetPlayCounts(items);
   else
   {
-    for (int i = 0; i < items.Size(); i++)
+    m_database.GetItemsForPath(content, items.GetPath(), dbItems);
+    dbItems.SetFastLookup(true);
+  }
+  for (int i = 0; i < items.Size(); i++)
+  {
+    CFileItemPtr pItem = items[i];
+    CFileItemPtr match;
+    if (!content.IsEmpty())
+      match = dbItems.Get(pItem->GetPath());
+    if (match)
     {
-      CFileItemPtr pItem = items[i];
-      int playCount = m_database.GetPlayCount(*pItem);
-      if (playCount >= 0)
-        pItem->SetOverlayImage(CGUIListItem::ICON_OVERLAY_UNWATCHED, playCount > 0);
+      pItem->UpdateInfo(*match);
+      if (match->m_bIsFolder)
+        pItem->SetPath(match->GetVideoInfoTag()->m_strPath);
+      else
+        pItem->SetPath(match->GetVideoInfoTag()->m_strFileNameAndPath);
+      // if we switch from a file to a folder item it means we really shouldn't be sorting files and
+      // folders separately
+      if (pItem->m_bIsFolder != match->m_bIsFolder)
+        items.SetSortIgnoreFolders(true);
+      pItem->m_bIsFolder = match->m_bIsFolder;
+    }
+    else
+    { // set the watched overlay (note: items in a folder with content set that aren't in the db
+      //                                won't get picked up here - in the future all items will be returned)
+      // and clean the label
+      if (pItem->HasVideoInfoTag())
+        pItem->SetOverlayImage(CGUIListItem::ICON_OVERLAY_UNWATCHED, pItem->GetVideoInfoTag()->m_playCount > 0);
+      if (clean)
+        pItem->CleanString();
     }
   }
 }

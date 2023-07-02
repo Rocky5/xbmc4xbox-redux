@@ -924,7 +924,9 @@ namespace VIDEO
     CLog::Log(LOGDEBUG, "VideoInfoScanner: Adding new item to %s:%s", content.c_str(), pItem->GetPath().c_str());
     long lResult = -1;
 
-    movieDetails.m_basePath = pItem->GetBaseMoviePath(videoFolder);
+    if (movieDetails.m_basePath.IsEmpty())
+      movieDetails.m_basePath = pItem->GetBaseMoviePath(videoFolder);
+    movieDetails.m_parentPathID = m_database.AddPath(URIUtils::GetParentPath(movieDetails.m_basePath));
 
     // add to all movies in the stacked set
     if (content.Equals("movies"))
