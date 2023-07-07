@@ -100,3 +100,12 @@ public:
 protected:
   virtual void SaveViewState();
 };
+
+class CGUIViewStateLibrary : public CGUIViewState
+{
+public:
+  CGUIViewStateLibrary(const CFileItemList& items);
+
+protected:
+  virtual void SaveViewState();
+};
