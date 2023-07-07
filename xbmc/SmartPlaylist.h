@@ -20,9 +20,11 @@
  */
 
 #include "utils/StdString.h"
-#include "Database.h"
 #include "tinyXML/tinyxml.h"
 #include <vector>
+#include <set>
+
+class CDatabase;
 
 class CSmartPlaylistRule
 {
@@ -111,7 +113,7 @@ public:
                     TEXTIN_FIELD
                   };
  
-  CStdString GetWhereClause(CDatabase *db, const CStdString& strType);
+  CStdString GetWhereClause(CDatabase &db, const CStdString& strType);
   void TranslateStrings(const char *field, const char *oper, const char *parameter);
   static DATABASE_FIELD TranslateField(const char *field);
   static CStdString     TranslateField(DATABASE_FIELD field);
@@ -164,8 +166,17 @@ public:
   bool GetOrderAscending() const { return m_orderAscending; };
 
   void AddRule(const CSmartPlaylistRule &rule);
-  CStdString GetWhereClause(CDatabase *db, bool needWhere = true);
-  CStdString GetOrderClause(CDatabase *db);
+  
+  /*! \brief get the where clause for a playlist
+   We handle playlists inside playlists separately in order to ensure we don't introduce infinite loops
+   by playlist A including playlist B which also (perhaps via other playlists) then includes playlistA.
+   
+   \param db the database to use to format up results
+   \param referencedPlaylists a set of playlists to know when we reach a cycle
+   \param needWhere whether we need to prepend the where clause with "WHERE "
+   */
+  CStdString GetWhereClause(CDatabase &db, std::set<CStdString> &referencedPlaylists);
+  CStdString GetOrderClause(CDatabase &db);
 
   const std::vector<CSmartPlaylistRule> &GetRules() const;
 
