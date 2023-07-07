@@ -389,9 +389,8 @@ VECSOURCES& CGUIViewStateWindowVideoNav::GetSources()
 {
   //  Setup shares we want to have
   m_sources.clear();
-  //  Musicdb shares
   CFileItemList items;
-  CDirectory::GetDirectory("videodb://", items);
+  CDirectory::GetDirectory("library://video/", items);
   for (int i=0; i<items.Size(); ++i)
   {
     CFileItemPtr item=items[i];
@@ -411,25 +410,6 @@ VECSOURCES& CGUIViewStateWindowVideoNav::GetSources()
     share.m_strThumbnailImage = CUtil::GetDefaultFolderThumb("DefaultAddSource.png");
     share.m_iDriveType = CMediaSource::SOURCE_TYPE_LOCAL;
     m_sources.push_back(share);
-  }
-  else
-  {
-    { // Files share
-      CMediaSource share;
-      share.strName=g_localizeStrings.Get(744); // Files
-      share.strPath = "sources://video/";
-      share.m_strThumbnailImage = CUtil::GetDefaultFolderThumb("DefaultFolder.png");
-      share.m_iDriveType = CMediaSource::SOURCE_TYPE_LOCAL;
-      m_sources.push_back(share);
-    }
-    { // Playlists share
-      CMediaSource share;
-      share.strName=g_localizeStrings.Get(136); // Playlists
-      share.strPath = "special://videoplaylists/";
-      share.m_strThumbnailImage = CUtil::GetDefaultFolderThumb("DefaultVideoPlaylists.png");
-      share.m_iDriveType = CMediaSource::SOURCE_TYPE_LOCAL;
-      m_sources.push_back(share);
-    }
   }
 
   // plugins share
