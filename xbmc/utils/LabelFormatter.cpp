@@ -68,34 +68,35 @@ using namespace MUSIC_INFO;
  *
  * Available metadata masks:
  *
- *  %N - Track Number
- *  %S - Disc Number
  *  %A - Artist
- *  %T - Title
  *  %B - Album
- *  %G - Genre
- *  %Y - Year
- *  %F - FileName
- *  %L - existing Label
+ *  %C - Programs count
  *  %D - Duration
+ *  %E - episode number
+ *  %F - FileName
+ *  %G - Genre
+ *  %H - season*100+episode
  *  %I - Size
  *  %J - Date
- *  %R - Movie rating
- *  %C - Programs count
  *  %K - Movie/Game title
+ *  %L - existing Label
  *  %M - number of episodes
- *  %E - episode number
- *  %P - production code
- *  %H - season*100+episode
- *  %Z - tvshow title
+ *  %N - Track Number
  *  %O - mpaa rating
+ *  %P - production code
  *  %Q - file time
+ *  %R - Movie rating
+ *  %S - Disc Number
+ *  %T - Title
  *  %U - studio
- *  %X - Bitrate
+ *  %V - Playcount
  *  %W - Listeners
+ *  %X - Bitrate
+ *  %Y - Year
+ *  %Z - tvshow title
  */
 
-#define MASK_CHARS "NSATBGYFLDIJRCKMEPHZOQUXW"
+#define MASK_CHARS "NSATBGYFLDIJRCKMEPHZOQUVXW"
 
 CLabelFormatter::CLabelFormatter(const CStdString &mask, const CStdString &mask2)
 {
@@ -291,6 +292,12 @@ CStdString CLabelFormatter::GetMaskContent(const CMaskString &mask, const CFileI
     {// Studios
       value = StringUtils::Join(movie ->m_studio, g_advancedSettings.m_videoItemSeparator);
     }
+    break;
+  case 'V': // Playcount
+    if (music)
+      value.Format("%i", music->GetPlayCount());
+    if (movie)
+      value.Format("%i", movie->m_playCount);
     break;
   case 'X': // Bitrate
     if( !item->m_bIsFolder && item->m_dwSize != 0 )

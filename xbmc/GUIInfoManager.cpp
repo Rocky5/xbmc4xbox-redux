@@ -2670,8 +2670,14 @@ bool CGUIInfoManager::GetMultiInfoBool(const GUIInfo &info, int contextWindow, c
         bReturn = g_guiSettings.GetBool(m_stringParameters[info.GetData1()]);
         break;
       case SYSTEM_SETTING:
-        if ( m_stringParameters[info.GetData1()].Equals("hidewatched") )
-          bReturn = g_settings.m_iMyVideoWatchMode == VIDEO_SHOW_UNWATCHED;
+        {
+          if ( m_stringParameters[info.GetData1()].Equals("hidewatched") )
+          {
+            CGUIWindow *window = GetWindowWithCondition(contextWindow, WINDOW_CONDITION_IS_MEDIA_WINDOW);
+            if (window)
+              bReturn = g_settings.GetWatchMode(((CGUIMediaWindow *)window)->CurrentDirectory().GetContent()) == VIDEO_SHOW_UNWATCHED;
+          }
+        }
         break;
       case CONTAINER_SCROLL_PREVIOUS:
       case CONTAINER_MOVE_PREVIOUS:
@@ -3715,6 +3721,11 @@ void CGUIInfoManager::SetCurrentSong(CFileItem &item)
   }
   else
     m_currentFile->SetMusicThumb();
+  if (!m_currentFile->HasProperty("fanart_image"))
+  {
+    if (m_currentFile->CacheLocalFanart())
+      m_currentFile->SetProperty("fanart_image", m_currentFile->GetCachedFanart());
+  }
   m_currentFile->FillInDefaultIcon();
 
   CMusicInfoLoader::LoadAdditionalTagInfo(m_currentFile);

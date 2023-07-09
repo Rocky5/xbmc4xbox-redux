@@ -1208,7 +1208,7 @@ int CVideoDatabase::AddCountry(const CStdString& strCountry)
   return AddToTable("country", "idCountry", "strCountry", strCountry);
 }
 
-int CVideoDatabase::AddActor(const CStdString& strActor, const CStdString& strThumb)
+int CVideoDatabase::AddActor(const CStdString& strActor, const CStdString& thumbURLs)
 {
   try
   {
@@ -1220,19 +1220,19 @@ int CVideoDatabase::AddActor(const CStdString& strActor, const CStdString& strTh
     {
       m_pDS->close();
       // doesnt exists, add it
-      strSQL=PrepareSQL("insert into Actors (idActor, strActor, strThumb) values( NULL, '%s','%s')", strActor.c_str(),strThumb.c_str());
+      strSQL=PrepareSQL("insert into actors (idActor, strActor, strThumb) values( NULL, '%s','%s')", strActor.c_str(),thumbURLs.c_str());
       m_pDS->exec(strSQL.c_str());
       int idActor = (int)m_pDS->lastinsertid();
       return idActor;
     }
     else
     {
-      const field_value value = m_pDS->fv("idActor");
-      int idActor = value.get_asInt() ;
-      // update the thumb url's
-      if (!strThumb.IsEmpty())
-        strSQL=PrepareSQL("update actors set strThumb='%s' where idActor=%i",strThumb.c_str(),idActor);
+      int idActor = m_pDS->fv("idActor").get_asInt();
       m_pDS->close();
+      // update the thumb url's
+      if (!thumbURLs.IsEmpty())
+        strSQL=PrepareSQL("update actors set strThumb='%s' where idActor=%i",thumbURLs.c_str(),idActor);
+      m_pDS->exec(strSQL.c_str());
       return idActor;
     }
 
@@ -1572,33 +1572,36 @@ void CVideoDatabase::DeleteDetailsForTvShow(const CStdString& strPath)
 void CVideoDatabase::GetMoviesByActor(const CStdString& strActor, CFileItemList& items)
 {
   Filter filter;
-  filter.join  = PrepareSQL("LEFT JOIN actorlinkmovie ON actorlinkmovie.idMovie=movieview.idMovie "
-                            "LEFT JOIN actors a ON a.idActor=actorlinkmovie.idActor "
-                            "LEFT JOIN directorlinkmovie ON directorlinkmovie.idMovie=movieview.idMovie "
-                            "LEFT JOIN actors d ON d.idActor=directorlinkmovie.idDirector");
-  filter.where = PrepareSQL("a.strActor='%s' OR d.strActor='%s' GROUP BY movieview.idMovie", strActor.c_str(), strActor.c_str());
+  filter.join  = "LEFT JOIN actorlinkmovie ON actorlinkmovie.idMovie=movieview.idMovie "
+                 "LEFT JOIN actors a ON a.idActor=actorlinkmovie.idActor "
+                 "LEFT JOIN directorlinkmovie ON directorlinkmovie.idMovie=movieview.idMovie "
+                 "LEFT JOIN actors d ON d.idActor=directorlinkmovie.idDirector";
+  filter.where = PrepareSQL("a.strActor='%s' OR d.strActor='%s'", strActor.c_str(), strActor.c_str());
+  filter.group = "movieview.idMovie";
   GetMoviesByWhere("videodb://1/2/", filter, items);
 }
 
 void CVideoDatabase::GetTvShowsByActor(const CStdString& strActor, CFileItemList& items)
 {
   Filter filter;
-  filter.join  = PrepareSQL("LEFT JOIN actorlinktvshow ON actorlinktvshow.idShow=tvshowview.idShow "
-                            "LEFT JOIN actors a ON a.idActor=actorlinktvshow.idActor "
-                            "LEFT JOIN directorlinktvshow ON directorlinktvshow.idShow=tvshowview.idShow "
-                            "LEFT JOIN actors d ON d.idActor=directorlinktvshow.idDirector");
-  filter.where = PrepareSQL("a.strActor='%s' OR d.strActor='%s' GROUP BY tvshowview.idShow", strActor.c_str(), strActor.c_str());
+  filter.join  = "LEFT JOIN actorlinktvshow ON actorlinktvshow.idShow=tvshowview.idShow "
+                 "LEFT JOIN actors a ON a.idActor=actorlinktvshow.idActor "
+                 "LEFT JOIN directorlinktvshow ON directorlinktvshow.idShow=tvshowview.idShow "
+                 "LEFT JOIN actors d ON d.idActor=directorlinktvshow.idDirector";
+  filter.where = PrepareSQL("a.strActor='%s' OR d.strActor='%s'", strActor.c_str(), strActor.c_str());
+  filter.group = "tvshowview.idShow";
   GetTvShowsByWhere("videodb://2/2/", filter, items);
 }
 
 void CVideoDatabase::GetEpisodesByActor(const CStdString& strActor, CFileItemList& items)
 {
   Filter filter;
-  filter.join  = PrepareSQL("LEFT JOIN actorlinkepisode ON actorlinkepisode.idEpisode=episodeview.idEpisode "
-                            "LEFT JOIN actors a ON a.idActor=actorlinkepisode.idActor "
-                            "LEFT JOIN directorlinkepisode ON directorlinkepisode.idEpisode=episodeview.idEpisode "
-                            "LEFT JOIN actors d ON d.idActor=directorlinkepisode.idDirector");
-  filter.where = PrepareSQL("a.strActor='%s' OR d.strActor='%s' GROUP BY episodeview.idEpisode", strActor.c_str(), strActor.c_str());
+  filter.join  = "LEFT JOIN actorlinkepisode ON actorlinkepisode.idEpisode=episodeview.idEpisode "
+                 "LEFT JOIN actors a ON a.idActor=actorlinkepisode.idActor "
+                 "LEFT JOIN directorlinkepisode ON directorlinkepisode.idEpisode=episodeview.idEpisode "
+                 "LEFT JOIN actors d ON d.idActor=directorlinkepisode.idDirector";
+  filter.where = PrepareSQL("a.strActor='%s' OR d.strActor='%s'", strActor.c_str(), strActor.c_str());
+  filter.group = "episodeview.idEpisode";
   GetEpisodesByWhere("videodb://2/2/", filter, items);
 }
 
@@ -1778,8 +1781,6 @@ int CVideoDatabase::SetDetailsForMovie(const CStdString& strFilenameAndPath, con
 {
   try
   {
-    CVideoInfoTag info = details;
-
     int idMovie = GetMovieId(strFilenameAndPath);
     if (idMovie > -1)
       DeleteMovie(strFilenameAndPath, true); // true to keep the table entry
@@ -1796,7 +1797,7 @@ int CVideoDatabase::SetDetailsForMovie(const CStdString& strFilenameAndPath, con
     vector<int> vecDirectors;
     vector<int> vecGenres;
     vector<int> vecStudios;
-    AddGenreAndDirectorsAndStudios(info,vecDirectors,vecGenres,vecStudios);
+    AddGenreAndDirectorsAndStudios(details,vecDirectors,vecGenres,vecStudios);
 
     for (unsigned int i = 0; i < vecGenres.size(); ++i)
       AddGenreToMovie(idMovie, vecGenres[i]);
@@ -1808,31 +1809,31 @@ int CVideoDatabase::SetDetailsForMovie(const CStdString& strFilenameAndPath, con
       AddStudioToMovie(idMovie, vecStudios[i]);
 
     // add writers...
-    for (unsigned int i = 0; i < info.m_writingCredits.size(); i++)
-      AddWriterToMovie(idMovie, AddActor(info.m_writingCredits[i],""));
+    for (unsigned int i = 0; i < details.m_writingCredits.size(); i++)
+      AddWriterToMovie(idMovie, AddActor(details.m_writingCredits[i],""));
 
     // add cast...
     int order = 0;
-    for (CVideoInfoTag::iCast it = info.m_cast.begin(); it != info.m_cast.end(); ++it)
+    for (CVideoInfoTag::iCast it = details.m_cast.begin(); it != details.m_cast.end(); ++it)
     {
       int idActor = AddActor(it->strName,it->thumbUrl.m_xml);
       AddActorToMovie(idMovie, idActor, it->strRole, order++);
     }
 
     // add sets...
-    for (unsigned int i = 0; i < info.m_set.size(); i++)
-      AddSetToMovie(idMovie, AddSet(info.m_set[i]));
+    for (unsigned int i = 0; i < details.m_set.size(); i++)
+      AddSetToMovie(idMovie, AddSet(details.m_set[i]));
 
     // add countries...
-    for (unsigned int i = 0; i < info.m_country.size(); i++)
-      AddCountryToMovie(idMovie, AddCountry(info.m_country[i]));
+    for (unsigned int i = 0; i < details.m_country.size(); i++)
+      AddCountryToMovie(idMovie, AddCountry(details.m_country[i]));
 
     if (details.HasStreamDetails())
       SetStreamDetailsForFileId(details.m_streamDetails, GetFileId(strFilenameAndPath));
 
     // update our movie table (we know it was added already above)
     // and insert the new row
-    CStdString sql = "update movie set " + GetValueString(info, VIDEODB_ID_MIN, VIDEODB_ID_MAX, DbMovieOffsets);
+    CStdString sql = "update movie set " + GetValueString(details, VIDEODB_ID_MIN, VIDEODB_ID_MAX, DbMovieOffsets);
     sql += PrepareSQL(" where idMovie=%i", idMovie);
     m_pDS->exec(sql.c_str());
     CommitTransaction();
@@ -2838,25 +2839,13 @@ CVideoInfoTag CVideoDatabase::GetDetailsForMovie(auto_ptr<Dataset> &pDS, bool ne
   if (needsCast)
   {
     GetResumePoint(details);
+    GetCast("movie", "idMovie", details.m_iDbId, details.m_cast);
 
-    // create cast string
-    CStdString strSQL = PrepareSQL("SELECT actors.strActor,actorlinkmovie.strRole,actors.strThumb FROM actorlinkmovie,actors WHERE actorlinkmovie.idMovie=%i AND actorlinkmovie.idActor=actors.idActor ORDER BY actorlinkmovie.iOrder",idMovie);
-
-    m_pDS2->query(strSQL.c_str());
-    while (!m_pDS2->eof())
-    {
-      SActorInfo info;
-      info.strName = m_pDS2->fv("actors.strActor").get_asString();
-      info.strRole = m_pDS2->fv("actorlinkmovie.strRole").get_asString();
-      info.thumbUrl.ParseString(m_pDS2->fv("actors.strThumb").get_asString());
-      details.m_cast.push_back(info);
-      m_pDS2->next();
-    }
     castTime += CTimeUtils::GetTimeMS() - time; time = CTimeUtils::GetTimeMS();
     details.m_strPictureURL.Parse();
 
     // create sets string
-    strSQL = PrepareSQL("select sets.idSet, sets.strSet from sets,setlinkmovie where setlinkmovie.idMovie=%i and setlinkmovie.idSet=sets.idSet order by setlinkmovie.ROWID",idMovie);
+    CStdString strSQL = PrepareSQL("select sets.idSet, sets.strSet from sets,setlinkmovie where setlinkmovie.idMovie=%i and setlinkmovie.idSet=sets.idSet order by setlinkmovie.ROWID",idMovie);
     m_pDS2->query(strSQL.c_str());
     while (!m_pDS2->eof())
     {
@@ -2903,18 +2892,8 @@ CVideoInfoTag CVideoDatabase::GetDetailsForTvShow(auto_ptr<Dataset> &pDS, bool n
 
   if (needsCast)
   {
-    // create cast string
-    CStdString strSQL = PrepareSQL("select actors.strActor,actorlinktvshow.strRole,actors.strThumb from actorlinktvshow,actors where actorlinktvshow.idShow=%i and actorlinktvshow.idActor = actors.idActor ORDER BY actorlinktvshow.iOrder",idTvShow);
-    m_pDS2->query(strSQL.c_str());
-    while (!m_pDS2->eof())
-    {
-      SActorInfo info;
-      info.strName = m_pDS2->fv("actors.strActor").get_asString();
-      info.strRole = m_pDS2->fv("actorlinktvshow.strRole").get_asString();
-      info.thumbUrl.ParseString(m_pDS2->fv("actors.strThumb").get_asString());
-      details.m_cast.push_back(info);
-      m_pDS2->next();
-    }
+    GetCast("tvshow", "idShow", details.m_iDbId, details.m_cast);
+
     castTime += CTimeUtils::GetTimeMS() - time; time = CTimeUtils::GetTimeMS();
     details.m_strPictureURL.Parse();
   }
@@ -2953,46 +2932,12 @@ CVideoInfoTag CVideoDatabase::GetDetailsForEpisode(auto_ptr<Dataset> &pDS, bool 
   if (needsCast)
   {
     GetResumePoint(details);
+    GetCast("episode", "idEpisode", details.m_iDbId, details.m_cast);
+    GetCast("tvshow", "idShow", details.m_iIdShow, details.m_cast);
 
-    set<int> actors;
-    set<int>::iterator it;
-
-    // create cast string
-    CStdString strSQL = PrepareSQL("select actors.idActor,actors.strActor,actorlinkepisode.strRole,actors.strThumb from actorlinkepisode,actors where actorlinkepisode.idEpisode=%i and actorlinkepisode.idActor = actors.idActor ORDER BY actorlinkepisode.iOrder",idEpisode);
-    m_pDS2->query(strSQL.c_str());
-    bool showCast=false;
-    while (!m_pDS2->eof() || !showCast)
-    {
-      if (!m_pDS2->eof())
-      {
-        int idActor = m_pDS2->fv("actors.idActor").get_asInt();
-        it = actors.find(idActor);
-
-        if (it == actors.end())
-        {
-          SActorInfo info;
-          info.strName = m_pDS2->fv("actors.strActor").get_asString();
-          info.strRole = m_pDS2->fv("actorlinkepisode.strRole").get_asString();
-          info.thumbUrl.ParseString(m_pDS2->fv("actors.strThumb").get_asString());
-          details.m_cast.push_back(info);
-          actors.insert(idActor);
-        }
-        m_pDS2->next();
-      }
-      if (m_pDS2->eof() && !showCast)
-      {
-        showCast = true;
-        int idShow = GetTvShowForEpisode(details.m_iDbId);
-        if (idShow > -1)
-        {
-          strSQL = PrepareSQL("select actors.idActor,actors.strActor,actorlinktvshow.strRole,actors.strThumb from actorlinktvshow,actors where actorlinktvshow.idShow=%i and actorlinktvshow.idActor = actors.idActor ORDER BY actorlinktvshow.iOrder",idShow);
-          m_pDS2->query(strSQL.c_str());
-        }
-      }
-    }
     castTime += CTimeUtils::GetTimeMS() - time; time = CTimeUtils::GetTimeMS();
     details.m_strPictureURL.Parse();
-    strSQL=PrepareSQL("select * from bookmark join episode on episode.c%02d=bookmark.idBookmark where episode.idEpisode=%i and bookmark.type=%i", VIDEODB_ID_EPISODE_BOOKMARK,details.m_iDbId,CBookmark::EPISODE);
+    CStdString strSQL = PrepareSQL("select * from bookmark join episode on episode.c%02d=bookmark.idBookmark where episode.idEpisode=%i and bookmark.type=%i", VIDEODB_ID_EPISODE_BOOKMARK,details.m_iDbId,CBookmark::EPISODE);
     m_pDS2->query(strSQL.c_str());
     if (!m_pDS2->eof())
       details.m_fEpBookmark = m_pDS2->fv("bookmark.timeInSeconds").get_asFloat();
@@ -3031,6 +2976,51 @@ void CVideoDatabase::GetCommonDetails(auto_ptr<Dataset> &pDS, CVideoInfoTag &det
   details.m_playCount = pDS->fv(VIDEODB_DETAILS_PLAYCOUNT).get_asInt();
   details.m_lastPlayed.SetFromDBDateTime(pDS->fv(VIDEODB_DETAILS_LASTPLAYED).get_asString());
   details.m_dateAdded.SetFromDBDateTime(pDS->fv(VIDEODB_DETAILS_DATEADDED).get_asString());
+}
+
+void CVideoDatabase::GetCast(const CStdString &table, const CStdString &table_id, int type_id, vector<SActorInfo> &cast)
+{
+  try
+  {
+    if (!m_pDB.get()) return;
+    if (!m_pDS2.get()) return;
+
+    CStdString sql = PrepareSQL("SELECT actors.strActor,"
+                                "  actorlink%s.strRole,"
+                                "  actors.strThumb "
+                                "FROM actorlink%s"
+                                "  JOIN actors ON"
+                                "    actorlink%s.idActor=actors.idActor "
+                                "WHERE actorlink%s.%s=%i "
+                                "ORDER BY actorlink%s.iOrder",table.c_str(), table.c_str(), table.c_str(), table.c_str(), table_id.c_str(), type_id, table.c_str());
+    m_pDS2->query(sql.c_str());
+    while (!m_pDS2->eof())
+    {
+      SActorInfo info;
+      info.strName = m_pDS2->fv(0).get_asString();
+      bool found = false;
+      for (vector<SActorInfo>::iterator i = cast.begin(); i != cast.end(); ++i)
+      {
+        if (i->strName == info.strName)
+        {
+          found = true;
+          break;
+        }
+      }
+      if (!found)
+      {
+        info.strRole = m_pDS2->fv(1).get_asString();
+        info.thumbUrl.ParseString(m_pDS2->fv(2).get_asString());
+        cast.push_back(info);
+      }
+      m_pDS2->next();
+    }
+    m_pDS2->close();
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s(%s,%s,%i) failed", __FUNCTION__, table.c_str(), table_id.c_str(), type_id);
+  }
 }
 
 /// \brief GetVideoSettings() obtains any saved video settings for the current file.
@@ -4326,103 +4316,111 @@ bool CVideoDatabase::GetNavCommon(const CStdString& strBaseDir, CFileItemList& i
   return false;
 }
 
-bool CVideoDatabase::GetSetsNav(const CStdString& strBaseDir, CFileItemList& items, int idContent, const CStdString &where)
+bool CVideoDatabase::GetSetsNav(const CStdString& strBaseDir, CFileItemList& items, int idContent)
+{
+  if (idContent != VIDEODB_CONTENT_MOVIES)
+    return false;
+
+  Filter filter;
+  return GetSetsByWhere(strBaseDir, filter, items);
+}
+
+bool CVideoDatabase::GetSetsByWhere(const CStdString& strBaseDir, const Filter &filter, CFileItemList& items)
 {
   try
   {
     if (NULL == m_pDB.get()) return false;
     if (NULL == m_pDS.get()) return false;
 
-    // get primary sets for movies
-    CStdString strSQL;
-    if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
-    {
-      if (idContent == VIDEODB_CONTENT_MOVIES)
-        strSQL=PrepareSQL("select sets.idSet,sets.strSet,path.strPath,files.playCount from sets join setlinkmovie on sets.idSet=setlinkmovie.idSet join movie on setlinkMovie.idMovie = movie.idMovie join files on files.idFile=movie.idFile join path on path.idPath = files.idPath");
-      if (!where.empty())
-        strSQL += " WHERE (" + where + ")";
-    }
-    else
-    {
-      CStdString group;
-      if (idContent == VIDEODB_CONTENT_MOVIES)
-      {
-        strSQL=PrepareSQL("select sets.idSet,sets.strSet,count(1),count(files.playCount) from sets join setlinkmovie on sets.idSet=setlinkmovie.idSet join movie on setlinkmovie.idMovie=movie.idMovie join files on files.idFile=movie.idFile ");
-        group = " group by sets.idSet";
-      }
-      if (!where.empty())
-        strSQL += " WHERE (" + where + ")";
-      strSQL += group;
-    }
+    CStdString strSQL = "SELECT movieview.*, sets.idSet, sets.strSet FROM movieview"
+                       " JOIN setlinkmovie ON movieview.idMovie = setlinkmovie.idMovie"
+                       " JOIN (SELECT idSet, COUNT(1) AS c FROM setlinkmovie GROUP BY idSet HAVING c>1) s2 ON s2.idSet = sets.idSet"
+                       " JOIN sets ON setlinkmovie.idSet = sets.idSet ";
+    if (!filter.join.empty())
+      strSQL += filter.join;
+    if (!filter.where.empty())
+      strSQL += " WHERE (" + filter.where + ")";
+    strSQL += " ORDER BY sets.idSet";
+    if (!filter.order.empty())
+      strSQL += "," + filter.order;
+    if (!filter.limit.empty())
+      strSQL += " LIMIT " + filter.limit;
 
     int iRowsFound = RunQuery(strSQL);
     if (iRowsFound <= 0)
       return iRowsFound == 0;
 
-    if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser)
+    map<int, CSetInfo> mapSets;
+    map<int, CSetInfo>::iterator it;
+    while (!m_pDS->eof())
     {
-      map<int, pair<CStdString,int> > mapSets;
-      map<int, pair<CStdString,int> >::iterator it;
-      while (!m_pDS->eof())
-      {
-        int idSet = m_pDS->fv("sets.idSet").get_asInt();
-        CStdString strSet = m_pDS->fv("sets.strSet").get_asString();
-        it = mapSets.find(idSet);
-        // was this set already found?
-        if (it == mapSets.end())
-        {
-          // check path
-          if (g_passwordManager.IsDatabasePathUnlocked(CStdString(m_pDS->fv("path.strPath").get_asString()),g_settings.m_videoSources))
-          {
-            if (idContent == VIDEODB_CONTENT_MOVIES || idContent == VIDEODB_CONTENT_MUSICVIDEOS)
-              mapSets.insert(pair<int, pair<CStdString,int> >(idSet, pair<CStdString,int>(strSet,m_pDS->fv(3).get_asInt())));
-            else
-              mapSets.insert(pair<int, pair<CStdString,int> >(idSet, pair<CStdString,int>(strSet,0)));
-          }
-        }
-        m_pDS->next();
-      }
-      m_pDS->close();
+      if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser &&
+          !g_passwordManager.IsDatabasePathUnlocked(CStdString(m_pDS->fv("movieview.strPath").get_asString()),g_settings.m_videoSources))
+        continue;
 
-      for (it=mapSets.begin();it != mapSets.end();++it)
+      // get the setid and check if we already have this set
+      int idSet = m_pDS->fv("sets.idSet").get_asInt();
+      if ((it = mapSets.find(idSet)) == mapSets.end())
       {
-        CFileItemPtr pItem(new CFileItem(it->second.first));
-        pItem->GetVideoInfoTag()->m_type = "set";
-        CStdString strDir;
-        strDir.Format("%ld/", it->first);
-        pItem->SetPath(strBaseDir + strDir);
-        pItem->m_bIsFolder=true;
-        pItem->GetVideoInfoTag()->m_strPath = pItem->GetPath();
-        if (idContent == VIDEODB_CONTENT_MOVIES || idContent == VIDEODB_CONTENT_MUSICVIDEOS)
-        {
-          pItem->GetVideoInfoTag()->m_playCount = it->second.second;
-          pItem->GetVideoInfoTag()->m_strTitle = pItem->GetLabel();
-        }
-        if (!items.Contains(pItem->GetPath()))
-        {
-          pItem->SetLabelPreformated(true);
-          items.Add(pItem);
-        }
+        // add the set to the list of sets
+        CSetInfo set;
+        set.name = m_pDS->fv("sets.strSet").get_asString();
+
+        pair<map<int, CSetInfo>::iterator, bool> insertIt = mapSets.insert(make_pair(idSet, set));
+        it = insertIt.first;
       }
+
+      // add the movie's details to the set
+      it->second.movies.push_back(GetDetailsForMovie(m_pDS));
+      m_pDS->next();
     }
-    else
+    m_pDS->close();
+
+    for (it = mapSets.begin(); it != mapSets.end(); it++)
     {
-      while (!m_pDS->eof())
+      // we only handle sets with at least 2 movies
+      if (it->second.movies.size() <= 1)
+        continue;
+
+      CFileItemPtr pItem(new CFileItem(it->second.name));
+      pItem->GetVideoInfoTag()->m_iDbId = it->first;
+      pItem->GetVideoInfoTag()->m_type = "set";
+      CStdString strDir;
+      strDir.Format("%s%ld/", strBaseDir.c_str(), it->first);
+      pItem->SetPath(strDir);
+      pItem->m_bIsFolder = true;
+      pItem->GetVideoInfoTag()->m_strPath = pItem->GetPath();
+      pItem->GetVideoInfoTag()->m_strTitle = pItem->GetLabel();
+
+      // calculate the remaining metadata from the movies
+      int ratings = 0;
+      bool iWatched = 0; // have all the movies been played at least once?
+      for (VECMOVIES::const_iterator movie = it->second.movies.begin(); movie != it->second.movies.end(); movie++)
       {
-        CFileItemPtr pItem(new CFileItem(m_pDS->fv("sets.strSet").get_asString()));
-        CStdString strDir;
-        strDir.Format("%ld/", m_pDS->fv("sets.idSet").get_asInt());
-        pItem->SetPath(strBaseDir + strDir);
-        pItem->m_bIsFolder=true;
-        pItem->GetVideoInfoTag()->m_strPath = pItem->GetPath();
-        pItem->SetLabelPreformated(true);
-        if (idContent == VIDEODB_CONTENT_MOVIES || idContent==VIDEODB_CONTENT_MUSICVIDEOS)
+        // handle rating
+        if (movie->m_fRating > 0.0f)
         {
-          // fv(3) is the number of videos watched, fv(2) is the total number.  We set the playcount
-          // only if the number of videos watched is equal to the total number (i.e. every video watched)
-          pItem->GetVideoInfoTag()->m_playCount = (m_pDS->fv(3).get_asInt() == m_pDS->fv(2).get_asInt()) ? 1 : 0;
-          pItem->GetVideoInfoTag()->m_strTitle = pItem->GetLabel();
+          ratings++;
+          pItem->GetVideoInfoTag()->m_fRating += movie->m_fRating;
         }
+
+        // handle year
+        if (movie->m_iYear > pItem->GetVideoInfoTag()->m_iYear)
+          pItem->GetVideoInfoTag()->m_iYear = movie->m_iYear;
+
+        // handle lastplayed
+        if (movie->m_lastPlayed.IsValid() && movie->m_lastPlayed > pItem->GetVideoInfoTag()->m_lastPlayed)
+          pItem->GetVideoInfoTag()->m_lastPlayed = movie->m_lastPlayed;
+
+        // handle dateadded
+        if (movie->m_dateAdded.IsValid() && movie->m_dateAdded > pItem->GetVideoInfoTag()->m_dateAdded)
+          pItem->GetVideoInfoTag()->m_dateAdded = movie->m_dateAdded;
+
+        // handle playcount/watched
+        pItem->GetVideoInfoTag()->m_playCount += movie->m_playCount;
+        if (movie->m_playCount > 0)
+          iWatched++;
+
         bool thumb=false,fanart=false;
         if (CFile::Exists(pItem->GetCachedVideoThumb()))
         {
@@ -4436,7 +4434,7 @@ bool CVideoDatabase::GetSetsNav(const CStdString& strBaseDir, CFileItemList& ite
         }
         if (!thumb || !fanart) // use the first item's thumb
         {
-          CStdString strSQL = PrepareSQL("select strPath, strFileName from movieview join setlinkmovie on setlinkmovie.idMovie=movieview.idmovie where setlinkmovie.idSet=%u",m_pDS->fv("sets.idSet").get_asInt());
+          CStdString strSQL = PrepareSQL("select strPath, strFileName from movieview join setlinkmovie on setlinkmovie.idMovie=movieview.idmovie where setlinkmovie.idSet=%u",it->first);
           m_pDS2->query(strSQL.c_str());
           if (!m_pDS2->eof())
           {
@@ -4450,13 +4448,21 @@ bool CVideoDatabase::GetSetsNav(const CStdString& strBaseDir, CFileItemList& ite
             m_pDS2->close();
           }
         }
-        items.Add(pItem);
-        m_pDS->next();
       }
-      m_pDS->close();
+
+      if (ratings > 1)
+        pItem->GetVideoInfoTag()->m_fRating /= ratings;
+
+      pItem->GetVideoInfoTag()->m_playCount = iWatched >= it->second.movies.size() ? (pItem->GetVideoInfoTag()->m_playCount / it->second.movies.size()) : 0;
+      pItem->SetProperty("total", it->second.movies.size());
+      pItem->SetProperty("watched", iWatched);
+      pItem->SetProperty("unwatched", it->second.movies.size() - iWatched);      
+      pItem->SetOverlayImage(CGUIListItem::ICON_OVERLAY_UNWATCHED, pItem->GetVideoInfoTag()->m_playCount > 0);
+
+      if (!items.Contains(pItem->GetPath()))
+        items.Add(pItem);
     }
 
-//    CLog::Log(LOGDEBUG, "%s Time: %d ms", CTimeUtils::GetTimeMS() - time);
     return true;
   }
   catch (...)
@@ -5145,31 +5151,39 @@ bool CVideoDatabase::GetMoviesByWhere(const CStdString& strBaseDir, const Filter
     if (NULL == m_pDB.get()) return false;
     if (NULL == m_pDS.get()) return false;
 
-    CStdString strSQL = "select * from movieview ";
+    CStdString strSQL = PrepareSQL("select %s from movieview ", !filter.fields.empty() ? filter.fields.c_str() : "*");
     if (fetchSets && g_guiSettings.GetBool("videolibrary.groupmoviesets"))
     {
       // not getting a set, so grab all sets that match this where clause first
-      CStdString setsWhere;
+      Filter setsFilter;
       if (!filter.where.empty() || !filter.join.empty())
       {
-        setsWhere = "movie.idMovie in (select movieview.idMovie from movieview ";
+        setsFilter.where = "movieview.idMovie in (select movieview.idMovie from movieview ";
         if (!filter.join.empty())
-          setsWhere += filter.join;
+          setsFilter.where += filter.join;
         if (!filter.where.empty())
-          setsWhere += " WHERE " + filter.where;
-        setsWhere += ")";
+          setsFilter.where += " WHERE " + filter.where;
+        setsFilter.where += ")";
       }
-      GetSetsNav("videodb://1/7/", items, VIDEODB_CONTENT_MOVIES, setsWhere);
-      CStdString movieSetsWhere = "movieview.idMovie NOT IN (SELECT idMovie FROM setlinkmovie s1 JOIN(SELECT idSet, COUNT(1) AS c FROM setlinkmovie GROUP BY idSet HAVING c>1) s2 ON s2.idSet=s1.idSet)";
+      GetSetsByWhere("videodb://1/7/", setsFilter, items);
+      CStdString movieSetsWhere;
+      if (items.Size() > 0)
+      {
+        movieSetsWhere = "movieview.idMovie NOT IN (SELECT idMovie FROM setlinkmovie s1 JOIN(SELECT idSet, COUNT(1) AS c FROM setlinkmovie GROUP BY idSet HAVING c>1) s2 ON s2.idSet=s1.idSet WHERE s1.idSet IN (";
+        for (int index = 0; index < items.Size(); index++)
+          movieSetsWhere.AppendFormat("%s%d", index > 0 ? "," : "", items[index]->GetVideoInfoTag()->m_iDbId);
+        movieSetsWhere += "))";
+      }
       if (!filter.join.empty())
         strSQL += filter.join;
       if (!filter.where.empty())
       {
         strSQL += " WHERE (" + filter.where + ")";
-        strSQL += PrepareSQL(" AND " + movieSetsWhere);
+        if (!movieSetsWhere.empty())
+          strSQL += " AND " + movieSetsWhere;
       }
-      else
-        strSQL += PrepareSQL(" WHERE " + movieSetsWhere);
+      else if (!movieSetsWhere.empty())
+        strSQL += " WHERE " + movieSetsWhere;
     }
     else
     {
@@ -5179,15 +5193,19 @@ bool CVideoDatabase::GetMoviesByWhere(const CStdString& strBaseDir, const Filter
         strSQL += " WHERE (" + filter.where + ")";
     }
 
+    if (!filter.group.empty())
+      strSQL += " GROUP BY " + filter.group;
     if (filter.order.size())
-      strSQL += " " + filter.order;
+      strSQL += " ORDER BY " + filter.order;
+    if (!filter.limit.empty())
+      strSQL += " LIMIT " + filter.limit;
 
     int iRowsFound = RunQuery(strSQL);
     if (iRowsFound <= 0)
       return iRowsFound == 0;
 
     // get data from returned rows
-    items.Reserve(iRowsFound);
+    items.Reserve(items.Size() + iRowsFound);
     while (!m_pDS->eof())
     {
       CVideoInfoTag movie = GetDetailsForMovie(m_pDS);
@@ -5253,13 +5271,17 @@ bool CVideoDatabase::GetTvShowsByWhere(const CStdString& strBaseDir, const Filte
     if (NULL == m_pDB.get()) return false;
     if (NULL == m_pDS.get()) return false;
 
-    CStdString strSQL = "SELECT * FROM tvshowview ";
+    CStdString strSQL = PrepareSQL("SELECT %s FROM tvshowview ", !filter.fields.empty() ? filter.fields.c_str() : "*");
     if (!filter.join.empty())
       strSQL += filter.join;
     if (!filter.where.empty())
       strSQL += " WHERE " + filter.where;
+    if (!filter.group.empty())
+      strSQL += " GROUP BY " + filter.group;
     if (!filter.order.empty())
-      strSQL += " " + filter.order;
+      strSQL += " ORDER BY " + filter.order;
+    if (!filter.limit.empty())
+      strSQL += " LIMIT " + filter.limit;
     int iRowsFound = RunQuery(strSQL);
     if (iRowsFound <= 0)
       return iRowsFound == 0;
@@ -5550,13 +5572,17 @@ bool CVideoDatabase::GetEpisodesByWhere(const CStdString& strBaseDir, const Filt
     if (NULL == m_pDB.get()) return false;
     if (NULL == m_pDS.get()) return false;
 
-    CStdString strSQL = "select * from episodeview ";
+    CStdString strSQL = PrepareSQL("select %s from episodeview ", !filter.fields.empty() ? filter.fields.c_str() : "*");
     if (!filter.join.empty())
       strSQL += filter.join;
     if (!filter.where.empty())
       strSQL += " WHERE " + filter.where;
+    if (!filter.group.empty())
+      strSQL += " GROUP BY " + filter.group;
     if (!filter.order.empty())
-      strSQL += " " + filter.order;
+      strSQL += " ORDER BY " + filter.order;
+    if (!filter.limit.empty())
+      strSQL += " LIMIT " + filter.limit;
     int iRowsFound = RunQuery(strSQL);
     if (iRowsFound <= 0)
       return iRowsFound == 0;
@@ -5636,21 +5662,24 @@ bool CVideoDatabase::GetMusicVideosNav(const CStdString& strBaseDir, CFileItemLi
 bool CVideoDatabase::GetRecentlyAddedMoviesNav(const CStdString& strBaseDir, CFileItemList& items, unsigned int limit)
 {
   Filter filter;
-  filter.order = PrepareSQL("order by dateAdded desc, idMovie desc limit %u", limit ? limit : g_advancedSettings.m_iVideoLibraryRecentlyAddedItems);
+  filter.order = "dateAdded desc, idMovie desc";
+  filter.limit = PrepareSQL("%u", limit ? limit : g_advancedSettings.m_iVideoLibraryRecentlyAddedItems);
   return GetMoviesByWhere(strBaseDir, filter, items);
 }
 
 bool CVideoDatabase::GetRecentlyAddedEpisodesNav(const CStdString& strBaseDir, CFileItemList& items, unsigned int limit)
 {
   Filter filter;
-  filter.order = PrepareSQL("order by dateAdded desc, idEpisode desc limit %u", limit ? limit : g_advancedSettings.m_iVideoLibraryRecentlyAddedItems);
+  filter.order = "dateAdded desc, idEpisode desc";
+  filter.limit = PrepareSQL("%u", limit ? limit : g_advancedSettings.m_iVideoLibraryRecentlyAddedItems);
   return GetEpisodesByWhere(strBaseDir, filter, items, false);
 }
 
 bool CVideoDatabase::GetRecentlyAddedMusicVideosNav(const CStdString& strBaseDir, CFileItemList& items, unsigned int limit)
 {
   Filter filter;
-  filter.order = PrepareSQL("order by dateAdded desc, idMVideo desc limit %u", limit ? limit : g_advancedSettings.m_iVideoLibraryRecentlyAddedItems);
+  filter.order = "dateAdded desc, idMVideo desc";
+  filter.limit = PrepareSQL("%u", limit ? limit : g_advancedSettings.m_iVideoLibraryRecentlyAddedItems);
   return GetMusicVideosByWhere(strBaseDir, filter, items);
 }
 
@@ -6351,13 +6380,17 @@ bool CVideoDatabase::GetMusicVideosByWhere(const CStdString &baseDir, const Filt
     if (NULL == m_pDS.get()) return false;
 
     // We don't use PrepareSQL here, as the WHERE clause is already formatted.
-    CStdString strSQL = "select * from musicvideoview ";
+    CStdString strSQL = PrepareSQL("select %s from musicvideoview ", !filter.fields.empty() ? filter.fields.c_str() : "*");
     if (!filter.join.empty())
       strSQL += filter.join;
     if (!filter.where.empty())
       strSQL += " WHERE " + filter.where;
+    if (!filter.group.empty())
+      strSQL += " GROUP BY " + filter.group;
     if (!filter.order.empty())
-      strSQL += " " + filter.order;
+      strSQL += " ORDER BY " + filter.order;
+    if (!filter.limit.empty())
+      strSQL += " LIMIT " + filter.limit;
     CLog::Log(LOGDEBUG, "%s query = %s", __FUNCTION__, strSQL.c_str());
 
     // run query
