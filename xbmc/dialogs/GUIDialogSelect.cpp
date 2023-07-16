@@ -35,7 +35,8 @@ CGUIDialogSelect::CGUIDialogSelect(void)
   m_bButtonEnabled = false;
   m_useDetails = false;
   m_vecListInternal = new CFileItemList;
-  m_selectedItem = new CFileItem;
+  m_selectedItems = new CFileItemList;
+  m_multiSelection = false;
   m_vecList = m_vecListInternal;
   m_iSelected = -1;
   m_loadType = KEEP_IN_MEMORY;
@@ -44,7 +45,7 @@ CGUIDialogSelect::CGUIDialogSelect(void)
 CGUIDialogSelect::~CGUIDialogSelect(void)
 {
   delete m_vecListInternal;
-  delete m_selectedItem;
+  delete m_selectedItems;
 }
 
 bool CGUIDialogSelect::OnMessage(CGUIMessage& message)
@@ -57,6 +58,23 @@ bool CGUIDialogSelect::OnMessage(CGUIMessage& message)
       m_viewControl.Clear();
       m_bButtonEnabled = false;
       m_useDetails = false;
+
+      m_multiSelection = false;
+
+      // construct selected items list
+      m_selectedItems->Clear();
+      m_iSelected = -1;
+      for (int i = 0 ; i < m_vecList->Size() ; i++)
+      {
+        CFileItemPtr item = m_vecList->Get(i);
+        if (item->IsSelected())
+        {
+          m_selectedItems->Add(item);
+          if (m_iSelected == -1)
+            m_iSelected = i;
+        }
+      }
+
       m_vecListInternal->Clear();
       m_vecList = m_vecListInternal;
       return true;
@@ -67,7 +85,6 @@ bool CGUIDialogSelect::OnMessage(CGUIMessage& message)
     {
       m_bButtonPressed = false;
       CGUIDialog::OnMessage(message);
-      m_iSelected = -1;
 
       return true;
     }
@@ -82,14 +99,20 @@ bool CGUIDialogSelect::OnMessage(CGUIMessage& message)
         int iAction = message.GetParam1();
         if (ACTION_SELECT_ITEM == iAction || ACTION_MOUSE_LEFT_CLICK == iAction)
         {
-          m_iSelected = m_viewControl.GetSelectedItem();
-          if(m_iSelected >= 0 && m_iSelected < (int)m_vecList->Size())
+          int iSelected = m_viewControl.GetSelectedItem();
+          if(iSelected >= 0 && iSelected < (int)m_vecList->Size())
           {
-            *m_selectedItem = *m_vecList->Get(m_iSelected);
-            Close();
+            CFileItemPtr item(m_vecList->Get(iSelected));
+            if (m_multiSelection)
+              item->Select(!item->IsSelected());
+            else
+            {
+              for (int i = 0 ; i < m_vecList->Size() ; i++)
+                m_vecList->Get(i)->Select(false);
+              item->Select(true);
+              Close();
+            }
           }
-          else
-            m_iSelected = -1;
         }
       }
       if (CONTROL_BUTTON == iControl)
@@ -114,12 +137,20 @@ bool CGUIDialogSelect::OnMessage(CGUIMessage& message)
   return CGUIDialog::OnMessage(message);
 }
 
+bool CGUIDialogSelect::OnBack(int actionID)
+{
+  m_iSelected = -1;
+  return CGUIDialog::OnBack(actionID);
+}
+
 void CGUIDialogSelect::Reset()
 {
   m_bButtonEnabled = false;
   m_useDetails = false;
+  m_multiSelection = false;
   m_iSelected = -1;
   m_vecListInternal->Clear();
+  m_selectedItems->Clear();
   m_vecList = m_vecListInternal;
 }
 
@@ -154,25 +185,26 @@ int CGUIDialogSelect::GetSelectedLabel() const
   return m_iSelected;
 }
 
-const CFileItem& CGUIDialogSelect::GetSelectedItem()
+const CFileItemPtr CGUIDialogSelect::GetSelectedItem()
 {
-  return *m_selectedItem;
+  return m_selectedItems->Size() > 0 ? m_selectedItems->Get(0) : CFileItemPtr(new CFileItem);
 }
 
 const CStdString& CGUIDialogSelect::GetSelectedLabelText()
 {
-  return m_selectedItem->GetLabel();
+  return GetSelectedItem()->GetLabel();
 }
 
-void CGUIDialogSelect::EnableButton(bool bOnOff)
+const CFileItemList& CGUIDialogSelect::GetSelectedItems() const
 {
-  m_bButtonEnabled = bOnOff;
+  return *m_selectedItems;
 }
 
-void CGUIDialogSelect::SetButtonLabel(int iString)
+void CGUIDialogSelect::EnableButton(bool enable, int string)
 {
+  m_bButtonEnabled = enable;
   CGUIMessage msg(GUI_MSG_LABEL_SET, GetID(), CONTROL_BUTTON);
-  msg.SetLabel(iString);
+  msg.SetLabel(string);
   OnMessage(msg);
 }
 
@@ -216,6 +248,18 @@ void CGUIDialogSelect::OnWindowLoaded()
 void CGUIDialogSelect::OnInitWindow()
 {
   m_viewControl.SetItems(*m_vecList);
+  m_selectedItems->Clear();
+  if (m_iSelected == -1)
+  {
+    for(int i = 0 ; i < m_vecList->Size(); i++)
+    {
+      if (m_vecList->Get(i)->IsSelected())
+      {
+        m_iSelected = i;
+        break;
+      }
+    }
+  }
   m_viewControl.SetCurrentView(m_useDetails ? CONTROL_DETAILS : CONTROL_LIST);
 
   CStdString items;

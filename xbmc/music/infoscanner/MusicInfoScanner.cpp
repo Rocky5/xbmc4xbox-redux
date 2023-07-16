@@ -882,8 +882,7 @@ bool CMusicInfoScanner::DownloadAlbumInfo(const CStdString& strPath, const CStdS
           pDlg = (CGUIDialogSelect*)g_windowManager.GetWindow(WINDOW_DIALOG_SELECT);
           pDlg->SetHeading(g_localizeStrings.Get(181).c_str());
           pDlg->Reset();
-          pDlg->EnableButton(true);
-          pDlg->SetButtonLabel(413); // manual
+          pDlg->EnableButton(true, 413); // manual
         }
 
         for (int i = 0; i < scraper.GetAlbumCount(); ++i)
@@ -957,7 +956,7 @@ bool CMusicInfoScanner::DownloadAlbumInfo(const CStdString& strPath, const CStdS
           m_musicDatabase.Close();
           return DownloadAlbumInfo(strPath,strNewArtist,strNewAlbum,bCanceled,albumInfo,pDialog);
         }
-        iSelectedAlbum = pDlg->GetSelectedItem().m_idepth;
+        iSelectedAlbum = pDlg->GetSelectedItem()->m_idepth;
       }
     }
 
@@ -1099,8 +1098,7 @@ bool CMusicInfoScanner::DownloadArtistInfo(const CStdString& strPath, const CStd
         {
           pDlg->SetHeading(g_localizeStrings.Get(21890));
           pDlg->Reset();
-          pDlg->EnableButton(true);
-          pDlg->SetButtonLabel(413); // manual
+          pDlg->EnableButton(true, 413); // manual
 
           for (int i = 0; i < scraper.GetArtistCount(); ++i)
           {
@@ -1137,7 +1135,7 @@ bool CMusicInfoScanner::DownloadArtistInfo(const CStdString& strPath, const CStd
             m_musicDatabase.Close();
             return DownloadArtistInfo(strPath,strNewArtist,bCanceled,pDialog);
           }
-          iSelectedArtist = pDlg->GetSelectedItem().m_idepth;
+          iSelectedArtist = pDlg->GetSelectedItem()->m_idepth;
         }
       }
     }
