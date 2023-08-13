@@ -962,6 +962,12 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					RelativePath=".\xbmc\utils\JpegIO.h">
 				</File>
 				<File
+					RelativePath=".\xbmc\utils\JSONVariantParser.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\utils\JSONVariantWriter.cpp">
+				</File>
+				<File
 					RelativePath=".\xbmc\input\KeyboardLayoutConfiguration.cpp">
 				</File>
 				<File
@@ -3212,6 +3218,12 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 				RelativePath=".\xbmc\utils\ISortable.h">
 			</File>
 			<File
+				RelativePath=".\xbmc\utils\JSONVariantParser.h">
+			</File>
+			<File
+				RelativePath=".\xbmc\utils\JSONVariantWriter.h">
+			</File>
+			<File
 				RelativePath=".\xbmc\cores\mplayer\keycodes.h">
 			</File>
 			<File
@@ -4982,6 +4994,19 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 				</File>
 				<File
 					RelativePath=".\xbmc\lib\SlingboxLib\SlingboxLib.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="jsoncpp"
+				Filter="">
+				<File
+					RelativePath=".\xbmc\lib\jsoncpp\json\json-forwards.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\lib\jsoncpp\json\json.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\lib\jsoncpp\jsoncpp.cpp">
 				</File>
 			</Filter>
 		</Filter>
