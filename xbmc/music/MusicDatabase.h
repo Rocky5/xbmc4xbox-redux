@@ -189,7 +189,7 @@ public:
   static void SetPropertiesFromArtist(CFileItem& item, const CArtist& artist);
   static void SetPropertiesFromAlbum(CFileItem& item, const CAlbum& album);
 
-  bool GetFilter(const CMusicDbUrl &musicUrl, Filter &filter);
+  virtual bool GetFilter(const CDbUrl &musicUrl, Filter &filter);
 
 protected:
   std::map<CStdString, int> m_artistCache;
@@ -314,6 +314,4 @@ private:
 
   void AnnounceRemove(std::string content, int id);
   void AnnounceUpdate(std::string content, int id);
-
-  bool BuildSQL(const CStdString &strBaseDir, const CStdString &strQuery, Filter &filter, CStdString &strSQL, CMusicDbUrl &musicUrl);
 };

@@ -28,6 +28,7 @@
 #include "lib/sqLite/sqlitedataset.h"
 
 struct DatabaseSettings; // forward
+class CDbUrl;
 
 class CDatabase
 {
@@ -130,6 +131,9 @@ public:
    * @return True if all queries were executed successfully, false otherwise.
    */
   bool CommitInsertQueries();
+
+  virtual bool GetFilter(const CDbUrl &dbUrl, Filter &filter) { return true; }
+  virtual bool BuildSQL(const CStdString &strBaseDir, const CStdString &strQuery, Filter &filter, CStdString &strSQL, CDbUrl &dbUrl);
 
 protected:
   void Split(const CStdString& strFileNameAndPath, CStdString& strPath, CStdString& strFileName);

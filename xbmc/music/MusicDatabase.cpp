@@ -4462,7 +4462,7 @@ void CMusicDatabase::AnnounceUpdate(std::string content, int id)
   ANNOUNCEMENT::CAnnouncementManager::Announce(ANNOUNCEMENT::AudioLibrary, "xbmc", "OnUpdate", data);
 }
 
-bool CMusicDatabase::GetFilter(const CMusicDbUrl &musicUrl, Filter &filter)
+bool CMusicDatabase::GetFilter(const CDbUrl &musicUrl, Filter &filter)
 {
   if (!musicUrl.IsValid())
     return false;
@@ -4652,14 +4652,4 @@ bool CMusicDatabase::GetFilter(const CMusicDbUrl &musicUrl, Filter &filter)
   }
 
   return true;
-}
-
-bool CMusicDatabase::BuildSQL(const CStdString &strBaseDir, const CStdString &strQuery, Filter &filter, CStdString &strSQL, CMusicDbUrl &musicUrl)
-{
-  // parse the base path to get additional filters
-  musicUrl.Reset();
-  if (!musicUrl.FromString(strBaseDir) || !GetFilter(musicUrl, filter))
-    return false;
-
-  return CDatabase::BuildSQL(strQuery, filter, strSQL);
 }
