@@ -283,8 +283,14 @@ string ByEpisodeNumber(SortAttribute attributes, const SortItem &values)
   else
     num = ((uint64_t)values.find(FieldSeason)->second.asInteger() << 32) + (values.find(FieldEpisodeNumber)->second.asInteger() << 16);
 
+  std::string title;
+  if (values.find(FieldMediaType) != values.end() && values.at(FieldMediaType).asInteger() == MediaTypeMovie)
+    title = BySortTitle(attributes, values);
+  if (title.empty())
+    title = ByLabel(attributes, values);
+
   CStdString label;
-  label.Format("%"PRIu64" %s", num, ByLabel(attributes, values).c_str());
+  label.Format("%"PRIu64" %s", num, title.c_str());
   return label;
 }
 
@@ -595,7 +601,8 @@ map<SortBy, Fields> fillSortingFields()
   sortingFields[SortByEpisodeNumber].insert(FieldSeason);
   sortingFields[SortByEpisodeNumber].insert(FieldEpisodeNumberSpecialSort);
   sortingFields[SortByEpisodeNumber].insert(FieldSeasonSpecialSort);
-  sortingFields[SortByEpisodeNumber].insert(FieldFilename);
+  sortingFields[SortByEpisodeNumber].insert(FieldTitle);
+  sortingFields[SortByEpisodeNumber].insert(FieldSortTitle);
   sortingFields[SortBySeason].insert(FieldSeason);
   sortingFields[SortByNumberOfEpisodes].insert(FieldNumberOfEpisodes);
   sortingFields[SortByNumberOfWatchedEpisodes].insert(FieldNumberOfWatchedEpisodes);
