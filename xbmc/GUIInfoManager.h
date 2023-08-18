@@ -544,6 +544,9 @@ namespace INFO
 #define LISTITEM_DBTYPE             (LISTITEM_START + 79)
 #define LISTITEM_DBID               (LISTITEM_START + 80)
 
+#define LISTITEM_TAG                (LISTITEM_START + 154)
+#define LISTITEM_SET                (LISTITEM_START + 155)
+
 #define LISTITEM_PROPERTY_START     (LISTITEM_START + 200)
 #define LISTITEM_PROPERTY_END       (LISTITEM_PROPERTY_START + 1000)
 #define LISTITEM_END                (LISTITEM_PROPERTY_END)
