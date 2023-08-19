@@ -150,7 +150,7 @@
 #include "pictures/GUIWindowSlideShow.h"
 #include "windows/GUIWindowStartup.h"
 #include "video/windows/GUIWindowFullScreen.h"
-#include "GUIWindowOSD.h"
+#include "video/dialogs/GUIDialogVideoOSD.h"
 #include "GUIWindowMusicOverlay.h"
 #include "GUIWindowVideoOverlay.h"
 
@@ -1325,16 +1325,16 @@ HRESULT CApplication::Initialize()
   g_windowManager.Add(new CGUIWindowMusicPlaylistEditor);    // window id = 503
 
   g_windowManager.Add(new CGUIDialogSelect);             // window id = 2000
-  g_windowManager.Add(new CGUIWindowMusicInfo);                // window id = 2001
+  g_windowManager.Add(new CGUIDialogMusicInfo);                // window id = 2001
   g_windowManager.Add(new CGUIDialogOK);                 // window id = 2002
-  g_windowManager.Add(new CGUIWindowVideoInfo);                // window id = 2003
+  g_windowManager.Add(new CGUIDialogVideoInfo);                // window id = 2003
   g_windowManager.Add(new CGUIWindowScriptsInfo);              // window id = 2004
   g_windowManager.Add(new CGUIWindowFullScreen);         // window id = 2005
   g_windowManager.Add(new CGUIWindowVisualisation);      // window id = 2006
   g_windowManager.Add(new CGUIWindowSlideShow);          // window id = 2007
   g_windowManager.Add(new CGUIDialogFileStacking);       // window id = 2008
 
-  g_windowManager.Add(new CGUIWindowOSD);                // window id = 2901
+  g_windowManager.Add(new CGUIDialogVideoOSD);                // window id = 2901
   g_windowManager.Add(new CGUIWindowMusicOverlay);       // window id = 2903
   g_windowManager.Add(new CGUIWindowVideoOverlay);       // window id = 2904
   g_windowManager.Add(new CGUIWindowScreensaver);        // window id = 2900 Screensaver
@@ -3472,14 +3472,13 @@ HRESULT CApplication::Cleanup()
     g_windowManager.Delete(WINDOW_MUSIC_PLAYLIST_EDITOR);
     g_windowManager.Delete(WINDOW_MUSIC_FILES);
     g_windowManager.Delete(WINDOW_MUSIC_NAV);
-    g_windowManager.Delete(WINDOW_MUSIC_INFO);
-    g_windowManager.Delete(WINDOW_VIDEO_INFO);
+    g_windowManager.Delete(WINDOW_DIALOG_MUSIC_INFO);
+    g_windowManager.Delete(WINDOW_DIALOG_VIDEO_INFO);
     g_windowManager.Delete(WINDOW_VIDEO_FILES);
     g_windowManager.Delete(WINDOW_VIDEO_PLAYLIST);
     g_windowManager.Delete(WINDOW_VIDEO_NAV);
     g_windowManager.Delete(WINDOW_FILES);
-    g_windowManager.Delete(WINDOW_MUSIC_INFO);
-    g_windowManager.Delete(WINDOW_VIDEO_INFO);
+    g_windowManager.Delete(WINDOW_DIALOG_VIDEO_INFO);
     g_windowManager.Delete(WINDOW_DIALOG_YES_NO);
     g_windowManager.Delete(WINDOW_DIALOG_PROGRESS);
     g_windowManager.Delete(WINDOW_DIALOG_NUMERIC);
@@ -3527,7 +3526,7 @@ HRESULT CApplication::Cleanup()
     g_windowManager.Delete(WINDOW_SCREEN_CALIBRATION);
     g_windowManager.Delete(WINDOW_SYSTEM_INFORMATION);
     g_windowManager.Delete(WINDOW_SCREENSAVER);
-    g_windowManager.Delete(WINDOW_OSD);
+    g_windowManager.Delete(WINDOW_DIALOG_VIDEO_OSD);
     g_windowManager.Delete(WINDOW_MUSIC_OVERLAY);
     g_windowManager.Delete(WINDOW_VIDEO_OVERLAY);
     g_windowManager.Delete(WINDOW_SCRIPTS_INFO);
@@ -4818,7 +4817,7 @@ void CApplication::CheckNetworkHDSpinDown(bool playbackStarted)
         if (iWin == WINDOW_FULLSCREEN_VIDEO)
         {
           // check if OSD is visible, if so don't do immediate spindown
-          CGUIWindowOSD *pOSD = (CGUIWindowOSD *)g_windowManager.GetWindow(WINDOW_OSD);
+          CGUIDialogVideoOSD *pOSD = (CGUIDialogVideoOSD *)g_windowManager.GetWindow(WINDOW_DIALOG_VIDEO_OSD);
           if (pOSD)
             m_bNetworkSpinDown = !pOSD->IsDialogRunning();
         }
@@ -5645,9 +5644,9 @@ void CApplication::SeekPercentage(float percent)
 bool CApplication::SwitchToFullScreen()
 {
   // if playing from the video info window, close it first!
-  if (g_windowManager.HasModalDialog() && g_windowManager.GetTopMostModalDialogID() == WINDOW_VIDEO_INFO)
+  if (g_windowManager.HasModalDialog() && g_windowManager.GetTopMostModalDialogID() == WINDOW_DIALOG_VIDEO_INFO)
   {
-    CGUIWindowVideoInfo* pDialog = (CGUIWindowVideoInfo*)g_windowManager.GetWindow(WINDOW_VIDEO_INFO);
+    CGUIDialogVideoInfo* pDialog = (CGUIDialogVideoInfo*)g_windowManager.GetWindow(WINDOW_DIALOG_VIDEO_INFO);
     if (pDialog) pDialog->Close(true);
   }
 

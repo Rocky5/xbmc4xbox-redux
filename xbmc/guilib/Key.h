@@ -363,9 +363,9 @@
 
 //#define WINDOW_VIRTUAL_KEYBOARD           11000
 #define WINDOW_DIALOG_SELECT              12000
-#define WINDOW_MUSIC_INFO                 12001
+#define WINDOW_DIALOG_MUSIC_INFO          12001
 #define WINDOW_DIALOG_OK                  12002
-#define WINDOW_VIDEO_INFO                 12003
+#define WINDOW_DIALOG_VIDEO_INFO                 12003
 #define WINDOW_SCRIPTS_INFO               12004
 #define WINDOW_FULLSCREEN_VIDEO           12005
 #define WINDOW_VISUALISATION              12006
@@ -373,7 +373,7 @@
 #define WINDOW_DIALOG_FILESTACKING        12008
 #define WINDOW_WEATHER                    12600
 #define WINDOW_SCREENSAVER                12900
-#define WINDOW_OSD                        12901
+#define WINDOW_DIALOG_VIDEO_OSD                        12901
 
 #define WINDOW_VIDEO_MENU                 12902
 #define WINDOW_MUSIC_OVERLAY              12903
