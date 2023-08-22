@@ -4765,16 +4765,16 @@ bool CVideoDatabase::GetTagsNav(const CStdString& strBaseDir, CFileItemList& ite
   return false;
 }
 
-bool CVideoDatabase::GetSetsNav(const CStdString& strBaseDir, CFileItemList& items, int idContent)
+bool CVideoDatabase::GetSetsNav(const CStdString& strBaseDir, CFileItemList& items, int idContent, bool ignoreSingleMovieSets /* = false */)
 {
   if (idContent != VIDEODB_CONTENT_MOVIES)
     return false;
 
   Filter filter;
-  return GetSetsByWhere(strBaseDir, filter, items);
+  return GetSetsByWhere(strBaseDir, filter, items, ignoreSingleMovieSets);
 }
 
-bool CVideoDatabase::GetSetsByWhere(const CStdString& strBaseDir, const Filter &filter, CFileItemList& items)
+bool CVideoDatabase::GetSetsByWhere(const CStdString& strBaseDir, const Filter &filter, CFileItemList& items, bool ignoreSingleMovieSets /* = false */)
 {
   try
   {
@@ -4830,7 +4830,8 @@ bool CVideoDatabase::GetSetsByWhere(const CStdString& strBaseDir, const Filter &
     for (it = mapSets.begin(); it != mapSets.end(); it++)
     {
       // we only handle sets with at least 2 movies
-      if (it->second.movies.size() <= 1)
+      if (it->second.movies.size() <= 0 ||
+         (ignoreSingleMovieSets && it->second.movies.size() == 1))
         continue;
 
       CFileItemPtr pItem(new CFileItem(it->second.name));
@@ -5805,7 +5806,7 @@ bool CVideoDatabase::GetMoviesByWhere(const CStdString& strBaseDir, const Filter
       CVideoDbUrl setUrl;
       setUrl.FromString("videodb://1/7/");
       setUrl.AddOptions(videoUrl.GetOptionsString());
-      GetSetsByWhere(setUrl.ToString(), setsFilter, setItems);
+      GetSetsByWhere(setUrl.ToString(), setsFilter, setItems, true);
 
       CStdString movieSetsWhere;
       if (setItems.Size() > 0)
