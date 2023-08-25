@@ -35,6 +35,7 @@
 #include "FileItem.h"
 #include "settings/AdvancedSettings.h"
 #include "LocalizeStrings.h"
+#include "Album.h"
 
 using namespace XFILE;
 
@@ -105,9 +106,9 @@ bool CGUIDialogSongInfo::OnMessage(CGUIMessage& message)
         if (window)
         {
           CFileItem item(*m_song);
-          CStdString itemPath;
-          URIUtils::GetDirectory(m_song->GetPath(),itemPath);
-          item.SetPath(itemPath);
+          CStdString path;
+          path.Format("musicdb://3/%li",m_albumId);
+          item.SetPath(path);
           item.m_bIsFolder = true;
           window->OnInfo(&item, true);
         }
@@ -151,10 +152,23 @@ bool CGUIDialogSongInfo::OnBack(int actionID)
 
 void CGUIDialogSongInfo::OnInitWindow()
 {
+  CMusicDatabase db;
+  db.Open();
+
+  // no known db info - check if parent dir is an album
   if (!g_guiSettings.GetBool("musiclibrary.enabled") || m_song->GetMusicInfoTag()->GetDatabaseId() == -1)
-    CONTROL_DISABLE(CONTROL_ALBUMINFO);
+  {
+    CStdString path;
+    URIUtils::GetDirectory(m_song->GetPath(),path);
+    m_albumId = db.GetAlbumIdByPath(path);
+  }
   else
-    CONTROL_ENABLE(CONTROL_ALBUMINFO);
+  {
+    CAlbum album;
+    db.GetAlbumFromSong(m_song->GetMusicInfoTag()->GetDatabaseId(),album);
+    m_albumId = album.idAlbum;
+  }
+  CONTROL_ENABLE_ON_CONDITION(CONTROL_ALBUMINFO, m_albumId > -1);
 
   CGUIDialog::OnInitWindow();
 }
