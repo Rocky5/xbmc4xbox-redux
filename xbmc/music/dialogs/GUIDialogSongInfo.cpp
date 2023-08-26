@@ -35,7 +35,7 @@
 #include "FileItem.h"
 #include "settings/AdvancedSettings.h"
 #include "LocalizeStrings.h"
-#include "Album.h"
+#include "music/Album.h"
 
 using namespace XFILE;
 
