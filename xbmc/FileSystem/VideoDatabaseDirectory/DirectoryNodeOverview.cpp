@@ -63,10 +63,6 @@ CStdString CDirectoryNodeOverview::GetLocalizedName() const
 
 bool CDirectoryNodeOverview::GetContent(CFileItemList& items) const
 {
-  CVideoDbUrl videoUrl;
-  if (!videoUrl.FromString(BuildPath()))
-    return false;
-
   CVideoDatabase database;
   database.Open();
   bool hasMovies = database.HasContent(VIDEODB_CONTENT_MOVIES);
@@ -102,14 +98,10 @@ bool CDirectoryNodeOverview::GetContent(CFileItemList& items) const
     if (hasMusicVideos)
       vec.push_back(make_pair("6", 20390)); // Recently Added Music Videos
   }
-
+  CStdString path = BuildPath();
   for (unsigned int i = 0; i < vec.size(); ++i)
   {
-    CVideoDbUrl itemUrl = videoUrl;
-    CStdString strDir; strDir.Format("%s/", vec[i].first);
-    itemUrl.AppendPath(strDir);
-
-    CFileItemPtr pItem(new CFileItem(itemUrl.ToString()));
+    CFileItemPtr pItem(new CFileItem(path + vec[i].first + "/", true));
     pItem->SetLabel(g_localizeStrings.Get(vec[i].second));
     pItem->SetLabelPreformated(true);
     pItem->SetCanQueue(false);
