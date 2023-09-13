@@ -2212,49 +2212,7 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeArtist.h">
 					</File>
 					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeGenre.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeGenre.h">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeOverview.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeOverview.h">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeRoot.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeRoot.h">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeSingles.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeSingles.h">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeSong.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeSong.h">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeSongTop100.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeSongTop100.h">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeTop100.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeTop100.h">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeYear.cpp">
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeGrouped.cpp">
 						<FileConfiguration
 							Name="Debug|Xbox">
 							<Tool
@@ -2293,7 +2251,43 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 						</FileConfiguration>
 					</File>
 					<File
-						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeYear.h">
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeGrouped.h">
+					</File>
+					<File
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeOverview.cpp">
+					</File>
+					<File
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeOverview.h">
+					</File>
+					<File
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeRoot.cpp">
+					</File>
+					<File
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeRoot.h">
+					</File>
+					<File
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeSingles.cpp">
+					</File>
+					<File
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeSingles.h">
+					</File>
+					<File
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeSong.cpp">
+					</File>
+					<File
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeSong.h">
+					</File>
+					<File
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeSongTop100.cpp">
+					</File>
+					<File
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeSongTop100.h">
+					</File>
+					<File
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeTop100.cpp">
+					</File>
+					<File
+						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeTop100.h">
 					</File>
 					<File
 						RelativePath=".\xbmc\FileSystem\MusicDatabaseDirectory\DirectoryNodeYearAlbum.cpp">
@@ -2400,82 +2394,22 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNode.h">
 					</File>
 					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeActor.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeActor.h">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeCountry.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeCountry.h">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeDirector.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeDirector.h">
-					</File>
-					<File
 						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeEpisodes.cpp">
 					</File>
 					<File
 						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeEpisodes.h">
 					</File>
 					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeGenre.cpp">
-						<FileConfiguration
-							Name="Debug|Xbox">
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Profile|Xbox">
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Profile_FastCap|Xbox">
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release|Xbox">
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release_LTCG|Xbox">
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug Xbox No Memory Tracking|Xbox">
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-						</FileConfiguration>
+						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeGrouped.cpp">
 					</File>
 					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeGenre.h">
+						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeGrouped.h">
 					</File>
 					<File
 						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeMoviesOverview.cpp">
 					</File>
 					<File
 						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeMoviesOverview.h">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeMusicVideoAlbum.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeMusicVideoAlbum.h">
 					</File>
 					<File
 						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeMusicVideosOverview.cpp">
@@ -2592,24 +2526,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeSeasons.h">
 					</File>
 					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeSets.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeSets.h">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeStudio.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeStudio.h">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeTags.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeTags.h">
-					</File>
-					<File
 						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeTitleMovies.cpp">
 					</File>
 					<File
@@ -2632,12 +2548,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					</File>
 					<File
 						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeTvShowsOverview.h">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeYear.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\DirectoryNodeYear.h">
 					</File>
 					<File
 						RelativePath=".\xbmc\FileSystem\VideoDatabaseDirectory\QueryParams.cpp">

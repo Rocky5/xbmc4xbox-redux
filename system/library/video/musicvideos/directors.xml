@@ -1,5 +1,6 @@
-<node order="6" type="folder">
- <label>20348</label>
-  <path>videodb://3/6</path>
+<node order="6" type="filter">s
+  <label>20348</label>
   <icon>DefaultDirector.png</icon>
+  <content>musicvideos</content>
+  <group>directors</group>
 </node>
