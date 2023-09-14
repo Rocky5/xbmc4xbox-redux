@@ -106,6 +106,7 @@ public:
   bool IsPlugin() const;
   bool IsPluginRoot() const;
   bool IsDefaultXBE() const;
+  bool IsSourcesPath() const;
   bool IsShortCut() const;
   bool IsNFO() const;
   bool IsDVDImage() const;
