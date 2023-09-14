@@ -77,6 +77,7 @@ IFile* CFileFactory::CreateLoader(const CURL& url)
   else if (strProtocol == "rar") return new CRarFile();
   else if (strProtocol == "musicdb") return new CMusicDatabaseFile();
   else if (strProtocol == "videodb") return NULL;
+  else if (strProtocol == "library") return NULL;
   else if (strProtocol == "special") return new CSpecialProtocolFile();
   else if (strProtocol == "multipath") return new CMultiPathFile();
   else if (strProtocol == "file" || strProtocol.IsEmpty()) return new CFileHD();
