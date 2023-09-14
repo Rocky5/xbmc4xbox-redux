@@ -51,7 +51,7 @@ bool CSourcesDirectory::GetDirectory(const CStdString& strPath, CFileItemList &i
   if (sourcesFromType)
     sources = *sourcesFromType;
 
-  if (sources.empty())
+  if (!sourcesFromType)
     return false;
 
   return GetDirectory(sources, items);
