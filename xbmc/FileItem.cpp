@@ -1990,7 +1990,10 @@ void CFileItemList::Stack(bool stackFiles /* = true */)
   CSingleLock lock(m_lock);
 
   // not allowed here
-  if (IsVirtualDirectoryRoot() || IsLiveTV() || IsSourcesPath())
+  if (IsVirtualDirectoryRoot() ||
+      IsLiveTV() ||
+      IsSourcesPath() ||
+      IsLibraryFolder())
     return;
 
   SetProperty("isstacked", "1");
@@ -2478,6 +2481,7 @@ CStdString CFileItem::GetUserMusicThumb(bool alwaysCheckRemote /* = false */) co
    || URIUtils::IsUPnP(m_strPath)
    || IsPlugin()
    || (URIUtils::IsFTP(m_strPath) && !g_advancedSettings.m_bFTPThumbs)
+   || IsLibraryFolder()
    || IsParentFolder()
    || IsMusicDb())
     return "";
@@ -2641,6 +2645,7 @@ CStdString CFileItem::GetUserVideoThumb() const
    || m_strPath.Left(4).Equals("dvd:")
    || (URIUtils::IsFTP(m_strPath) && !g_advancedSettings.m_bFTPThumbs)
    || IsPlugin()
+   || IsLibraryFolder()
    || IsParentFolder()
    || IsLiveTV())
     return "";
