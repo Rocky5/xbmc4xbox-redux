@@ -278,9 +278,9 @@ namespace XFILE
       items.SetContent(group);
     else
       items.SetContent(playlist.GetType());
+
     items.SetProperty(PROPERTY_SORT_ORDER, (int)playlist.GetOrder());
     items.SetProperty(PROPERTY_SORT_ASCENDING, playlist.GetOrderDirection() == SortOrderAscending);
-
     if (!group.empty())
     {
       items.SetProperty(PROPERTY_GROUP_BY, group);
@@ -297,7 +297,7 @@ namespace XFILE
       CFileItemPtr item = items[i];
       item->m_iprogramCount = i;  // hack for playlist order
     }
-    
+
     if (playlist.GetType().Equals("mixed"))
       return success || success2;
     else if (playlist.GetType().Equals("musicvideos"))
