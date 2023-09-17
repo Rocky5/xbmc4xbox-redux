@@ -3135,6 +3135,8 @@ void CGUIWindowSettingsCategory::FillInStartupWindow(CSetting *pSetting)
     CStdString windowName((*it).m_name);
     if (StringUtils::IsNaturalNumber(windowName))
       windowName = g_localizeStrings.Get(atoi(windowName.c_str()));
+    else if (windowName.Equals("Settings"))
+      windowName = g_localizeStrings.Get(5);
     int windowID((*it).m_id);
     pControl->AddLabel(windowName, windowID);
     if (pSettingInt->GetData() == windowID)
