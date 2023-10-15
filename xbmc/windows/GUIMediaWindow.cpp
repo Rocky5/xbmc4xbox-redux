@@ -774,7 +774,7 @@ bool CGUIMediaWindow::Update(const CStdString &strDirectory, bool updateFilterPa
       showLabel = 997;
     else if (iWindow == WINDOW_MUSIC_FILES)
       showLabel = 998;
-    else // WINDOW_FILES
+    else if (iWindow == WINDOW_FILES || iWindow == WINDOW_PROGRAMS)
       showLabel = 1026;
   }
   if (m_vecItems->GetPath().Equals("sources://video/"))
