@@ -361,4 +361,9 @@
       <space>Pause</space>
     </keyboard>
   </PictureInfo>
+  <FileBrowser>
+    <keyboard>
+      <space>Highlight</space>
+    </keyboard>
+  </FileBrowser>
 </keymap>

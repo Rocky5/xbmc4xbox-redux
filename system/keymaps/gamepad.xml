@@ -315,4 +315,9 @@
       <dpadright>NextPicture</dpadright>
     </gamepad>
   </PictureInfo>
+  <FileBrowser>
+    <gamepad>
+      <Y>Highlight</Y>
+    </gamepad>
+  </FileBrowser>
 </keymap>

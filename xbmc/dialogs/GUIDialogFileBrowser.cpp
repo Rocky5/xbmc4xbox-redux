@@ -66,6 +66,7 @@ CGUIDialogFileBrowser::CGUIDialogFileBrowser()
   m_singleList = false;
   m_thumbLoader.SetObserver(this);
   m_flipEnabled = false;
+  m_multipleSelection = false;
   m_loadType = KEEP_IN_MEMORY;
 }
 
@@ -182,6 +183,16 @@ bool CGUIDialogFileBrowser::OnMessage(CGUIMessage& message)
           OnClick(iItem);
           return true;
         }
+        else if (iAction == ACTION_HIGHLIGHT_ITEM && m_multipleSelection)
+        {
+          CFileItemPtr pItem = (*m_vecItems)[iItem];
+          if (!pItem->m_bIsShareOrDrive && !pItem->m_bIsFolder)
+          {
+            pItem->Select(!pItem->IsSelected());
+            CGUIMessage msg(GUI_MSG_ITEM_SELECT, GetID(), message.GetSenderId(), iItem + 1);
+            OnMessage(msg);
+          }
+        }
       }
       else if (message.GetSenderId() == CONTROL_OK)
       {
@@ -210,6 +221,15 @@ bool CGUIDialogFileBrowser::OnMessage(CGUIMessage& message)
         }
         else
         {
+          if (m_multipleSelection)
+          {
+            for (int iItem = 0; iItem < m_vecItems->Size(); ++iItem)
+            {
+              CFileItemPtr pItem = (*m_vecItems)[iItem];
+              if (pItem->IsSelected())
+                m_markedPath.push_back(pItem->GetPath());
+            }
+          }
           m_bConfirmed = true;
           Close();
         }
@@ -615,6 +635,11 @@ bool CGUIDialogFileBrowser::ShowAndGetImage(const VECSOURCES &shares, const CStd
   return ShowAndGetFile(shares, ".png|.jpg|.bmp|.gif|.tbn", heading, path, true); // true for use thumbs
 }
 
+bool CGUIDialogFileBrowser::ShowAndGetImageList(const VECSOURCES &shares, const CStdString &heading, CStdStringArray &path)
+{
+  return ShowAndGetFileList(shares, ".png|.jpg|.bmp|.gif|.tbn", heading, path, true); // true for use thumbs
+}
+
 bool CGUIDialogFileBrowser::ShowAndGetDirectory(const VECSOURCES &shares, const CStdString &heading, CStdString &path, bool bWriteOnly)
 {
   // an extension mask of "/" ensures that no files are shown
@@ -707,6 +732,35 @@ bool CGUIDialogFileBrowser::ShowAndGetFile(const CStdString &directory, const CS
   bool confirmed(browser->IsConfirmed());
   if (confirmed)
     path = browser->m_selectedPath;
+  g_windowManager.Remove(browser->GetID());
+  delete browser;
+  return confirmed;
+}
+
+bool CGUIDialogFileBrowser::ShowAndGetFileList(const VECSOURCES &shares, const CStdString &mask, const CStdString &heading, CStdStringArray &path, bool useThumbs /* = false */, bool useFileDirectories /* = false */)
+{
+  CGUIDialogFileBrowser *browser = new CGUIDialogFileBrowser();
+  if (!browser)
+    return false;
+  g_windowManager.AddUniqueInstance(browser);
+
+  browser->m_useFileDirectories = useFileDirectories;
+  browser->m_multipleSelection = true;
+  browser->m_browsingForImages = useThumbs;
+  browser->SetHeading(heading);
+  browser->SetSources(shares);
+  browser->m_browsingForFolders = 0;
+  browser->m_rootDir.SetMask(mask);
+  browser->m_addNetworkShareEnabled = false;
+  browser->DoModal();
+  bool confirmed(browser->IsConfirmed());
+  if (confirmed)
+  {
+    if (browser->m_markedPath.size())
+      path = browser->m_markedPath;
+    else
+      path.push_back(browser->m_selectedPath);
+  }
   g_windowManager.Remove(browser->GetID());
   delete browser;
   return confirmed;
