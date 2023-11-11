@@ -66,6 +66,10 @@ public:
   // currently focused window(s).  Returns true only if the message is handled.
   bool OnAction(const CAction &action);
 
+  /*! \brief Rendering of the current window
+   Render is called every frame to draw the current window.
+   It should only be called from the application thread.
+   */
   void Render();
 
   /*! \brief Per-frame updating of the current window and any dialogs
@@ -123,13 +127,12 @@ private:
 
   friend class CApplicationMessenger;
   void ActivateWindow_Internal(int windowID, const std::vector<CStdString> &params, bool swappingWindows);
-  void Process_Internal(bool renderOnly = false);
-  void Render_Internal();
 
   typedef std::map<int, CGUIWindow *> WindowMap;
   WindowMap m_mapWindows;
   std::vector <CGUIWindow*> m_vecCustomWindows;
   std::vector <CGUIWindow*> m_activeDialogs;
+  std::vector <CGUIWindow*> m_deleteWindows;
   typedef std::vector<CGUIWindow*>::iterator iDialog;
   typedef std::vector<CGUIWindow*>::const_iterator ciDialog;
   typedef std::vector<CGUIWindow*>::reverse_iterator rDialog;
@@ -143,6 +146,7 @@ private:
   std::vector <IMsgTargetCallback*> m_vecMsgTargets;
 
   bool m_bShowOverlay;
+  int  m_iNested;
   bool m_initialized;
 };
 

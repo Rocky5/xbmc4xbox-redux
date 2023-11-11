@@ -114,7 +114,7 @@ bool CGUIDialog::OnMessage(CGUIMessage& message)
   return CGUIWindow::OnMessage(message);
 }
 
-void CGUIDialog::Close(bool forceClose /*= false*/)
+void CGUIDialog::Close_Internal(bool forceClose /*= false*/)
 {
   //Lock graphic context here as it is sometimes called from non rendering threads
   //maybe we should have a critical section per window instead??
@@ -181,16 +181,6 @@ void CGUIDialog::DoModal_Internal(int iWindowID /*= WINDOW_INVALID */, const CSt
   }
 }
 
-void CGUIDialog::DoModalThreadSafe()
-{
-  // we make sure we're threadsafe by sending via the application messenger
-  ThreadMessage tMsg = {TMSG_DIALOG_DOMODAL, GetID(), g_windowManager.GetActiveWindow()};
-  // first ensure we don't hold the graphics lock
-  int numLocks = ExitCriticalSection(g_graphicsContext);
-  g_application.getApplicationMessenger().SendMessage(tMsg, true);
-  RestoreCriticalSection(g_graphicsContext, numLocks);
-}
-
 void CGUIDialog::Show_Internal()
 {
   //Lock graphic context here as it is sometimes called from non rendering threads
@@ -223,14 +213,27 @@ void CGUIDialog::Show_Internal()
 //  m_bRunning = true;
 }
 
+void CGUIDialog::Close(bool forceClose /* = false */)
+{
+  if (!g_application.IsCurrentThread())
+  {
+    // make sure graphics lock is not held
+    int nCount = ExitCriticalSection(g_graphicsContext);
+    g_application.getApplicationMessenger().Close(this, forceClose);
+    RestoreCriticalSection(g_graphicsContext, nCount);
+  }
+  else
+    g_application.getApplicationMessenger().Close(this, forceClose);
+}
+
 void CGUIDialog::DoModal(int iWindowID /*= WINDOW_INVALID */, const CStdString &param)
 {
-  DoModal_Internal(iWindowID, param);
+  g_application.getApplicationMessenger().DoModal(this, iWindowID, param);
 }
 
 void CGUIDialog::Show()
 {
-  Show_Internal();
+  g_application.getApplicationMessenger().Show(this);
 }
 
 bool CGUIDialog::RenderAnimation(unsigned int time)
