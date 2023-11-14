@@ -2218,12 +2218,6 @@
 					RelativePath="..\..\xbmc\windows\GUIWindowScreensaver.cpp">
 				</File>
 				<File
-					RelativePath="..\..\xbmc\GUIWindowScripts.cpp">
-				</File>
-				<File
-					RelativePath="..\..\xbmc\GUIWindowScriptsInfo.cpp">
-				</File>
-				<File
 					RelativePath="..\..\xbmc\pictures\GUIWindowSlideShow.cpp">
 				</File>
 				<File
@@ -3256,12 +3250,6 @@
 				RelativePath="..\..\xbmc\windows\GUIWindowScreensaver.h">
 			</File>
 			<File
-				RelativePath="..\..\xbmc\GUIWindowScripts.h">
-			</File>
-			<File
-				RelativePath="..\..\xbmc\GUIWindowScriptsInfo.h">
-			</File>
-			<File
 				RelativePath="..\..\xbmc\settings\GUIWindowSettings.h">
 			</File>
 			<File
@@ -3901,12 +3889,6 @@
 					</File>
 					<File
 						RelativePath="..\..\xbmc\lib\libPython\xbmcmodule\PythonPlayer.h">
-					</File>
-					<File
-						RelativePath="..\..\xbmc\lib\libPython\xbmcmodule\PythonSettings.cpp">
-					</File>
-					<File
-						RelativePath="..\..\xbmc\lib\libPython\xbmcmodule\PythonSettings.h">
 					</File>
 					<File
 						RelativePath="..\..\xbmc\lib\libPython\xbmcmodule\pyutil.cpp">

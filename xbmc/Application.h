@@ -28,6 +28,12 @@
 
 class CFileItem;
 class CFileItemList;
+namespace ADDON
+{
+  class CSkinInfo;
+  class IAddon;
+  typedef boost::shared_ptr<IAddon> AddonPtr;
+}
 
 #include "dialogs/GUIDialogSeekBar.h"
 #include "dialogs/GUIDialogKaiToast.h"
@@ -97,7 +103,7 @@ public:
   DWORD GetThreadId() const { return m_threadID; };
   void Stop(bool bLCDStop = true);
   void RestartApp();
-  void LoadSkin(const CStdString& strSkin);
+  bool LoadSkin(const CStdString& skinID);
   void UnloadSkin();
   bool LoadUserWindows();
   void DelayLoadSkin();
@@ -214,10 +220,12 @@ public:
   int GlobalIdleTime();
 
 protected:
+  void LoadSkin(const boost::shared_ptr<ADDON::CSkinInfo>& skin);
+
   friend class CApplicationMessenger;
   // screensaver
   bool m_bScreenSave;
-  CStdString m_screenSaverMode;
+  ADDON::AddonPtr m_screenSaver;
 
   D3DGAMMARAMP m_OldRamp;
 

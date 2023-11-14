@@ -34,7 +34,7 @@
 #include "Weather.h"
 #include "PlayListPlayer.h"
 #include "PartyModeManager.h"
-#include "visualizations/Visualisation.h"
+#include "addons/Visualisation.h"
 #include "input/ButtonTranslator.h"
 #include "music/MusicDatabase.h"
 #include "utils/AlarmClock.h"
@@ -80,19 +80,20 @@
 #include "TextureManager.h"
 #include "video/dialogs/GUIDialogVideoInfo.h"
 #include "music/dialogs/GUIDialogMusicInfo.h"
-#include "SkinInfo.h"
+#include "addons/Skin.h"
 #include "TimeUtils.h"
 #include "utils/URIUtils.h"
 #include "LocalizeStrings.h"
 #include "utils/log.h"
 
+#include "addons/AddonManager.h"
 #include "interfaces/info/InfoBool.h"
-#include "AddonDatabase.h"
 
 using namespace std;
 using namespace XFILE;
 using namespace MEDIA_DETECT;
 using namespace MUSIC_INFO;
+using namespace ADDON;
 
 CGUIInfoManager g_infoManager;
 
@@ -866,6 +867,22 @@ int CGUIInfoManager::TranslateSingleString(const CStdString &strCondition)
         }
         else if (prop.name == "idletime")
           return AddMultiInfo(GUIInfo(SYSTEM_IDLE_TIME, atoi(param.c_str())));
+        else if (prop.name == "addontitle")
+        {
+          int infoLabel = TranslateSingleString(param);
+          if (infoLabel > 0)
+            return AddMultiInfo(GUIInfo(SYSTEM_ADDON_TITLE, infoLabel, 0));
+          CStdString label = CGUIInfoLabel::GetLabel(param).ToLower();
+          return AddMultiInfo(GUIInfo(SYSTEM_ADDON_TITLE, ConditionalStringParameter(label), 1));
+        }
+        else if (prop.name == "addonicon")
+        {
+          int infoLabel = TranslateSingleString(param);
+          if (infoLabel > 0)
+            return AddMultiInfo(GUIInfo(SYSTEM_ADDON_ICON, infoLabel, 0));
+          CStdString label = CGUIInfoLabel::GetLabel(param).ToLower();
+          return AddMultiInfo(GUIInfo(SYSTEM_ADDON_ICON, ConditionalStringParameter(label), 1));
+        }
         else if (prop.name == "controllerport")
         {
           int i_ControllerPort = atoi(param);
@@ -1101,10 +1118,10 @@ int CGUIInfoManager::TranslateSingleString(const CStdString &strCondition)
           return bar[i].val;
       }
     }
-    else if (cat.name == "addon" && prop.name == "setting")
+    /*else if (cat.name == "addon" && prop.name == "setting")
     {
       return AddMultiInfo(GUIInfo(WINDOW_PROPERTY, WINDOW_DIALOG_PLUGIN_SETTINGS, ConditionalStringParameter(prop.param(0))));
-    }
+    }*/
     else if (cat.name == "buttonscroller" && prop.name == "hasfocus")
     {
       int controlID = atoi(prop.param(0));
@@ -1241,7 +1258,7 @@ CStdString CGUIInfoManager::GetLabel(int info, int contextWindow)
     URIUtils::RemoveExtension(strLabel);
     break;
   case WEATHER_PLUGIN:
-    strLabel = g_guiSettings.GetString("weather.plugin");
+    strLabel = g_guiSettings.GetString("weather.addon");
     break;
   case SYSTEM_DATE:
     strLabel = GetDate();
@@ -1820,25 +1837,18 @@ CStdString CGUIInfoManager::GetLabel(int info, int contextWindow)
       g_windowManager.SendMessage(msg);
       if (msg.GetPointer())
       {
-        CVisualisation *pVis = (CVisualisation *)msg.GetPointer();
-        char *preset = pVis->GetPreset();
-        if (preset)
+        CVisualisation* viz = NULL;
+        viz = (CVisualisation*)msg.GetPointer();
+        if (viz)
         {
-          strLabel = preset;
+          strLabel = viz->GetPresetName();
           URIUtils::RemoveExtension(strLabel);
         }
       }
     }
     break;
   case VISUALISATION_NAME:
-    {
-      strLabel = g_guiSettings.GetString("musicplayer.visualisation");
-      if (strLabel != "None" && strLabel.size() > 4)
-      { // make it look pretty
-        strLabel = strLabel.Left(strLabel.size() - 4);
-        strLabel[0] = toupper(strLabel[0]);
-      }
-    }
+    strLabel = g_guiSettings.GetString("musicplayer.visualisation");
     break;
   case FANART_COLOR1:
     {
@@ -2592,10 +2602,10 @@ bool CGUIInfoManager::GetMultiInfoBool(const GUIInfo &info, int contextWindow, c
         break;
       case SYSTEM_HAS_ADDON:
         {
-          CStdString addon = m_stringParameters[info.GetData1()];
-          bReturn = CAddonDatabase::HasAddon(addon);
+          AddonPtr addon;
+          bReturn = CAddonMgr::Get().GetAddon(m_stringParameters[info.GetData1()],addon) && addon;
+          break;
         }
-	      break;
       case SYSTEM_IDLE_TIME:
         bReturn = g_application.GlobalIdleTime() >= (int)info.GetData1();
         break;
@@ -3053,6 +3063,23 @@ CStdString CGUIInfoManager::GetMultiInfoLabel(const GUIInfo &info, int contextWi
 
     if (window)
       return window->GetProperty(m_stringParameters[info.GetData2()]).asString();
+  }
+  else if (info.m_info == SYSTEM_ADDON_TITLE ||
+           info.m_info == SYSTEM_ADDON_ICON)
+  {
+    // This logic does not check/care whether an addon has been disabled/marked as broken,
+    // it simply retrieves it's name or icon that means if an addon is placed on the home screen it
+    // will stay there even if it's disabled/marked as broken. This might need to be changed/fixed
+    // in the future.
+    AddonPtr addon;
+    if (info.GetData2() == 0)
+      CAddonMgr::Get().GetAddon(const_cast<CGUIInfoManager*>(this)->GetLabel(info.GetData1(), contextWindow),addon,ADDON_UNKNOWN,false);
+    else
+      CAddonMgr::Get().GetAddon(m_stringParameters[info.GetData1()],addon,ADDON_UNKNOWN,false);
+    if (addon && info.m_info == SYSTEM_ADDON_TITLE)
+      return addon->Name();
+    if (addon && info.m_info == SYSTEM_ADDON_ICON)
+      return addon->Icon();
   }
 
   return StringUtils::EmptyString;
@@ -4217,13 +4244,14 @@ CStdString CGUIInfoManager::GetItemLabel(const CFileItem *item, int info)
   case LISTITEM_ICON:
     {
       CStdString strThumb = item->GetThumbnailImage();
-      if(!strThumb.IsEmpty() && !g_TextureManager.CanLoad(strThumb))
+      // NOTICE: we can remove this completely in PR798
+      if(!strThumb.IsEmpty() && !g_TextureManager.CanLoad(strThumb) && !item->IsAddonsPath())
         strThumb = "";
 
       if(strThumb.IsEmpty() && !item->GetIconImage().IsEmpty())
       {
         strThumb = item->GetIconImage();
-        if (g_SkinInfo.GetVersion() <= 2.10)
+        if (g_SkinInfo->GetVersion() <= 2.10)
           strThumb.Insert(strThumb.Find("."), "Big");
       }
       return strThumb;

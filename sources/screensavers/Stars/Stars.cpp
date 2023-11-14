@@ -26,9 +26,13 @@
 #include "Stars.h"
 #include "StarField.h"
 #include "XmlDocument.h"
+#include "../../../xbmc/addons/include/xbmc_scr_dll.h"
+#include "../../../xbmc/addons/include/xbmc_addon_cpp_dll.h"
 
 #include <stdio.h>
 #include <math.h>
+
+#define CONFIG_FILE "special://home/addons/screensaver.stars/config.xml"
 
 #pragma comment (lib, "lib/xbox_dx8.lib" )
 
@@ -60,15 +64,22 @@ LPDIRECT3DDEVICE8 g_pd3dDevice;
 // This is a quick and dirty hack to show a simple screensaver ...
 //////////////////////////////////////////////////////////////////////
 
-extern "C" void Create(LPDIRECT3DDEVICE8 pd3dDevice, int iWidth, int iHeight, const char* szScreenSaverName)
+extern "C" ADDON_STATUS ADDON_Create(void* hdl, void* props)
 {
-	g_Settings.iWidth = iWidth;
-	g_Settings.iHeight = iHeight;
-	strcpy(g_Settings.szScrName, szScreenSaverName);
+  if (!props)
+    return ADDON_STATUS_UNKNOWN;
+
+  SCR_PROPS* scrprops = (SCR_PROPS*)props;
+
+	g_Settings.iWidth = scrprops->width;
+	g_Settings.iHeight = scrprops->height;
+	strcpy(g_Settings.szScrName, scrprops->name);
 	
-	g_pd3dDevice = pd3dDevice;
+	g_pd3dDevice = (LPDIRECT3DDEVICE8)scrprops->device;
 
 	LoadSettings();
+
+  return ADDON_STATUS_OK;
 }
 
 extern "C" void Start()
@@ -98,10 +109,60 @@ extern "C" void Render()
 	}
 }
 
-extern "C" void Stop()
+extern "C" void ADDON_Stop()
 {
 	delete g_pStarField;
 	g_pStarField = NULL;
+}
+
+//-- Destroy-------------------------------------------------------------------
+// Do everything before unload of this add-on
+// !!! Add-on master function !!!
+//-----------------------------------------------------------------------------
+extern "C" void ADDON_Destroy()
+{
+}
+
+//-- HasSettings --------------------------------------------------------------
+// Returns true if this add-on use settings
+// !!! Add-on master function !!!
+//-----------------------------------------------------------------------------
+extern "C" bool ADDON_HasSettings()
+{
+  return false;
+}
+
+//-- GetStatus ---------------------------------------------------------------
+// Returns the current Status of this visualisation
+// !!! Add-on master function !!!
+//-----------------------------------------------------------------------------
+extern "C" ADDON_STATUS ADDON_GetStatus()
+{
+  return ADDON_STATUS_OK;
+}
+
+//-- GetSettings --------------------------------------------------------------
+// Return the settings for XBMC to display
+//-----------------------------------------------------------------------------
+
+extern "C" unsigned int ADDON_GetSettings(ADDON_StructSetting ***sSet)
+{
+  return 0;
+}
+
+//-- FreeSettings --------------------------------------------------------------
+// Free the settings struct passed from XBMC
+//-----------------------------------------------------------------------------
+extern "C" void ADDON_FreeSettings()
+{
+}
+
+//-- UpdateSetting ------------------------------------------------------------
+// Handle setting change request from XBMC
+//-----------------------------------------------------------------------------
+extern "C" ADDON_STATUS ADDON_SetSetting(const char* id, const void* value)
+{
+  return ADDON_STATUS_UNKNOWN;
 }
 
 void LoadSettings(void)
@@ -110,9 +171,7 @@ void LoadSettings(void)
 	CXmlDocument doc;
 
 	char szXMLFile[1024];
-	strcpy(szXMLFile, "Q:\\screensavers\\");
-	strcat(szXMLFile, g_Settings.szScrName);
-	strcat(szXMLFile, ".xml");
+  strcpy(szXMLFile, CONFIG_FILE);
 
 	// Load the config file
 	if (doc.Load(szXMLFile) >= 0)
@@ -167,27 +226,3 @@ extern "C" void GetInfo(SCR_INFO* pInfo)
 {
 	return;
 }
-
-extern "C" 
-{
-
-struct ScreenSaver
-{
-public:
-	void (__cdecl* Create)(LPDIRECT3DDEVICE8 pd3dDevice, int iWidth, int iHeight, const char* szScreensaver);
-	void (__cdecl* Start)();
-	void (__cdecl* Render)();
-	void (__cdecl* Stop)();
-	void (__cdecl* GetInfo)(SCR_INFO *info);
-} ;
-
-
-	void __declspec(dllexport) get_module(struct ScreenSaver* pScr)
-	{
-		pScr->Create = Create;
-		pScr->Start = Start;
-		pScr->Render = Render;
-		pScr->Stop = Stop;
-		pScr->GetInfo = GetInfo;
-	}
-};

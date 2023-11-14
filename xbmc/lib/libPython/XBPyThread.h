@@ -23,34 +23,40 @@
 
 #include "python/Include/Python.h"
 #include "utils/Thread.h"
+#include "addons/IAddon.h"
+#include "utils/StringUtils.h"
+
+class XBPython;
 
 class XBPyThread : public CThread
 {
 public:
-  XBPyThread(LPVOID pExecuter, PyThreadState* mainThreadState, int id);
+  XBPyThread(XBPython *pExecuter, int id);
   virtual ~XBPyThread();
-  int evalFile(const char*);
-  int evalString(const char*);
-  int setArgv(const unsigned int, const char **);
-  bool isDone();
+  int evalFile(const CStdString &src);
+  int evalString(const CStdString &src);
+  int setArgv(const std::vector<CStdString> &argv);
   bool isStopping();
   void stop();
 
-protected:
-  PyThreadState*	threadState;
-  LPVOID					pExecuter;
+  void setAddon(ADDON::AddonPtr _addon) { addon = _addon; }
 
-  char type;
-  char *source;
-  char **argv;
-  unsigned int  argc;
-  bool done;
-  bool stopping;
-  int id;
+protected:
+  XBPython      *m_pExecuter;
+  PyThreadState *m_threadState;
+
+  char m_type;
+  char *m_source;
+  char **m_argv;
+  unsigned int  m_argc;
+  bool m_stopping;
+  int  m_id;
+  ADDON::AddonPtr addon;
 
   virtual void OnStartup();
   virtual void Process();
   virtual void OnExit();
+  virtual void OnException();
 };
 
 #endif // XBPYTHREAD_H_

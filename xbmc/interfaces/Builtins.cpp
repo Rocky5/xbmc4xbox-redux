@@ -28,6 +28,7 @@
 #include "Builtins.h"
 #include "input/ButtonTranslator.h"
 #include "FileItem.h"
+#include "addons/GUIDialogAddonSettings.h"
 #include "dialogs/GUIDialogFileBrowser.h"
 #include "dialogs/GUIDialogKeyboard.h"
 #include "music/dialogs/GUIDialogMusicScan.h"
@@ -37,6 +38,10 @@
 #include "GUIUserMessages.h"
 #include "windows/GUIWindowLoginScreen.h"
 #include "video/windows/GUIWindowVideoBase.h"
+#include "addons/GUIWindowAddonBrowser.h"
+#include "addons/Addon.h" // for TranslateType, TranslateContent
+#include "addons/AddonInstaller.h"
+#include "addons/AddonManager.h"
 #include "music/LastFmManager.h"
 #include "LCD.h"
 #include "log.h"
@@ -79,6 +84,7 @@
 
 using namespace std;
 using namespace XFILE;
+using namespace ADDON;
 using namespace MEDIA_DETECT;
 
 typedef struct
@@ -113,6 +119,7 @@ const BUILT_IN commands[] = {
   { "SlideShow",                  true,   "Run a slideshow from the specified directory" },
   { "RecursiveSlideShow",         true,   "Run a slideshow from the specified directory, including all subdirs" },
   { "ReloadSkin",                 false,  "Reload XBMC's skin" },
+  { "UnloadSkin",                 false,  "Unload XBMC's skin" },
   { "RefreshRSS",                 false,  "Reload RSS feeds from RSSFeeds.xml"},
   { "PlayerControl",              true,   "Control the music or video player" },
   { "Playlist.PlayOffset",        true,   "Start playing from a particular offset in the playlist" },
@@ -167,6 +174,10 @@ const BUILT_IN commands[] = {
   { "ClearProperty",              true,   "Clears a window property for the current focused window/dialog (key,value)" },
   { "PlayWith",                   true,   "Play the selected item with the specified core" },
   { "WakeOnLan",                  true,   "Sends the wake-up packet to the broadcast address for the specified MAC address" },
+  { "Addon.Default.OpenSettings", true,   "Open a settings dialog for the default addon of the given type" },
+  { "Addon.Default.Set",          true,   "Open a select dialog to allow choosing the default addon of the given type" },
+  { "UpdateAddonRepos",           false,  "Check add-on repositories for updates" },
+  { "InstallFromZip",             false,  "Open the install from zip dialog" },
   { "toggledebug",                false,  "Enables/disables debug mode" },
 };
 
@@ -313,16 +324,21 @@ int CBuiltins::Execute(const CStdString& execString)
   }
   else if (execute.Equals("runscript") && params.size())
   {
-    unsigned int argc = params.size();
-    char ** argv = new char*[argc];
+    vector<CStdString> argv = params;
 
-    argv[0] = (char*)params[0].c_str();
+    vector<CStdString> path;
+    //split the path up to find the filename
+    StringUtils::SplitString(params[0],"\\",path);
 
-    for(unsigned int i = 1; i < argc; i++)
-      argv[i] = (char*)params[i].c_str();
+    if (path.size())
+      argv[0] = path[path.size() - 1];
 
-    g_pythonParser.evalFile(params[0].c_str(), argc, (const char**)argv);
-    delete [] argv;
+    AddonPtr script;
+    CStdString scriptpath(params[0]);
+    if (CAddonMgr::Get().GetAddon(params[0], script))
+      scriptpath = script->LibPath();
+
+    g_pythonParser.evalFile(scriptpath, argv,script);
   }
   else if (execute.Equals("resolution"))
   {
@@ -536,6 +552,10 @@ int CBuiltins::Execute(const CStdString& execString)
   {
     //  Reload the skin
     g_application.ReloadSkin();
+  }
+  else if (execute.Equals("unloadskin"))
+  {
+    g_application.UnloadSkin();
   }
   else if (execute.Equals("refreshrss"))
   {
@@ -985,23 +1005,43 @@ int CBuiltins::Execute(const CStdString& execString)
     }
     else if (execute.Equals("skin.setfile"))
     {
+      // Note. can only browse one addon type from here
+      // if browsing for addons, required param[1] is addontype string, with optional param[2]
+      // as contenttype string see IAddon.h & ADDON::TranslateXX
       CStdString strMask = (params.size() > 1) ? params[1] : "";
-    
-      if (params.size() > 2)
+      strMask.ToLower();
+      ADDON::TYPE type;
+      if ((type = ADDON::TranslateType(strMask)) != ADDON::ADDON_UNKNOWN)
       {
-        value = params[2];
-        URIUtils::AddSlashAtEnd(value);
-        bool bIsSource;
-        if (CUtil::GetMatchingSource(value,localShares,bIsSource) < 0) // path is outside shares - add it as a separate one
-        {
-          CMediaSource share;
-          share.strName = g_localizeStrings.Get(13278);
-          share.strPath = value;
-          localShares.push_back(share);
-        }
+        CURL url;
+        url.SetProtocol("addons");
+        url.SetHostName(strMask);
+        localShares.clear();
+        CStdString content = (params.size() > 2) ? params[2] : "";
+        content.ToLower();
+        url.SetPassword(content);
+        CStdString replace;
+        if (CGUIDialogFileBrowser::ShowAndGetFile(url.Get(), "", TranslateType(type, true), replace, true, true))
+          g_settings.SetSkinString(string, replace);
       }
-      if (CGUIDialogFileBrowser::ShowAndGetFile(localShares, strMask, g_localizeStrings.Get(1033), value))
-        g_settings.SetSkinString(string, value);
+      else 
+      {
+        if (params.size() > 2)
+        {
+          value = params[2];
+          URIUtils::AddSlashAtEnd(value);
+          bool bIsSource;
+          if (CUtil::GetMatchingSource(value,localShares,bIsSource) < 0) // path is outside shares - add it as a separate one
+          {
+            CMediaSource share;
+            share.strName = g_localizeStrings.Get(13278);
+            share.strPath = value;
+            localShares.push_back(share);
+          }
+        }
+        if (CGUIDialogFileBrowser::ShowAndGetFile(localShares, strMask, g_localizeStrings.Get(1033), value))
+          g_settings.SetSkinString(string, value);
+      }
     }
     else // execute.Equals("skin.setpath"))
     {
@@ -1108,14 +1148,12 @@ int CBuiltins::Execute(const CStdString& execString)
     if (params[0].Equals("video"))
     {
       CGUIDialogVideoScan *scanner = (CGUIDialogVideoScan *)g_windowManager.GetWindow(WINDOW_DIALOG_VIDEO_SCAN);
-      SScraperInfo info;
-      VIDEO::SScanSettings settings;
       if (scanner)
       {
         if (scanner->IsScanning())
           scanner->StopScanning();
         else
-          CGUIWindowVideoBase::OnScan(params.size() > 1 ? params[1] : "",info,settings);
+          CGUIWindowVideoBase::OnScan(params.size() > 1 ? params[1] : "");
       }
     }
   }
@@ -1332,6 +1370,38 @@ int CBuiltins::Execute(const CStdString& execString)
   else if (execute.Equals("wakeonlan"))
   {
     g_application.getNetwork().WakeOnLan((char*)params[0].c_str());
+  }
+  else if (execute.Equals("addon.default.opensettings") && params.size() == 1)
+  {
+    AddonPtr addon;
+    ADDON::TYPE type = TranslateType(params[0]);
+    if (CAddonMgr::Get().GetDefault(type, addon))
+    {
+      CGUIDialogAddonSettings::ShowAndGetInput(addon);
+      if (type == ADDON_VIZ)
+        g_windowManager.SendMessage(GUI_MSG_VISUALISATION_RELOAD, 0, 0);
+    }
+  }
+  else if (execute.Equals("addon.default.set") && params.size() == 1)
+  {
+    CStdString addonID;
+    TYPE type = TranslateType(params[0]);
+    if (type != ADDON_UNKNOWN && 
+        CGUIWindowAddonBrowser::SelectAddonID(type,addonID,false))
+    {
+      CAddonMgr::Get().SetDefault(type,addonID);
+      if (type == ADDON_VIZ)
+        g_windowManager.SendMessage(GUI_MSG_VISUALISATION_RELOAD, 0, 0);
+    }
+  }
+  else if (execute.Equals("updateaddonrepos"))
+  {
+    CAddonInstaller::Get().UpdateRepos(true);
+  }
+  else if (execute.Equals("installfromzip"))
+  {
+    CGUIWindowAddonBrowser::InstallFromZip();
+    return 0;
   }
   else if (execute.Equals("toggledebug"))
   {

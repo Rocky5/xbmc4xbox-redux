@@ -22,8 +22,9 @@
 #define PRE_SKIN_VERSION_9_10_COMPATIBILITY 1
 #define PRE_SKIN_VERSION_11_COMPATIBILITY 1
 
-#define DEFAULT_SKIN "Confluence Lite"
-#define DEFAULT_WEATHER_PLUGIN "Weather.com (standard)"
+#define DEFAULT_SKIN           "skin.confluence.lite"
+#define DEFAULT_WEATHER_ADDON "weather.xbmc.builtin"
+#define DEFAULT_WEB_INTERFACE "webinterface.default"
 
 #include "settings/VideoSettings.h"
 #include "settings/GUISettings.h"
@@ -366,6 +367,8 @@ public:
   bool m_bMyVideoPlaylistShuffle;
   bool m_bMyVideoNavFlatten;
   bool m_bStartVideoWindowed;
+  bool m_bAddonAutoUpdate;
+  bool m_bAddonNotifications;
 
   int m_iVideoStartWindow;
 
@@ -509,9 +512,7 @@ public:
   CStdString GetProfilesThumbFolder() const;
   CStdString GetLibraryFolder() const;
   CStdString GetSourcesFile() const;
-  CStdString GetSkinFolder() const;
   CStdString GetSkinFolder(const CStdString& skinName) const;
-  CStdString GetScriptsFolder() const;
   CStdString GetVideoFanartFolder() const;
   CStdString GetMusicFanartFolder() const;
   CStdString GetFFmpegDllFolder() const;

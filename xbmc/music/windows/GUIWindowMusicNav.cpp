@@ -21,6 +21,7 @@
 #include "music/windows/GUIWindowMusicNav.h"
 #include "Util.h"
 #include "GUIInfoManager.h"
+#include "utils/FileUtils.h"
 #include "playlists/PlayListM3U.h"
 #include "PlayListPlayer.h"
 #include "GUIPassword.h"
@@ -40,6 +41,7 @@
 #include "windows/GUIWindowFileManager.h"
 #include "dialogs/GUIDialogOK.h"
 #include "dialogs/GUIDialogKeyboard.h"
+#include "dialogs/GUIDialogYesNo.h"
 #include "GUIEditControl.h"
 #include "FileSystem/File.h"
 #include "FileItem.h"
@@ -428,8 +430,6 @@ void CGUIWindowMusicNav::GetContextButtons(int itemNumber, CContextButtons &butt
                        m_vecItems->GetPath().Equals("special://musicplaylists/");
 
     CMusicDatabaseDirectory dir;
-    SScraperInfo info;
-    m_musicdatabase.GetScraperForPath(item->GetPath(),info);
     // enable music info button on an album or on a song.
     if (item->IsAudio() && !item->IsPlayList() && !item->IsSmartPlayList() &&
        !item->IsLastFM() && !item->IsShoutCast() && !item->m_bIsFolder)
@@ -470,14 +470,14 @@ void CGUIWindowMusicNav::GetContextButtons(int itemNumber, CContextButtons &butt
     }
 
     // enable query all artist button only in album view
-    if (dir.IsArtistDir(item->GetPath())        && !dir.IsAllItem(item->GetPath()) &&
-        item->m_bIsFolder && !item->IsVideoDb() && !info.strContent.IsEmpty())
+    if (dir.IsArtistDir(item->GetPath()) && !dir.IsAllItem(item->GetPath()) &&
+      item->m_bIsFolder && !item->IsVideoDb())
     {
-      buttons.Add(CONTEXT_BUTTON_INFO_ALL, 21884);
+      ADDON::ScraperPtr info;
+      m_musicdatabase.GetScraperForPath(item->GetPath(), info, ADDON::ADDON_SCRAPER_ARTISTS);
+      if (info && info->Supports(CONTENT_ARTISTS))
+        buttons.Add(CONTEXT_BUTTON_INFO_ALL, 21884);
     }
-
-    if (m_vecItems->GetPath().Equals("plugin://music/"))
-      buttons.Add(CONTEXT_BUTTON_SET_PLUGIN_THUMB, 1044);
 
     //Set default or clear default
     NODE_TYPE nodetype = dir.GetDirectoryType(item->GetPath());
@@ -538,6 +538,9 @@ void CGUIWindowMusicNav::GetContextButtons(int itemNumber, CContextButtons &butt
     if (inPlaylists && !URIUtils::GetFileName(item->GetPath()).Equals("PartyMode.xsp")
                     && (item->IsPlayList() || item->IsSmartPlayList()))
       buttons.Add(CONTEXT_BUTTON_DELETE, 117);
+
+    if (item->IsPlugin() || item->GetPath().Left(9).Equals("script://") || m_vecItems->IsPlugin())
+      buttons.Add(CONTEXT_BUTTON_PLUGIN_SETTINGS, 1045);
   }
   // noncontextual buttons
 
@@ -603,7 +606,7 @@ bool CGUIWindowMusicNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
         CGUIWindowVideoNav* pWindow = (CGUIWindowVideoNav*)g_windowManager.GetWindow(WINDOW_VIDEO_NAV);
         if (pWindow)
         { 
-          SScraperInfo info;
+          ADDON::ScraperPtr info;
           pWindow->OnInfo(item.get(),info);
           Refresh();
         }
@@ -613,10 +616,6 @@ bool CGUIWindowMusicNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 
   case CONTEXT_BUTTON_INFO_ALL:
     OnInfoAll(itemNumber);
-    return true;
-
-  case CONTEXT_BUTTON_SET_PLUGIN_THUMB:
-    SetPluginThumb(itemNumber, g_settings.m_musicSources);
     return true;
 
   case CONTEXT_BUTTON_UPDATE_LIBRARY:
@@ -679,7 +678,7 @@ bool CGUIWindowMusicNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     if (item->IsPlayList() || item->IsSmartPlayList())
     {
       item->m_bIsFolder = false;
-      CGUIWindowFileManager::DeleteItem(item.get());
+      CFileUtils::DeleteItem(item);
     }
     else
     {
@@ -691,31 +690,40 @@ bool CGUIWindowMusicNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
 
   case CONTEXT_BUTTON_SET_CONTENT:
     {
-      bool bScan=false;
-      SScraperInfo info;
+      ADDON::ScraperPtr scraper;
       CStdString path(item->GetPath());
       CQueryParams params;
       CDirectoryNode::GetDatabaseInfo(item->GetPath(), params);
+      CONTENT_TYPE content = CONTENT_ALBUMS;
       if (params.GetAlbumId() != -1)
         path.Format("musicdb://albums/%i/",params.GetAlbumId());
       else if (params.GetArtistId() != -1)
-        path.Format("musicdb://artists/%i/",params.GetArtistId());
-
-      if (!m_musicdatabase.GetScraperForPath(path,info))
-        info.strContent = "albums";
-
-      int iLabel=132;
-      // per genre or for all artists
-      if (m_vecItems->GetPath().Left(12).Equals("musicdb://genres/") || item->GetPath().Left(12).Equals("musicdb://artists/"))
       {
-        iLabel = 133;
+        path.Format("musicdb://artists/%i/",params.GetArtistId());
+        content = CONTENT_ARTISTS;
       }
 
-      if (CGUIDialogContentSettings::Show(info, bScan,iLabel))
+      if (m_vecItems->GetPath().Equals("musicdb://genres/") || item->GetPath().Equals("musicdb://artists/"))
       {
-        m_musicdatabase.SetScraperForPath(path,info);
-        if (bScan)
+        content = CONTENT_ARTISTS;
+      }
+
+      if (!m_musicdatabase.GetScraperForPath(path, scraper, ADDON::ScraperTypeFromContent(content)))
+      {
+        ADDON::AddonPtr defaultScraper;
+        if (ADDON::CAddonMgr::Get().GetDefault(ADDON::ScraperTypeFromContent(content), defaultScraper))
+        {
+          scraper = boost::dynamic_pointer_cast<ADDON::CScraper>(defaultScraper->Clone(defaultScraper));
+        }
+      }
+
+      if (CGUIDialogContentSettings::Show(scraper, content))
+      {
+        m_musicdatabase.SetScraperForPath(path,scraper);
+        if (CGUIDialogYesNo::ShowAndGetInput(20442,20443,20444,20022))
+        {
           OnInfoAll(itemNumber,true);
+        }
       }
       return true;
     }
@@ -725,79 +733,6 @@ bool CGUIWindowMusicNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
   }
 
   return CGUIWindowMusicBase::OnContextButton(itemNumber, button);
-}
-
-void CGUIWindowMusicNav::SetPluginThumb(int iItem, const VECSOURCES &sources)
-{
-  CFileItemList items;
-
-  CStdString itemPath = m_vecItems->Get(iItem)->GetPath();
-  itemPath.Replace("plugin://", "special://home/plugins/");
-  CStdString picturePath = itemPath;
-  CFileItem item(picturePath, true);
-  CStdString cachedThumb = item.GetCachedProgramThumb();
-
-  if (XFILE::CFile::Exists(cachedThumb))
-  {
-    CFileItemPtr item(new CFileItem("thumb://Current", false));
-    item->SetThumbnailImage(cachedThumb);
-    item->SetLabel(g_localizeStrings.Get(20016));
-    items.Add(item);
-  }
-  else
-  {
-    CFileItem item2(URIUtils::AddFileToFolder(picturePath, "default.py"), false);
-      if (XFILE::CFile::Exists(item2.GetCachedProgramThumb()))
-      {
-        CFileItemPtr item(new CFileItem("thumb://Current", false));
-        item->SetThumbnailImage(item2.GetCachedProgramThumb());
-        item->SetLabel(g_localizeStrings.Get(20016));
-        items.Add(item);
-      }
-    }
-
-  CStdString localThumb = URIUtils::AddFileToFolder(picturePath, "default.tbn");
-  if (XFILE::CFile::Exists(localThumb))
-    {
-    CFileItemPtr item(new CFileItem(localThumb, false));
-    item->SetThumbnailImage(localThumb);
-      item->SetLabel(g_localizeStrings.Get(20017));
-      items.Add(item);
-    }
-  else
-  {
-    CFileItemPtr nItem(new CFileItem("thumb://None", false));
-  nItem->SetLabel(g_localizeStrings.Get(20018));
-    nItem->SetIconImage("DefaultFolder.png");
-  items.Add(nItem);
-  }
-  
-  if (CGUIDialogFileBrowser::ShowAndGetImage(items, sources,
-                                             g_localizeStrings.Get(20019), picturePath))
-  {
-    CPicture picture;
-    if (picturePath.Equals("thumb://Current"))
-      return;
-
-    if (picturePath.Equals("thumb://None"))
-    {
-      XFILE::CFile::Delete(cachedThumb);
-      CFileItem item2(URIUtils::AddFileToFolder(itemPath, "default.py"), false);
-        XFILE::CFile::Delete(item2.GetCachedProgramThumb());
-      }
-    else
-      XFILE::CFile::Cache(picturePath, cachedThumb);
-
-    if (picturePath.Equals("thumb://None") ||
-        picture.CreateThumbnail(picturePath, cachedThumb))
-    {
-      CGUIMessage msg(GUI_MSG_NOTIFY_ALL, 0, 0, GUI_MSG_REFRESH_THUMBS);
-      g_windowManager.SendMessage(msg);
-      Update(m_vecItems->GetPath());
-    }
-    else
-      CLog::Log(LOGERROR, " %s Could not cache plugin thumb: %s", __FUNCTION__, picturePath.c_str());
-  }
 }
 
 bool CGUIWindowMusicNav::GetSongsFromPlayList(const CStdString& strPlayList, CFileItemList &items)

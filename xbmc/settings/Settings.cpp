@@ -33,6 +33,8 @@
 #include "input/ButtonTranslator.h"
 #include "XMLUtils.h"
 #include "PasswordManager.h"
+#include "utils/RegExp.h"
+#include "GUIPassword.h"
 #include "GUIAudioManager.h"
 #include "AudioContext.h"
 #include "GUIInfoManager.h"
@@ -57,6 +59,7 @@
 #include "LocalizeStrings.h"
 #include "utils/CharsetConverter.h"
 #include "utils/log.h"
+#include "utils/FileUtils.h"
 
 using namespace std;
 using namespace XFILE;
@@ -93,6 +96,8 @@ void CSettings::Initialize()
   m_bMyVideoPlaylistShuffle = false;
   m_bMyVideoNavFlatten = false;
   m_bStartVideoWindowed = false;
+  m_bAddonAutoUpdate = false;
+  m_bAddonNotifications = true;
 
   m_nVolumeLevel = 0;
   m_dynamicRangeCompressionLevel = 0;
@@ -168,11 +173,11 @@ bool CSettings::Load(bool& bXboxMediacenter, bool& bSettings)
 
 #ifdef _XBOX
   char szDevicePath[1024];
-  CStdString strMnt = _P(GetProfileUserDataFolder());
+  CStdString strMnt = CSpecialProtocol::TranslatePath(GetProfileUserDataFolder());
   if (strMnt.Left(2).Equals("Q:"))
   {
     CUtil::GetHomePath(strMnt);
-    strMnt += _P(GetProfileUserDataFolder()).substr(2);
+    strMnt += CSpecialProtocol::TranslatePath(GetProfileUserDataFolder()).substr(2);
   }
   CIoSupport::GetPartition(strMnt.c_str()[0], szDevicePath);
   strcat(szDevicePath,strMnt.c_str()+2);
@@ -770,6 +775,8 @@ bool CSettings::LoadSettings(const CStdString& strSettingsFile)
     GetInteger(pElement, "systemtotaluptime", m_iSystemTimeTotalUp, 0, 0, INT_MAX);
     GetInteger(pElement, "httpapibroadcastlevel", m_HttpApiBroadcastLevel, 0, 0,5);
     GetInteger(pElement, "httpapibroadcastport", m_HttpApiBroadcastPort, 8278, 1, 65535);
+    XMLUtils::GetBoolean(pElement, "addonautoupdate", m_bAddonAutoUpdate);
+    XMLUtils::GetBoolean(pElement, "addonnotifications", m_bAddonNotifications);
   }
 
   pElement = pRootElement->FirstChildElement("defaultvideosettings");
@@ -1127,6 +1134,8 @@ bool CSettings::SaveSettings(const CStdString& strSettingsFile, CGUISettings *lo
   XMLUtils::SetInt(pNode, "systemtotaluptime", m_iSystemTimeTotalUp);
   XMLUtils::SetInt(pNode, "httpapibroadcastport", m_HttpApiBroadcastPort);
   XMLUtils::SetInt(pNode, "httpapibroadcastlevel", m_HttpApiBroadcastLevel);
+  XMLUtils::SetBoolean(pNode, "addonautoupdate", m_bAddonAutoUpdate);
+  XMLUtils::SetBoolean(pNode, "addonnotifications", m_bAddonNotifications);
 
   // default video settings
   TiXmlElement videoSettingsNode("defaultvideosettings");
@@ -1148,7 +1157,6 @@ bool CSettings::SaveSettings(const CStdString& strSettingsFile, CGUISettings *lo
   XMLUtils::SetFloat(pNode, "gamma", m_defaultVideoSettings.m_Gamma);
   XMLUtils::SetFloat(pNode, "audiodelay", m_defaultVideoSettings.m_AudioDelay);
   XMLUtils::SetFloat(pNode, "subtitledelay", m_defaultVideoSettings.m_SubtitleDelay);
-
 
   // audio settings
   TiXmlElement volumeNode("audio");
@@ -1294,11 +1302,11 @@ bool CSettings::DeleteProfile(unsigned int index)
         Save();
       }
 
-      CFileItem item(URIUtils::AddFileToFolder(GetUserDataFolder(), strDirectory));
-      item.SetPath(URIUtils::AddFileToFolder(GetUserDataFolder(), strDirectory + "\\"));
-      item.m_bIsFolder = true;
-      item.Select(true);
-      CGUIWindowFileManager::DeleteItem(&item);
+      CFileItemPtr item = CFileItemPtr(new CFileItem(URIUtils::AddFileToFolder(GetUserDataFolder(), strDirectory)));
+      item->SetPath(URIUtils::AddFileToFolder(GetUserDataFolder(), strDirectory + "\\"));
+      item->m_bIsFolder = true;
+      item->Select(true);
+      CFileUtils::DeleteItem(item);
     }
     else
       return false;
@@ -2086,25 +2094,6 @@ CStdString CSettings::GetSourcesFile() const
   return folder;
 }
 
-CStdString CSettings::GetSkinFolder() const
-{
-  CStdString folder;
-
-  // Get the Current Skin Path
-  return GetSkinFolder(g_guiSettings.GetString("lookandfeel.skin"));
-}
-
-CStdString CSettings::GetScriptsFolder() const
-{
-  CStdString folder = "special://home/scripts";
-
-  if ( CDirectory::Exists(folder) )
-    return folder;
-
-  folder = "special://xbmc/scripts";
-  return folder;
-}
-
 CStdString CSettings::GetSkinFolder(const CStdString &skinName) const
 {
   CStdString folder;
@@ -2223,7 +2212,7 @@ void CSettings::CreateProfileFolders()
     CDirectory::Create(URIUtils::AddFileToFolder(GetVideoThumbFolder(), strHex));
     CDirectory::Create(URIUtils::AddFileToFolder(GetProgramsThumbFolder(), strHex));
   }
-  CDirectory::Create("special://profile/visualisations");
+  CDirectory::Create("special://profile/addon_data");
   CDirectory::Create(GetLibraryFolder());
 }
 

@@ -105,6 +105,7 @@
 #include "cores/dvdplayer/DVDSubtitles/DVDSubtitleTagSami.h"
 #include "cores/dvdplayer/DVDSubtitles/DVDSubtitleStream.h"
 #include "LocalizeStrings.h"
+#include "utils/md5.h"
 #include "utils/CharsetConverter.h"
 #include "utils/log.h"
 
@@ -1241,6 +1242,29 @@ bool CUtil::CacheXBEIcon(const CStdString& strFilePath, const CStdString& strIco
   return success;
 }
 
+CStdString CUtil::GetFileMD5(const CStdString& strPath)
+{
+  CFile file;
+  CStdString result;
+  if (file.Open(strPath))
+  {
+    XBMC::XBMC_MD5 md5;
+    char temp[1024];
+    int pos=0;
+    int read=1;
+    while (read > 0 && pos < file.GetLength())
+    {
+      read = file.Read(temp,1024);
+      pos += read;
+      md5.append(temp,read);
+    }
+    md5.getDigest(result);
+    file.Close();
+  }
+
+  return result;
+}
+
 bool CUtil::GetDirectoryName(const CStdString& strFileName, CStdString& strDescription)
 {
   CStdString strFName = URIUtils::GetFileName(strFileName);
@@ -1962,7 +1986,7 @@ void CUtil::PrepareSubtitleFonts()
 
     CStdString strSearchMask = strFontPath + "\\*.*";
     WIN32_FIND_DATA wfd;
-    CAutoPtrFind hFind ( FindFirstFile(_P(strSearchMask).c_str(), &wfd));
+    CAutoPtrFind hFind ( FindFirstFile(CSpecialProtocol::TranslatePath(strSearchMask).c_str(), &wfd));
     if (hFind.isValid())
     {
       do
@@ -1984,7 +2008,7 @@ void CUtil::PrepareSubtitleFonts()
 
     CStdString strSearchMask = strPath + "\\*.*";
     WIN32_FIND_DATA wfd;
-    CAutoPtrFind hFind ( FindFirstFile(_P(strSearchMask).c_str(), &wfd));
+    CAutoPtrFind hFind ( FindFirstFile(CSpecialProtocol::TranslatePath(strSearchMask).c_str(), &wfd));
     if (hFind.isValid())
     {
       do
@@ -3955,7 +3979,7 @@ void CUtil::RunXBE(const char* szPath1, char* szParameters, F_VIDEO ForceVideo, 
   Sleep(600);        //and wait a little bit to execute
 
   char szPath[1024];
-  strcpy(szPath, _P(szPath1).c_str());
+  strcpy(szPath, CSpecialProtocol::TranslatePath(szPath1).c_str());
 
   CStdString szNewPath;
   if (RunFFPatchedXBE(szPath, szNewPath))
@@ -4011,7 +4035,7 @@ void CUtil::RunXBE(const char* szPath1, char* szParameters, F_VIDEO ForceVideo, 
 
 void CUtil::LaunchXbe(const char* szPath, const char* szXbe, const char* szParameters, F_VIDEO ForceVideo, F_COUNTRY ForceCountry, CUSTOM_LAUNCH_DATA* pData)
 {
-  CStdString strPath(_P(szPath));
+  CStdString strPath(CSpecialProtocol::TranslatePath(szPath));
   CLog::Log(LOGINFO, "launch xbe:%s %s", strPath.c_str(), szXbe);
   CLog::Log(LOGINFO, " mount %s as D:", strPath.c_str());
 

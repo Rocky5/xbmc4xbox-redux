@@ -37,8 +37,6 @@ public:
   virtual void Render();
   virtual int GetID() const { return CGUIWindow::GetID() + m_iScreen; };
 
-  // static function as it's accessed elsewhere
-  static void FillInVisualisations(CSetting *pSetting, int iControlID);
 protected:
   virtual void OnInitWindow();
 
@@ -47,13 +45,11 @@ protected:
   void FillInSubtitleFonts(CSetting *pSetting);
   void FillInCharSets(CSetting *pSetting);
   void FillInSkinFonts(CSetting *pSetting);
-  void FillInSkins(CSetting *pSetting);
   void FillInSoundSkins(CSetting *pSetting);
   void FillInLanguages(CSetting *pSetting);
   void FillInVoiceMasks(DWORD dwPort, CSetting *pSetting);   // Karaoke patch (114097)
   void FillInVoiceMaskValues(DWORD dwPort, CSetting *pSetting); // Karaoke patch (114097)
   void FillInResolutions(CSetting *pSetting, bool playbackSetting);
-  void FillInScreenSavers(CSetting *pSetting);
   void FillInRegions(CSetting *pSetting);
   void FillInFTPServerUser(CSetting *pSetting);
   void FillInStartupWindow(CSetting *pSetting);
@@ -62,9 +58,6 @@ protected:
 
   void FillInSkinThemes(CSetting *pSetting);
   void FillInSkinColors(CSetting *pSetting);
-  void FillInScrapers(CGUISpinControlEx *pControl, const CStdString& strSelected, const CStdString& strContent);
-
-  void FillInWeatherPlugins(CGUISpinControlEx *pControl, const CStdString& strSelected);
 
   virtual void SetupControls();
   void CreateSettings();

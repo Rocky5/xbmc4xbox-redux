@@ -30,7 +30,7 @@
 #include "lib/mikxbox/mikxbox.h"
 #include "credits_res.h"
 #include "lib/liblzo/LZO1X.H"
-#include "SkinInfo.h"
+#include "addons/Skin.h"
 #include "GUIFont.h"
 #include "FileSystem/SpecialProtocol.h"
 #include "SectionLoader.h"
@@ -546,7 +546,7 @@ static HRESULT InitLogo()
   DWORD n;
 
   // Open XPR
-  HANDLE hFile = CreateFile(_P("special://xbmc/credits/credits.xpr").c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+  HANDLE hFile = CreateFile(CSpecialProtocol::TranslatePath("special://xbmc/credits/credits.xpr").c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
   if (hFile == INVALID_HANDLE_VALUE)
     return E_FAIL;
 
@@ -1133,7 +1133,7 @@ void RunCredits()
 
   // Load the skin credits from <skindir>\skin.xml
   for (int i = 0; i < 6; i++)
-    Credits[SkinOffset + i].Text = g_SkinInfo.GetCreditsLine(i);
+    Credits[SkinOffset + i].Text = g_SkinInfo->GetCreditsLine(i);
 
   FixedCredits = true;
 

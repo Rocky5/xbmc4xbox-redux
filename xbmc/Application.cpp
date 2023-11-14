@@ -53,7 +53,7 @@
 #include "GUIFontManager.h"
 #include "GUIColorManager.h"
 #include "GUITextLayout.h"
-#include "SkinInfo.h"
+#include "addons/Skin.h"
 #include "lib/libPython/XBPython.h"
 #include "input/ButtonTranslator.h"
 #include "GUIAudioManager.h"
@@ -138,10 +138,10 @@
 #include "settings/GUIWindowSettingsScreenCalibration.h"
 #include "programs/GUIWindowPrograms.h"
 #include "pictures/GUIWindowPictures.h"
-#include "GUIWindowScripts.h"
 #include "windows/GUIWindowWeather.h"
 #include "GUIWindowGameSaves.h"
 #include "windows/GUIWindowLoginScreen.h"
+#include "addons/GUIWindowAddonBrowser.h"
 #include "music/windows/GUIWindowVisualisation.h"
 #include "windows/GUIWindowSystemInfo.h"
 #include "windows/GUIWindowScreensaver.h"
@@ -152,10 +152,8 @@
 
 // Dialog includes
 #include "music/dialogs/GUIDialogMusicOSD.h"
-#include "dialogs/GUIDialogVisualisationSettings.h"
 #include "music/dialogs/GUIDialogVisualisationPresetList.h"
 #include "dialogs/GUIDialogTrainerSettings.h"
-#include "GUIWindowScriptsInfo.h"
 #include "network/GUIDialogNetworkSetup.h"
 #include "dialogs/GUIDialogMediaSource.h"
 #include "video/dialogs/GUIDialogVideoSettings.h"
@@ -186,18 +184,21 @@
 #include "dialogs/GUIDialogSmartPlaylistEditor.h"
 #include "dialogs/GUIDialogSmartPlaylistRule.h"
 #include "pictures/GUIDialogPictureInfo.h"
-#include "dialogs/GUIDialogPluginSettings.h"
+#include "addons/GUIDialogAddonSettings.h"
+#include "addons/GUIDialogAddonInfo.h"
 #include "video/dialogs/GUIDialogFullScreenInfo.h"
 #include "dialogs/GUIDialogSlider.h"
 #include "cores/dlgcache.h"
 #include "guilib/GUIControlFactory.h"
 #include "dialogs/GUIDialogMediaFilter.h"
+#include "addons/AddonInstaller.h"
 
 #ifdef _LINUX
 #include "XHandle.h"
 #endif
 
 using namespace std;
+using namespace ADDON;
 using namespace XFILE;
 using namespace MEDIA_DETECT;
 using namespace PLAYLIST;
@@ -801,11 +802,11 @@ HRESULT CApplication::Create(HWND hWnd)
   }
   else
   {
-    CStdString strMnt = _P(g_settings.GetUserDataFolder());
+    CStdString strMnt = CSpecialProtocol::TranslatePath(g_settings.GetUserDataFolder());
     if (strMnt.Left(2).Equals("Q:"))
     {
       CUtil::GetHomePath(strMnt);
-      strMnt += _P(g_settings.GetUserDataFolder()).substr(2);
+      strMnt += CSpecialProtocol::TranslatePath(g_settings.GetUserDataFolder()).substr(2);
     }
 
     CIoSupport::GetPartition(strMnt.c_str()[0], szDevicePath);
@@ -973,6 +974,14 @@ HRESULT CApplication::Create(HWND hWnd)
 
   update_emu_environ();//apply the GUI settings
 
+  // start-up Addons Framework
+  // currently bails out if either cpluff Dll is unavailable or system dir can not be scanned
+  if (!CAddonMgr::Get().Init())
+  {
+    CLog::Log(LOGFATAL, "CApplication::Create: Unable to start CAddonMgr");
+    FatalErrorHandler(true, true, true);
+  }
+
   // Check for WHITE + Y for forced Error Handler (to recover if something screwy happens)
 #ifdef HAS_GAMEPAD
   if (m_DefaultGamepad.bAnalogButtons[XINPUT_GAMEPAD_Y] && m_DefaultGamepad.bAnalogButtons[XINPUT_GAMEPAD_WHITE])
@@ -1099,22 +1108,6 @@ HRESULT CApplication::Create(HWND hWnd)
   if (!CButtonTranslator::GetInstance().Load())
     FatalErrorHandler(true, false, true);
 
-  // check the skin file for testing purposes
-  CStdString strSkinBase = "special://xbmc/skin/";
-  CStdString strSkinPath = strSkinBase + g_guiSettings.GetString("lookandfeel.skin");
-  CLog::Log(LOGINFO, "Checking skin version of: %s", g_guiSettings.GetString("lookandfeel.skin").c_str());
-  if (!g_SkinInfo.Check(strSkinPath))
-  {
-    // reset to the default skin (DEFAULT_SKIN)
-    CLog::Log(LOGINFO, "The above skin isn't suitable - checking the version of the default: %s", DEFAULT_SKIN);
-    strSkinPath = strSkinBase + DEFAULT_SKIN;
-    if (!g_SkinInfo.Check(strSkinPath))
-    {
-      g_LoadErrorStr.Format("No suitable skin version found.\nWe require at least version %5.4f \n", g_SkinInfo.GetMinVersion());
-      FatalErrorHandler(true, false, true);
-    }
-  }
-
   if (!g_graphicsContext.IsValidResolution(g_guiSettings.m_LookAndFeelResolution))
   {
     // Oh uh - doesn't look good for starting in their wanted screenmode
@@ -1223,18 +1216,13 @@ HRESULT CApplication::Initialize()
 
   CDirectory::Create(g_settings.GetProfilesThumbFolder());
 
-  CUtil::WipeDir("Z:\\");
-  CreateDirectory("Z:\\temp", NULL); // temp directory for python and dllGetTempPathA
-  CreateDirectory("Q:\\scripts", NULL);
-  CreateDirectory("Q:\\plugins", NULL);
-  CreateDirectory("Q:\\plugins\\music", NULL);
-  CreateDirectory("Q:\\plugins\\video", NULL);
-  CreateDirectory("Q:\\plugins\\pictures", NULL);
-  CreateDirectory("Q:\\plugins\\programs", NULL);
+  CDirectory::Create("special://home/addons");
+  CDirectory::Create("special://home/addons/packages");
+  CDirectory::Create("special://home/sounds");
+  CUtil::WipeDir("special://temp/");
+  CDirectory::Create("special://temp/temp"); // temp directory for python and dllGetTempPathA
+
   CreateDirectory("Q:\\language", NULL);
-  CreateDirectory("Q:\\visualisations", NULL);
-  CreateDirectory("Q:\\sounds", NULL);
-  CreateDirectory(g_settings.GetUserDataFolder()+"\\visualisations",NULL);
 
   // initialize network
   if (!m_bXboxMediacenterLoaded)
@@ -1258,8 +1246,8 @@ HRESULT CApplication::Initialize()
 
   g_windowManager.Add(new CGUIWindowHome);                     // window id = 0
 
-  CLog::Log(LOGNOTICE, "load default skin:[%s]", g_guiSettings.GetString("lookandfeel.skin").c_str());
-  LoadSkin(g_guiSettings.GetString("lookandfeel.skin"));
+  if (!LoadSkin(g_guiSettings.GetString("lookandfeel.skin")))
+    LoadSkin(DEFAULT_SKIN);
 
   g_windowManager.Add(new CGUIWindowPrograms);                 // window id = 1
   g_windowManager.Add(new CGUIWindowPictures);                 // window id = 2
@@ -1268,11 +1256,11 @@ HRESULT CApplication::Initialize()
   g_windowManager.Add(new CGUIWindowSystemInfo);               // window id = 7
   g_windowManager.Add(new CGUIWindowSettingsScreenCalibration); // window id = 11
   g_windowManager.Add(new CGUIWindowSettingsCategory);         // window id = 12 slideshow:window id 2007
-  g_windowManager.Add(new CGUIWindowScripts);                  // window id = 20
   g_windowManager.Add(new CGUIWindowVideoNav);                 // window id = 36
   g_windowManager.Add(new CGUIWindowVideoPlaylist);            // window id = 28
   g_windowManager.Add(new CGUIWindowLoginScreen);            // window id = 29
   g_windowManager.Add(new CGUIWindowSettingsProfile);          // window id = 34
+  g_windowManager.Add(new CGUIWindowAddonBrowser);          // window id = 40
   g_windowManager.Add(new CGUIWindowGameSaves);               // window id = 35
   g_windowManager.Add(new CGUIDialogYesNo);              // window id = 100
   g_windowManager.Add(new CGUIDialogProgress);           // window id = 101
@@ -1289,7 +1277,6 @@ HRESULT CApplication::Initialize()
   g_windowManager.Add(new CGUIDialogPlayerControls);     // window id = 113
   g_windowManager.Add(new CGUIDialogSlider);             // window id = 145
   g_windowManager.Add(new CGUIDialogMusicOSD);           // window id = 120
-  g_windowManager.Add(new CGUIDialogVisualisationSettings);     // window id = 121
   g_windowManager.Add(new CGUIDialogVisualisationPresetList);   // window id = 122
   g_windowManager.Add(new CGUIDialogVideoSettings);             // window id = 123
   g_windowManager.Add(new CGUIDialogAudioSubtitleSettings);     // window id = 124
@@ -1306,7 +1293,8 @@ HRESULT CApplication::Initialize()
   g_windowManager.Add(new CGUIDialogSmartPlaylistRule);       // window id = 137
   g_windowManager.Add(new CGUIDialogBusy);      // window id = 138
   g_windowManager.Add(new CGUIDialogPictureInfo);      // window id = 139
-  g_windowManager.Add(new CGUIDialogPluginSettings);      // window id = 140
+  g_windowManager.Add(new CGUIDialogAddonInfo);
+  g_windowManager.Add(new CGUIDialogAddonSettings);      // window id = 140
   g_windowManager.Add(new CGUIDialogTextViewer);              // window id = 147
 
   g_windowManager.Add(new CGUIDialogLockSettings); // window id = 131
@@ -1324,7 +1312,6 @@ HRESULT CApplication::Initialize()
   g_windowManager.Add(new CGUIDialogMusicInfo);                // window id = 2001
   g_windowManager.Add(new CGUIDialogOK);                 // window id = 2002
   g_windowManager.Add(new CGUIDialogVideoInfo);                // window id = 2003
-  g_windowManager.Add(new CGUIWindowScriptsInfo);              // window id = 2004
   g_windowManager.Add(new CGUIWindowFullScreen);         // window id = 2005
   g_windowManager.Add(new CGUIWindowVisualisation);      // window id = 2006
   g_windowManager.Add(new CGUIWindowSlideShow);          // window id = 2007
@@ -1356,10 +1343,9 @@ HRESULT CApplication::Initialize()
   }
   else
   {
-    g_windowManager.ActivateWindow(g_SkinInfo.GetFirstWindow());
+    g_windowManager.ActivateWindow(g_SkinInfo->GetFirstWindow());
   }
 
-  g_pythonParser.bStartup = true;
   //g_sysinfo.Refresh();
 
   CLog::Log(LOGINFO, "removing tempfiles");
@@ -1394,13 +1380,19 @@ HRESULT CApplication::Initialize()
   }
 
   if (!g_settings.UsingLoginScreen())
+  {
     UpdateLibraries();
+#ifdef HAS_PYTHON
+  g_pythonParser.m_bLogin = true;
+#endif
+  }
 
   m_slowTimer.StartZero();
 
 #ifdef __APPLE__
   g_xbmcHelper.CaptureAllInput();
 #endif
+  CAddonMgr::Get().StartServices();
 
   CLog::Log(LOGNOTICE, "initialize done");
 
@@ -1495,7 +1487,7 @@ void CApplication::StartFtpServer()
       CFile xml;
       if (xml.Open(xmlpath+"FileZilla Server.xml") && xml.GetLength() > 0)
       {
-        m_pFileZilla = new CXBFileZilla(_P(xmlpath));
+        m_pFileZilla = new CXBFileZilla(CSpecialProtocol::TranslatePath(xmlpath));
         m_pFileZilla->Start(false);
       }
       else
@@ -1869,8 +1861,27 @@ void CApplication::ReloadSkin()
   }
 }
 
-void CApplication::LoadSkin(const CStdString& strSkin)
+bool CApplication::LoadSkin(const CStdString& skinID)
 {
+  AddonPtr addon;
+  if (CAddonMgr::Get().GetAddon(skinID, addon))
+  {
+    LoadSkin(boost::dynamic_pointer_cast<ADDON::CSkinInfo>(addon));
+    return true;
+  }
+  return false;
+}
+
+void CApplication::LoadSkin(const SkinPtr& skin)
+{
+  if (!skin)
+  {
+    CLog::Log(LOGERROR, "failed to load requested skin, fallback to \"%s\" skin", DEFAULT_SKIN);
+    g_guiSettings.SetString("lookandfeel.skin", DEFAULT_SKIN);
+    LoadSkin(DEFAULT_SKIN);
+    return ;
+  }
+
   bool bPreviousPlayingState=false;
   bool bPreviousRenderingState=false;
   if (g_application.m_pPlayer && g_application.IsPlayingVideo())
@@ -1893,12 +1904,6 @@ void CApplication::LoadSkin(const CStdString& strSkin)
   CSingleLock lock(g_graphicsContext);
 
   m_skinReloadTime = 0;
-
-  CStdString strHomePath;
-  CStdString strSkinPath = "Q:\\skin\\" + strSkin;
-
-  CLog::Log(LOGINFO, "  load skin from:%s", strSkinPath.c_str());
-
   // save the current window details
   int currentWindow = g_windowManager.GetActiveWindow();
   vector<int> currentModelessWindows;
@@ -1907,12 +1912,14 @@ void CApplication::LoadSkin(const CStdString& strSkin)
   CLog::Log(LOGINFO, "  delete old skin...");
   UnloadSkin();
 
-  // Load in the skin.xml file if it exists
-  g_SkinInfo.Load(strSkinPath);
+  CLog::Log(LOGINFO, "  load skin from:%s", skin->Path().c_str());
+
+  g_SkinInfo = skin;
+  g_SkinInfo->Start();
 
   CLog::Log(LOGINFO, "  load fonts for skin...");
-  g_graphicsContext.SetMediaDir(strSkinPath);
-  g_directoryCache.ClearSubPaths(strSkinPath);
+  g_graphicsContext.SetMediaDir(skin->Path());
+  g_directoryCache.ClearSubPaths(skin->Path());
   if (g_langInfo.ForceUnicodeFont() && !g_fontManager.IsFontSetUnicode(g_guiSettings.GetString("lookandfeel.font")))
   {
     CLog::Log(LOGINFO, "    language needs a ttf font, loading first ttf font available");
@@ -1932,7 +1939,7 @@ void CApplication::LoadSkin(const CStdString& strSkin)
 
   // load in the skin strings
   CStdString langPath;
-  URIUtils::AddFileToFolder(strSkinPath, "language", langPath);
+  URIUtils::AddFileToFolder(skin->Path(), "language", langPath);
   URIUtils::AddSlashAtEnd(langPath);
 
   g_localizeStrings.LoadSkinStrings(langPath, g_guiSettings.GetString("locale.language"));
@@ -1941,19 +1948,6 @@ void CApplication::LoadSkin(const CStdString& strSkin)
   QueryPerformanceCounter(&start);
 
   CLog::Log(LOGINFO, "  load new skin...");
-  CGUIWindowHome *pHome = (CGUIWindowHome *)g_windowManager.GetWindow(WINDOW_HOME);
-  if (!g_SkinInfo.Check(strSkinPath) || !pHome || !pHome->Load("Home.xml"))
-  {
-    // failed to load home.xml
-    // fallback to default skin
-    if ( strcmpi(strSkin.c_str(), DEFAULT_SKIN) != 0)
-    {
-      CLog::Log(LOGERROR, "failed to load home.xml for skin:%s, fallback to \"%s\" skin", strSkin.c_str(), DEFAULT_SKIN);
-      g_guiSettings.SetString("lookandfeel.skin", DEFAULT_SKIN);
-      LoadSkin(g_guiSettings.GetString("lookandfeel.skin"));
-      return ;
-    }
-  }
 
   // Load the user windows
   LoadUserWindows();
@@ -1977,7 +1971,7 @@ void CApplication::LoadSkin(const CStdString& strSkin)
   g_audioManager.Initialize(CAudioContext::DEFAULT_DEVICE);
   g_audioManager.Load();
 
-  if (g_SkinInfo.HasSkinFile("DialogFullScreenInfo.xml"))
+  if (g_SkinInfo->HasSkinFile("DialogFullScreenInfo.xml"))
     g_windowManager.Add(new CGUIDialogFullScreenInfo);
 
   CLog::Log(LOGINFO, "  skin loaded...");
@@ -2041,7 +2035,7 @@ bool CApplication::LoadUserWindows()
 {
   // Start from wherever home.xml is
   std::vector<CStdString> vecSkinPath;
-  g_SkinInfo.GetSkinPaths(vecSkinPath);
+  g_SkinInfo->GetSkinPaths(vecSkinPath);
   for (unsigned int i = 0;i < vecSkinPath.size();++i)
   {
     CLog::Log(LOGINFO, "Loading user windows, path %s", vecSkinPath[i].c_str());
@@ -2287,7 +2281,7 @@ void CApplication::RenderMemoryStatus()
     GlobalMemoryStatus(&stat);
     info.Format("FreeMem %d/%d KB, FPS %2.1f, CPU %2.0f%%", stat.dwAvailPhys/1024, stat.dwTotalPhys/1024, g_infoManager.GetFPS(), (1.0f - m_idleThread.GetRelativeUsage())*100);
     
-    if(g_SkinInfo.IsDebugging())
+    if(g_SkinInfo->IsDebugging())
     {
       if (!info.IsEmpty())
         info += "\n";
@@ -3484,7 +3478,8 @@ HRESULT CApplication::Cleanup()
     g_windowManager.Delete(WINDOW_DIALOG_SMART_PLAYLIST_RULE);
     g_windowManager.Delete(WINDOW_DIALOG_BUSY);
     g_windowManager.Delete(WINDOW_DIALOG_PICTURE_INFO);
-    g_windowManager.Delete(WINDOW_DIALOG_PLUGIN_SETTINGS);
+    g_windowManager.Delete(WINDOW_DIALOG_ADDON_INFO);
+    g_windowManager.Delete(WINDOW_DIALOG_ADDON_SETTINGS);
     g_windowManager.Delete(WINDOW_DIALOG_SLIDER);
     g_windowManager.Delete(WINDOW_DIALOG_MEDIA_FILTER);
     g_windowManager.Delete(WINDOW_DIALOG_TEXT_VIEWER);
@@ -3499,7 +3494,6 @@ HRESULT CApplication::Cleanup()
     g_windowManager.Delete(WINDOW_SYSTEM_INFORMATION);
     g_windowManager.Delete(WINDOW_SCREENSAVER);
     g_windowManager.Delete(WINDOW_DIALOG_VIDEO_OSD);
-    g_windowManager.Delete(WINDOW_SCRIPTS_INFO);
     g_windowManager.Delete(WINDOW_SLIDESHOW);
 
     g_windowManager.Delete(WINDOW_HOME);
@@ -3521,6 +3515,8 @@ HRESULT CApplication::Cleanup()
 
     g_windowManager.Remove(WINDOW_DIALOG_SEEK_BAR);
     g_windowManager.Remove(WINDOW_DIALOG_VOLUME_BAR);
+
+    CAddonMgr::Get().DeInit();
 
     CLog::Log(LOGNOTICE, "unload sections");
     CSectionLoader::UnloadAll();
@@ -3631,6 +3627,9 @@ void CApplication::Stop(bool bLCDStop)
 
     CLog::Log(LOGNOTICE, "unload skin");
     UnloadSkin();
+
+    // Stop services before unloading Python
+    CAddonMgr::Get().StopServices();
 
     CLog::Log(LOGNOTICE, "stop python");
     g_pythonParser.FreeResources();
@@ -4507,13 +4506,13 @@ bool CApplication::ResetScreenSaverWindow()
     return false;
 
   // if Screen saver is active
-  if (m_bScreenSave)
+  if (m_bScreenSave && m_screenSaver)
   {
     if (m_iScreenSaveLock == 0)
       if (g_settings.GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE &&
           (g_settings.UsingLoginScreen() || g_guiSettings.GetBool("masterlock.startuplock")) &&
           g_settings.GetCurrentProfile().getLockMode() != LOCK_MODE_EVERYONE &&
-          m_screenSaverMode != "Dim" && m_screenSaverMode != "Black" && m_screenSaverMode != "Visualisation")
+          m_screenSaver->ID() != "screensaver.xbmc.builtin.dim" && m_screenSaver->ID() != "screensaver.xbmc.builtin.black" && m_screenSaver->ID() != "visualization")
       {
         m_iScreenSaveLock = 2;
         CGUIMessage msg(GUI_MSG_CHECK_LOCK,0,0);
@@ -4531,20 +4530,21 @@ bool CApplication::ResetScreenSaverWindow()
     m_screenSaverTimer.StartZero();
 
     float fFadeLevel = 1.0f;
-    if (m_screenSaverMode == "Visualisation" || m_screenSaverMode == "Slideshow" || m_screenSaverMode == "Fanart Slideshow")
+    if (m_screenSaver->ID() == "visualization" || m_screenSaver->ID() == "screensaver.xbmc.builtin.slideshow")
     {
       // we can just continue as usual from vis mode
       return false;
     }
-    else if (m_screenSaverMode == "Dim")
+    else if (m_screenSaver->ID() == "screensaver.xbmc.builtin.dim")
     {
-      fFadeLevel = (float)g_guiSettings.GetInt("screensaver.dimlevel") / 100;
+      if (!m_screenSaver->GetSetting("level").IsEmpty())
+        fFadeLevel = 1.0f - 0.01f * (float)atof(m_screenSaver->GetSetting("level"));
     }
-    else if (m_screenSaverMode == "Black")
+    else if (m_screenSaver->ID() == "screensaver.xbmc.builtin.black")
     {
       fFadeLevel = 0;
     }
-    else if (m_screenSaverMode != "None")
+    else if (!m_screenSaver->ID().IsEmpty())
     { // we're in screensaver window
       if (g_windowManager.GetActiveWindow() == WINDOW_SCREENSAVER)
         g_windowManager.PreviousWindow();  // show the previous window
@@ -4611,7 +4611,9 @@ void CApplication::ActivateScreenSaver(bool forceType /*= false */)
   m_bScreenSave = true;
 
   // Get Screensaver Mode
-  m_screenSaverMode = g_guiSettings.GetString("screensaver.mode");
+  m_screenSaver.reset();
+  if (!CAddonMgr::Get().GetAddon(g_guiSettings.GetString("screensaver.mode"), m_screenSaver))
+    m_screenSaver.reset(new CScreenSaver(""));
 
   // disable screensaver lock from the login screen
   m_iScreenSaveLock = g_windowManager.GetActiveWindow() == WINDOW_LOGIN_SCREEN ? 1 : 0;
@@ -4619,32 +4621,44 @@ void CApplication::ActivateScreenSaver(bool forceType /*= false */)
   {
     // set to Dim in the case of a dialog on screen or playing video
     if (g_windowManager.HasModalDialog() || (IsPlayingVideo() && g_guiSettings.GetBool("screensaver.usedimonpause")))
-      m_screenSaverMode = "Dim";
+    {
+      if (!CAddonMgr::Get().GetAddon("screensaver.xbmc.builtin.dim", m_screenSaver))
+        m_screenSaver.reset(new CScreenSaver(""));
+    }
     // Check if we are Playing Audio and Vis instead Screensaver!
     else if (IsPlayingAudio() && g_guiSettings.GetBool("screensaver.usemusicvisinstead") && g_guiSettings.GetString("musicplayer.visualisation") != "None")
     { // activate the visualisation
-      m_screenSaverMode = "Visualisation";
+      m_screenSaver.reset(new CScreenSaver("visualization"));
       g_windowManager.ActivateWindow(WINDOW_VISUALISATION);
       return;
     }
   }
   // Picture slideshow
-  if (m_screenSaverMode == "SlideShow" || m_screenSaverMode == "Fanart Slideshow")
+  if (m_screenSaver->ID() == "screensaver.xbmc.builtin.slideshow")
   {
     // reset our codec info - don't want that on screen
     g_infoManager.SetShowCodec(false);
-    m_applicationMessenger.PictureSlideShow(g_guiSettings.GetString("screensaver.slideshowpath"), true);
+    CStdString type = m_screenSaver->GetSetting("type");
+    CStdString path = m_screenSaver->GetSetting("path");
+    if (type == "2" && path.IsEmpty())
+      type = "0";
+    if (type == "0")
+      path = "special://profile/thumbnails/Video/Fanart";
+    if (type == "1")
+      path = "special://profile/thumbnails/Music/Fanart";
+    m_applicationMessenger.PictureSlideShow(path, true, type != "2");
     return;
   }
-  else if (m_screenSaverMode == "Dim")
+  else if (m_screenSaver->ID() == "screensaver.xbmc.builtin.dim")
   {
-    fFadeLevel = (FLOAT) g_guiSettings.GetInt("screensaver.dimlevel") / 100; // 0.07f;
+    if (!m_screenSaver->GetSetting("level").IsEmpty())
+      fFadeLevel = 1.0f - 0.01f * (float)atof(m_screenSaver->GetSetting("level"));
   }
-  else if (m_screenSaverMode == "Black")
+  else if (m_screenSaver->ID() == "screensaver.xbmc.builtin.black")
   {
     fFadeLevel = 0;
   }
-  else if (m_screenSaverMode != "None")
+  else if (!m_screenSaver->ID().IsEmpty())
   {
     g_windowManager.ActivateWindow(WINDOW_SCREENSAVER);
     return ;
@@ -5089,11 +5103,7 @@ bool CApplication::ExecuteXBMCAction(std::string actionStr)
         CFileItem item(actionStr, false);
         if (item.IsPythonScript())
         { // a python script
-          unsigned int argc = 1;
-          char ** argv = new char*[argc];
-          argv[0] = (char*)item.GetPath().c_str();
-          g_pythonParser.evalFile(argv[0], argc, (const char**)argv);
-          delete [] argv;
+          g_pythonParser.evalFile(item.GetPath().c_str(),ADDON::AddonPtr());
         }
         else if (item.IsXBE())
         { // an XBE
@@ -5252,6 +5262,9 @@ void CApplication::ProcessSlow()
 
   //Check to see if current playing Title has changed and whether we should broadcast the fact
   CheckForTitleChange();
+
+  if (!IsPlayingVideo())
+    CAddonInstaller::Get().UpdateRepos();
 }
 
 // Global Idle Time in Seconds
@@ -5657,10 +5670,8 @@ void CApplication::UpdateLibraries()
   {
     CLog::Log(LOGNOTICE, "%s - Starting video library startup scan", __FUNCTION__);
     CGUIDialogVideoScan *scanner = (CGUIDialogVideoScan *)g_windowManager.GetWindow(WINDOW_DIALOG_VIDEO_SCAN);
-    SScraperInfo info;
-    VIDEO::SScanSettings settings;
     if (scanner && !scanner->IsScanning())
-      scanner->StartScanning("",info,settings,false);
+      scanner->StartScanning("");
   }
  
   if (g_guiSettings.GetBool("musiclibrary.updateonstartup"))
@@ -5848,11 +5859,11 @@ void CApplication::InitDirectoriesXbox()
 
   // map our special drives to the correct drive letter
   CSpecialProtocol::SetXBMCPath(install_path);
-  CSpecialProtocol::SetHomePath(install_path);
+  CSpecialProtocol::SetHomePath("Q:\\home");
   CSpecialProtocol::SetTempPath("Z:\\");
 
   // First profile is always the Master Profile
-  CSpecialProtocol::SetMasterProfilePath("Q:\\UserData");
+  CSpecialProtocol::SetMasterProfilePath("Q:\\home\\userdata");
 
   g_settings.LoadProfiles(PROFILES_FILE);
 }

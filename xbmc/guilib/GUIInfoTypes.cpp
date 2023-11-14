@@ -22,12 +22,14 @@
 #include "GUIInfoTypes.h"
 #include "utils/CharsetConverter.h"
 #include "GUIInfoManager.h"
+#include "addons/AddonManager.h"
 #include "LocalizeStrings.h"
 #include "GUIColorManager.h"
 #include "GUIListItem.h"
-#include "guilib/SkinInfo.h"
+#include "addons/Skin.h"
 
 using namespace std;
+using ADDON::CAddonMgr;
 
 CGUIInfoBool::CGUIInfoBool(bool value)
 {
@@ -104,7 +106,7 @@ void CGUIInfoColor::Parse(const CStdString &label, int context)
     label2 = label.Mid(5, label.length() - 6);
     m_info = g_infoManager.TranslateSkinVariableString(label2, context);
     if (!m_info)
-      m_info = g_infoManager.RegisterSkinVariableString(g_SkinInfo.CreateSkinVariable(label2, context));
+      m_info = g_infoManager.RegisterSkinVariableString(g_SkinInfo->CreateSkinVariable(label2, context));
     return;
   }
 
@@ -276,7 +278,7 @@ CStdString AddonReplacer(const CStdString &str)
   size_t length = str.find(" ");
   CStdString id = str.substr(0, length);
   int stringid = atoi(str.substr(length + 1).c_str());
-  return g_localizeStringsTemp.Get(stringid);
+  return CAddonMgr::Get().GetString(id, stringid);
 }
 
 CStdString NumberReplacer(const CStdString &str)
@@ -354,7 +356,7 @@ void CGUIInfoLabel::Parse(const CStdString &label, int context)
         {
           info = g_infoManager.TranslateSkinVariableString(params[0], context);
           if (info == 0)
-            info = g_infoManager.RegisterSkinVariableString(g_SkinInfo.CreateSkinVariable(params[0], context));
+            info = g_infoManager.RegisterSkinVariableString(g_SkinInfo->CreateSkinVariable(params[0], context));
           if (info == 0) // skinner didn't define this conditional label!
             CLog::Log(LOGWARNING, "Label Formating: $VAR[%s] is not defined", params[0].c_str());
         }

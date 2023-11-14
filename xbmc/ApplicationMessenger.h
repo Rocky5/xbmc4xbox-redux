@@ -117,7 +117,7 @@ public:
 
   void PlayFile(const CFileItem &item, bool bRestart = false); // thread safe version of g_application.PlayFile()
   void PictureShow(std::string filename);
-  void PictureSlideShow(std::string pathname, bool bScreensaver = false);
+  void PictureSlideShow(std::string pathname, bool bScreensaver = false, bool addTBN = false);
   void Shutdown();
   void Powerdown();
   void Quit();
@@ -132,7 +132,7 @@ public:
   CStdString GetResponse();
   int SetResponse(CStdString response);
   void HttpApi(std::string cmd, bool wait = false);
-  void ExecBuiltIn(const CStdString &command);
+  void ExecBuiltIn(const CStdString &command, bool wait = false);
 
   void NetworkMessage(DWORD dwMessage, DWORD dwParam = 0);
 

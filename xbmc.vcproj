@@ -410,6 +410,12 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 				RelativePath=".\xbmc\utils\EventServer.cpp">
 			</File>
 			<File
+				RelativePath=".\xbmc\utils\FileUtils.cpp">
+			</File>
+			<File
+				RelativePath=".\xbmc\utils\FileUtils.h">
+			</File>
+			<File
 				RelativePath=".\xbmc\utils\Socket.cpp">
 			</File>
 			<File
@@ -428,12 +434,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					RelativePath=".\xbmc\settings\AdvancedSettings.h">
 				</File>
 				<File
-					RelativePath=".\xbmc\dialogs\GUIDialogPluginSettings.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\dialogs\GUIDialogPluginSettings.h">
-				</File>
-				<File
 					RelativePath=".\xbmc\settings\GUISettings.cpp">
 				</File>
 				<File
@@ -447,24 +447,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 				</File>
 				<File
 					RelativePath=".\xbmc\settings\GUIWindowSettingsScreenCalibration.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\PluginSettings.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\PluginSettings.h">
-				</File>
-				<File
-					RelativePath=".\xbmc\ScraperSettings.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\ScraperSettings.h">
-				</File>
-				<File
-					RelativePath=".\xbmc\ScriptSettings.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\ScriptSettings.h">
 				</File>
 				<File
 					RelativePath=".\xbmc\settings\Settings.cpp">
@@ -905,6 +887,12 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					RelativePath=".\xbmc\FileItem.cpp">
 				</File>
 				<File
+					RelativePath=".\xbmc\utils\FileOperationJob.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\utils\FileOperationJob.h">
+				</File>
+				<File
 					RelativePath=".\xbmc\utils\FilterFlickerPatch.cpp">
 				</File>
 				<File
@@ -1224,12 +1212,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 				Name="Database"
 				Filter="">
 				<File
-					RelativePath=".\xbmc\AddonDatabase.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\AddonDatabase.h">
-				</File>
-				<File
 					RelativePath=".\xbmc\music\Album.cpp">
 				</File>
 				<File
@@ -1471,12 +1453,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					RelativePath=".\xbmc\music\dialogs\GUIDialogVisualisationPresetList.h">
 				</File>
 				<File
-					RelativePath=".\xbmc\dialogs\GUIDialogVisualisationSettings.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\dialogs\GUIDialogVisualisationSettings.h">
-				</File>
-				<File
 					RelativePath=".\xbmc\dialogs\GUIDialogVolumeBar.cpp">
 				</File>
 				<File
@@ -1556,12 +1532,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					RelativePath=".\xbmc\windows\GUIWindowScreensaver.cpp">
 				</File>
 				<File
-					RelativePath=".\xbmc\GUIWindowScripts.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\GUIWindowScriptsInfo.cpp">
-				</File>
-				<File
 					RelativePath=".\xbmc\pictures\GUIWindowSlideShow.cpp">
 				</File>
 				<File
@@ -1611,6 +1581,12 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 			<Filter
 				Name="Filesystem"
 				Filter="">
+				<File
+					RelativePath=".\xbmc\FileSystem\AddonsDirectory.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\FileSystem\AddonsDirectory.h">
+				</File>
 				<File
 					RelativePath=".\xbmc\FileSystem\ASAPFileDirectory.cpp">
 				</File>
@@ -2600,25 +2576,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 				</Filter>
 			</Filter>
 			<Filter
-				Name="Screensavers"
-				Filter="">
-				<File
-					RelativePath=".\xbmc\screensavers\DllScreenSaver.h">
-				</File>
-				<File
-					RelativePath=".\xbmc\screensavers\Screensaver.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\screensavers\Screensaver.h">
-				</File>
-				<File
-					RelativePath=".\xbmc\screensavers\ScreenSaverFactory.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\screensavers\ScreenSaverFactory.h">
-				</File>
-			</Filter>
-			<Filter
 				Name="cdrip"
 				Filter="">
 				<File
@@ -2820,6 +2777,150 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 				</File>
 				<File
 					RelativePath=".\xbmc\listproviders\StaticProvider.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="addons"
+				Filter="">
+				<File
+					RelativePath=".\xbmc\addons\Addon.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\Addon.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\AddonDatabase.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\AddonDatabase.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\AddonDll.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\AddonInstaller.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\AddonInstaller.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\AddonManager.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\AddonManager.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\AddonStatusHandler.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\AddonStatusHandler.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\DllAddon.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\DllLibCPluff.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\DllScreenSaver.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\DllVisualisation.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\fft.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\fft.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\GUIDialogAddonInfo.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\GUIDialogAddonInfo.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\GUIDialogAddonSettings.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\GUIDialogAddonSettings.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\GUIViewStateAddonBrowser.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\GUIViewStateAddonBrowser.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\GUIWindowAddonBrowser.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\GUIWindowAddonBrowser.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\IAddon.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\PluginSource.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\PluginSource.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\Repository.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\Repository.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\Scraper.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\Scraper.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\ScreenSaver.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\ScreenSaver.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\Service.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\Service.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\Skin.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\Skin.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\Visualisation.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\Visualisation.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="xbox"
+				Filter="">
+				<File
+					RelativePath=".\xbmc\xbox\PlatformDefs.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\xbox\strverscmp.cpp">
+				</File>
+			</Filter>
+			<Filter
+				Name="threads"
+				Filter="">
+				<File
+					RelativePath=".\xbmc\threads\Atomics.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\threads\Atomics.h">
 				</File>
 			</Filter>
 		</Filter>
@@ -3057,12 +3158,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 			</File>
 			<File
 				RelativePath=".\xbmc\windows\GUIWindowScreensaver.h">
-			</File>
-			<File
-				RelativePath=".\xbmc\GUIWindowScripts.h">
-			</File>
-			<File
-				RelativePath=".\xbmc\GUIWindowScriptsInfo.h">
 			</File>
 			<File
 				RelativePath=".\xbmc\settings\GUIWindowSettings.h">
@@ -4365,31 +4460,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 				</Filter>
 			</Filter>
 			<Filter
-				Name="Visualisations"
-				Filter="">
-				<File
-					RelativePath=".\xbmc\visualizations\DllVisualisation.h">
-				</File>
-				<File
-					RelativePath=".\xbmc\visualizations\fft.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\visualizations\fft.h">
-				</File>
-				<File
-					RelativePath=".\xbmc\visualizations\Visualisation.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\visualizations\Visualisation.h">
-				</File>
-				<File
-					RelativePath=".\xbmc\visualizations\VisualisationFactory.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\visualizations\VisualisationFactory.h">
-				</File>
-			</Filter>
-			<Filter
 				Name="ffmpeg"
 				Filter="">
 				<File
@@ -4507,6 +4577,9 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 						RelativePath=".\xbmc\lib\libPython\xbmcmodule\controlradiobutton.cpp">
 					</File>
 					<File
+						RelativePath=".\xbmc\lib\libPython\xbmcmodule\controlslider.cpp">
+					</File>
+					<File
 						RelativePath=".\xbmc\lib\libPython\xbmcmodule\controlspin.cpp">
 					</File>
 					<File
@@ -4564,16 +4637,16 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 						RelativePath=".\xbmc\lib\libPython\xbmcmodule\keyboard.h">
 					</File>
 					<File
-						RelativePath=".\xbmc\lib\libPython\xbmcmodule\language.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\lib\libPython\xbmcmodule\language.h">
-					</File>
-					<File
 						RelativePath=".\xbmc\lib\libPython\xbmcmodule\listitem.cpp">
 					</File>
 					<File
 						RelativePath=".\xbmc\lib\libPython\xbmcmodule\listitem.h">
+					</File>
+					<File
+						RelativePath=".\xbmc\lib\libPython\xbmcmodule\monitor.cpp">
+					</File>
+					<File
+						RelativePath=".\xbmc\lib\libPython\xbmcmodule\monitor.h">
 					</File>
 					<File
 						RelativePath=".\xbmc\lib\libPython\xbmcmodule\player.cpp">
@@ -4588,16 +4661,25 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 						RelativePath=".\xbmc\lib\libPython\xbmcmodule\pyplaylist.h">
 					</File>
 					<File
+						RelativePath=".\xbmc\lib\libPython\xbmcmodule\PythonAddon.cpp">
+					</File>
+					<File
+						RelativePath=".\xbmc\lib\libPython\xbmcmodule\PythonAddon.h">
+					</File>
+					<File
+						RelativePath=".\xbmc\lib\libPython\xbmcmodule\PythonMonitor.cpp">
+					</File>
+					<File
+						RelativePath=".\xbmc\lib\libPython\xbmcmodule\PythonMonitor.h">
+					</File>
+					<File
 						RelativePath=".\xbmc\lib\libPython\xbmcmodule\PythonPlayer.cpp">
 					</File>
 					<File
 						RelativePath=".\xbmc\lib\libPython\xbmcmodule\PythonPlayer.h">
 					</File>
 					<File
-						RelativePath=".\xbmc\lib\libPython\xbmcmodule\PythonSettings.cpp">
-					</File>
-					<File
-						RelativePath=".\xbmc\lib\libPython\xbmcmodule\PythonSettings.h">
+						RelativePath=".\xbmc\lib\libPython\xbmcmodule\pythreadstate.h">
 					</File>
 					<File
 						RelativePath=".\xbmc\lib\libPython\xbmcmodule\pyutil.cpp">
@@ -4621,6 +4703,9 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 						RelativePath=".\xbmc\lib\libPython\xbmcmodule\winxmldialog.cpp">
 					</File>
 					<File
+						RelativePath=".\xbmc\lib\libPython\xbmcmodule\xbmcaddonmodule.cpp">
+					</File>
+					<File
 						RelativePath=".\xbmc\lib\libPython\xbmcmodule\xbmcguimodule.cpp">
 					</File>
 					<File
@@ -4628,6 +4713,9 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					</File>
 					<File
 						RelativePath=".\xbmc\lib\libPython\xbmcmodule\xbmcplugin.cpp">
+					</File>
+					<File
+						RelativePath=".\xbmc\lib\libPython\xbmcmodule\xbmcvfsmodule.cpp">
 					</File>
 				</Filter>
 				<Filter

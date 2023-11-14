@@ -20,7 +20,6 @@
 
 #include "video/windows/GUIWindowVideoNav.h"
 #include "music/windows/GUIWindowMusicNav.h"
-#include "windows/GUIWindowFileManager.h"
 #include "GUIInfoManager.h"
 #include "Util.h"
 #include "utils/RegExp.h"
@@ -33,6 +32,7 @@
 #include "playlists/PlayListFactory.h"
 #include "video/dialogs/GUIDialogVideoScan.h"
 #include "dialogs/GUIDialogOK.h"
+#include "addons/AddonManager.h"
 #include "PartyModeManager.h"
 #include "music/MusicDatabase.h"
 #include "GUIWindowManager.h"
@@ -50,6 +50,7 @@
 #include "utils/URIUtils.h"
 #include "utils/StringUtils.h"
 #include "utils/StringUtils2.h"
+#include "utils/FileUtils.h"
 #include "LocalizeStrings.h"
 #include "utils/log.h"
 #include "dialogs/GUIDialogKeyboard.h"
@@ -626,22 +627,19 @@ void CGUIWindowVideoNav::PlayItem(int iItem)
   CGUIWindowVideoBase::PlayItem(iItem);
 }
 
-void CGUIWindowVideoNav::OnInfo(CFileItem* pItem, const SScraperInfo& info)
+void CGUIWindowVideoNav::OnInfo(CFileItem* pItem, ADDON::ScraperPtr& scraper)
 {
-  SScraperInfo info2(info);
   CStdString strPath,strFile;
   m_database.Open(); // since we can be called from the music library without being inited
   if (pItem->IsVideoDb())
-    m_database.GetScraperForPath(pItem->GetVideoInfoTag()->m_strPath,info2);
-  else if (m_vecItems->IsPlugin())
-    info2.strContent = "plugin";
+    scraper = m_database.GetScraperForPath(pItem->GetVideoInfoTag()->m_strPath);
   else
   {
     URIUtils::Split(pItem->GetPath(),strPath,strFile);
-    m_database.GetScraperForPath(strPath,info2);
+    scraper = m_database.GetScraperForPath(strPath);
   }
   m_database.Close();
-  CGUIWindowVideoBase::OnInfo(pItem,info2);
+  CGUIWindowVideoBase::OnInfo(pItem,scraper);
 }
 
 bool CGUIWindowVideoNav::CanDelete(const CStdString& strPath)
@@ -677,8 +675,8 @@ void CGUIWindowVideoNav::OnDeleteItem(CFileItemPtr pItem)
     CStdString path;
     URIUtils::GetDirectory(pItem->GetPath(),path);
     path.Replace("plugin://","special://home/plugins/");
-    CFileItem item2(path,true);
-    CGUIWindowFileManager::DeleteItem(&item2);
+    CFileItemPtr item2 = CFileItemPtr(new CFileItem(path,true));
+    CFileUtils::DeleteItem(item2);
   }
   else if (StringUtils2::StartsWith(pItem->GetPath(), "videodb://movies/sets/") &&
            pItem->GetPath().size() > 22 && pItem->m_bIsFolder)
@@ -883,37 +881,25 @@ void CGUIWindowVideoNav::GetContextButtons(int itemNumber, CContextButtons &butt
     {
       CVideoDatabase database;
       database.Open();
-      SScraperInfo info;
-      database.GetScraperForPath(item->GetPath(), info);
+      ADDON::ScraperPtr info = database.GetScraperForPath(item->GetPath());
 
       if (!pScanDlg || (pScanDlg && !pScanDlg->IsScanning()))
       {
-        if (!item->IsLiveTV() && !item->IsPlugin()/* && !item->IsAddonsPath()*/)
+        if (!item->IsLiveTV() && !item->IsPlugin() && !item->IsAddonsPath())
         {
-          if (!info.strContent.IsEmpty())
+          if (info && info->Content() != CONTENT_NONE)
             buttons.Add(CONTEXT_BUTTON_SET_CONTENT, 20442);
           else
             buttons.Add(CONTEXT_BUTTON_SET_CONTENT, 20333);
         }
       }
 
-      if (info.strContent.IsEmpty() && (!pScanDlg || (pScanDlg && !pScanDlg->IsScanning())))
+      if (info && (!pScanDlg || (pScanDlg && !pScanDlg->IsScanning())))
         buttons.Add(CONTEXT_BUTTON_SCAN, 13349);
     }
   }
   else
   {
-    SScraperInfo info;
-    VIDEO::SScanSettings settings;
-    GetScraperForItem(item.get(), info, settings);
-
-    if (info.strContent.Equals("tvshows"))
-      buttons.Add(CONTEXT_BUTTON_INFO, item->m_bIsFolder ? 20351 : 20352);
-    else if (info.strContent.Equals("musicvideos"))
-      buttons.Add(CONTEXT_BUTTON_INFO,20393);
-    else if (!item->m_bIsFolder && !item->GetPath().Left(19).Equals("newsmartplaylist://"))
-      buttons.Add(CONTEXT_BUTTON_INFO, 13346);
-
     if (item->HasVideoInfoTag() && !item->GetVideoInfoTag()->m_artist.empty())
     {
       CMusicDatabase database;
@@ -943,6 +929,17 @@ void CGUIWindowVideoNav::GetContextButtons(int itemNumber, CContextButtons &butt
     }
     if (!item->IsParentFolder())
     {
+      ADDON::ScraperPtr info;
+      VIDEO::SScanSettings settings;
+      GetScraperForItem(item.get(), info, settings);
+
+      if (info && info->Content() == CONTENT_TVSHOWS)
+        buttons.Add(CONTEXT_BUTTON_INFO, item->m_bIsFolder ? 20351 : 20352);
+      else if (info && info->Content() == CONTENT_MUSICVIDEOS)
+        buttons.Add(CONTEXT_BUTTON_INFO,20393);
+      else if (!item->m_bIsFolder && !item->GetPath().Left(19).Equals("newsmartplaylist://"))
+        buttons.Add(CONTEXT_BUTTON_INFO, 13346);
+
       // can we update the database?
       if (g_settings.GetCurrentProfile().canWriteDatabases() || g_passwordManager.bMasterUser)
       {
@@ -954,7 +951,7 @@ void CGUIWindowVideoNav::GetContextButtons(int itemNumber, CContextButtons &butt
           else
             buttons.Add(CONTEXT_BUTTON_UPDATE_TVSHOW, 13349);
         }
-        if ((info.strContent.Equals("tvshows") && item->m_bIsFolder) ||
+        if ((info && info->Content() == CONTENT_TVSHOWS && item->m_bIsFolder) ||
             (item->IsVideoDb() && item->HasVideoInfoTag() && !item->m_bIsFolder))
         if (!item->IsPlugin() && !item->IsLiveTV() && /*!item->IsAddonsPath() &&*/
              item->GetPath() != "sources://video/" && item->GetPath() != "special://videoplaylists/" &&
@@ -995,9 +992,6 @@ void CGUIWindowVideoNav::GetContextButtons(int itemNumber, CContextButtons &butt
 
         if (node == NODE_TYPE_SEASONS && item->m_bIsFolder)
           buttons.Add(CONTEXT_BUTTON_SET_SEASON_THUMB, 20371);
-
-        if (m_vecItems->GetPath().Equals("plugin://video/"))
-          buttons.Add(CONTEXT_BUTTON_SET_PLUGIN_THUMB, 1044);
           
         if (StringUtils2::StartsWith(item->GetPath(), "videodb://movies/sets/") && item->GetPath().size() > 22 && item->m_bIsFolder) // sets
         {
@@ -1033,7 +1027,7 @@ void CGUIWindowVideoNav::GetContextButtons(int itemNumber, CContextButtons &butt
         if (item->IsVideoDb() && item->HasVideoInfoTag() &&
           (!item->m_bIsFolder || node == NODE_TYPE_TITLE_TVSHOWS))
         {
-          if (info.strContent.Equals("tvshows"))
+          if (info && info->Content() == CONTENT_TVSHOWS)
           {
             if(item->GetVideoInfoTag()->m_iBookmarkId != -1 &&
                item->GetVideoInfoTag()->m_iBookmarkId != 0)
@@ -1063,18 +1057,20 @@ void CGUIWindowVideoNav::GetContextButtons(int itemNumber, CContextButtons &butt
           buttons.Add(CONTEXT_BUTTON_RENAME, 118);
         }
         // add "Set/Change content" to folders
-        if (item->m_bIsFolder && !item->IsPlayList() && !item->IsLiveTV() && !item->IsPlugin()/* && !item->IsAddonsPath()*/)
+        if (item->m_bIsFolder && !item->IsPlayList() && !item->IsLiveTV() && !item->IsPlugin() && !item->IsAddonsPath())
         {
           CGUIDialogVideoScan *pScanDlg = (CGUIDialogVideoScan *)g_windowManager.GetWindow(WINDOW_DIALOG_VIDEO_SCAN);
           if (!pScanDlg || (pScanDlg && !pScanDlg->IsScanning()))
           {
-            if (!info.strContent.IsEmpty() && info.strContent != "None")
+            if (info && info->Content() != CONTENT_NONE)
               buttons.Add(CONTEXT_BUTTON_SET_CONTENT, 20442);
             else
               buttons.Add(CONTEXT_BUTTON_SET_CONTENT, 20333);
           }
         }
       }
+      if (item->IsPlugin() || item->GetPath().Left(9).Equals("script://") || m_vecItems->IsPlugin())
+        buttons.Add(CONTEXT_BUTTON_PLUGIN_SETTINGS, 1045);
     }
   }
   CGUIWindowVideoBase::GetNonContextButtons(itemNumber, buttons);
@@ -1113,7 +1109,6 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
   case CONTEXT_BUTTON_SET_SEASON_THUMB:
   case CONTEXT_BUTTON_SET_ACTOR_THUMB:
   case CONTEXT_BUTTON_SET_ARTIST_THUMB:
-  case CONTEXT_BUTTON_SET_PLUGIN_THUMB:
   case CONTEXT_BUTTON_SET_MOVIESET_THUMB:
     {
       // Grab the thumbnails from the web
@@ -1131,13 +1126,6 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
         cachedThumb = m_vecItems->Get(itemNumber)->GetCachedArtistThumb();
       if (button == CONTEXT_BUTTON_SET_MOVIESET_THUMB)
         cachedThumb = m_vecItems->Get(itemNumber)->GetCachedVideoThumb();
-      if (button == CONTEXT_BUTTON_SET_PLUGIN_THUMB)
-      {
-        strPath = m_vecItems->Get(itemNumber)->GetPath();
-        strPath.Replace("plugin://video/","special://home/plugins/video/");
-        CFileItem item(strPath,true);
-        cachedThumb = item.GetCachedProgramThumb();
-      }
       if (CFile::Exists(cachedThumb))
       {
         CFileItemPtr item(new CFileItem("thumb://Current", false));
@@ -1149,8 +1137,7 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       noneitem->SetLabel(g_localizeStrings.Get(20018));
 
       CVideoInfoTag tag;
-      if (button != CONTEXT_BUTTON_SET_ARTIST_THUMB &&
-          button != CONTEXT_BUTTON_SET_PLUGIN_THUMB)
+      if (button != CONTEXT_BUTTON_SET_ARTIST_THUMB)
       {
         if (button == CONTEXT_BUTTON_SET_SEASON_THUMB)
           m_database.GetTvShowInfo("",tag,m_vecItems->Get(itemNumber)->GetVideoInfoTag()->m_iIdShow);
@@ -1181,41 +1168,6 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       }
 
       bool local=false;
-      if (button == CONTEXT_BUTTON_SET_PLUGIN_THUMB)
-      {
-        if (items.Size() == 0)
-        {
-          CFileItem item2(strPath,false);
-          item2.SetPath(URIUtils::AddFileToFolder(strPath,"default.py"));
-          if (CFile::Exists(item2.GetCachedProgramThumb()))
-          {
-            CFileItemPtr item(new CFileItem("thumb://Current", false));
-            item->SetThumbnailImage(item2.GetCachedProgramThumb());
-            item->SetLabel(g_localizeStrings.Get(20016));
-            items.Add(item);
-            local = true;
-          }
-        }
-        CStdString strThumb;
-        URIUtils::AddFileToFolder(strPath,"folder.jpg",strThumb);
-        if (CFile::Exists(strThumb))
-        {
-          CFileItemPtr item(new CFileItem(strThumb,false));
-          item->SetThumbnailImage(strThumb);
-          item->SetLabel(g_localizeStrings.Get(20017));
-          items.Add(item);
-          local = true;
-        }
-        URIUtils::AddFileToFolder(strPath,"default.tbn",strThumb);
-        if (CFile::Exists(strThumb))
-        {
-          CFileItemPtr item(new CFileItem(strThumb,false));
-          item->SetThumbnailImage(strThumb);
-          item->SetLabel(g_localizeStrings.Get(20017));
-          items.Add(item);
-          local = true;
-        }
-      }
       if (button == CONTEXT_BUTTON_SET_ARTIST_THUMB)
       {
         CStdString picturePath;
@@ -1302,12 +1254,6 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       if (result == "thumb://None")
       {
         CFile::Delete(cachedThumb);
-        if (button == CONTEXT_BUTTON_SET_PLUGIN_THUMB)
-        {
-          CFileItem item2(strPath,false);
-          item2.SetPath(URIUtils::AddFileToFolder(strPath,"default.py"));
-          CFile::Delete(item2.GetCachedProgramThumb());
-        }
       }
       else
         CFile::Cache(result,cachedThumb);
@@ -1491,9 +1437,7 @@ bool CGUIWindowVideoNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
     }
   case CONTEXT_BUTTON_UPDATE_LIBRARY:
     {
-      SScraperInfo info;
-      VIDEO::SScanSettings settings;
-      OnScan("",info,settings);
+      OnScan("");
       return true;
     }
   case CONTEXT_BUTTON_UNLINK_MOVIE:

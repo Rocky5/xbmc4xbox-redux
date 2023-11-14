@@ -335,6 +335,9 @@
 				RelativePath=".\GUIRadioButtonControl.cpp">
 			</File>
 			<File
+				RelativePath=".\GUIRenderingControl.cpp">
+			</File>
+			<File
 				RelativePath=".\GUIResizeControl.cpp">
 			</File>
 			<File
@@ -408,9 +411,6 @@
 			</File>
 			<File
 				RelativePath=".\PackedTexture.cpp">
-			</File>
-			<File
-				RelativePath=".\SkinInfo.cpp">
 			</File>
 			<File
 				RelativePath=".\TextureBundle.cpp">
@@ -559,6 +559,9 @@
 				RelativePath=".\GUIRadioButtonControl.h">
 			</File>
 			<File
+				RelativePath=".\GUIRenderingControl.h">
+			</File>
+			<File
 				RelativePath=".\GUIResizeControl.h">
 			</File>
 			<File
@@ -678,9 +681,6 @@
 			</File>
 			<File
 				RelativePath=".\PackedTexture.h">
-			</File>
-			<File
-				RelativePath=".\SkinInfo.h">
 			</File>
 			<File
 				RelativePath=".\StdString.h">

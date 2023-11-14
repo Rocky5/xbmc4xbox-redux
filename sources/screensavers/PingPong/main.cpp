@@ -26,8 +26,12 @@
 #include "main.h"
 #include "pingpong.h"
 #include "XmlDocument.h"
+#include "../../../xbmc/addons/include/xbmc_scr_dll.h"
+#include "../../../xbmc/addons/include/xbmc_addon_cpp_dll.h"
 #include "timer.h"
 #include <time.h>
+
+#define CONFIG_FILE "special://home/addons/screensaver.pingpong/config.xml"
 
 static char gScrName[1024];
 
@@ -36,20 +40,27 @@ CRenderD3D		gRender;
 CTimer*			gTimer = null;
 CRGBA			gCol[3];
 
-extern "C" void Stop();
+extern "C" void ADDON_Stop();
 
 ////////////////////////////////////////////////////////////////////////////
 // XBMC has loaded us into memory, we should set our core values
 // here and load any settings we may have from our config file
 //
-extern "C" void Create(LPDIRECT3DDEVICE8 pd3dDevice, int width, int height, const char* szScreenSaverName)
+extern "C" ADDON_STATUS ADDON_Create(void* hdl, void* props)
 {
-	strcpy(gScrName,szScreenSaverName);
+  if (!props)
+    return ADDON_STATUS_UNKNOWN;
+
+  SCR_PROPS* scrprops = (SCR_PROPS*)props;
+
+	strcpy(gScrName,scrprops->name);
 	LoadSettings();
 
-	gRender.m_D3dDevice = pd3dDevice;
-	gRender.m_Width	= width;
-	gRender.m_Height= height;
+	gRender.m_D3dDevice = (LPDIRECT3DDEVICE8)scrprops->device;
+	gRender.m_Width	= scrprops->width;
+	gRender.m_Height= scrprops->height;
+
+  return ADDON_STATUS_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -70,7 +81,7 @@ extern "C" void Start()
 	gTimer = new CTimer();
 	gTimer->Init();
 	if (!gPingPong->RestoreDevice(&gRender))
-		Stop();
+		ADDON_Stop();
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -91,13 +102,63 @@ extern "C" void Render()
 // XBMC tells us to stop the screensaver we should free any memory and release
 // any resources we have created.
 //
-extern "C" void Stop()
+extern "C" void ADDON_Stop()
 {
 	if (!gPingPong)
 		return;
 	gPingPong->InvalidateDevice(&gRender);
 	SAFE_DELETE(gPingPong);
 	SAFE_DELETE(gTimer);
+}
+
+//-- Destroy-------------------------------------------------------------------
+// Do everything before unload of this add-on
+// !!! Add-on master function !!!
+//-----------------------------------------------------------------------------
+extern "C" void ADDON_Destroy()
+{
+}
+
+//-- HasSettings --------------------------------------------------------------
+// Returns true if this add-on use settings
+// !!! Add-on master function !!!
+//-----------------------------------------------------------------------------
+extern "C" bool ADDON_HasSettings()
+{
+  return false;
+}
+
+//-- GetStatus ---------------------------------------------------------------
+// Returns the current Status of this visualisation
+// !!! Add-on master function !!!
+//-----------------------------------------------------------------------------
+extern "C" ADDON_STATUS ADDON_GetStatus()
+{
+  return ADDON_STATUS_OK;
+}
+
+//-- GetSettings --------------------------------------------------------------
+// Return the settings for XBMC to display
+//-----------------------------------------------------------------------------
+
+extern "C" unsigned int ADDON_GetSettings(ADDON_StructSetting ***sSet)
+{
+  return 0;
+}
+
+//-- FreeSettings --------------------------------------------------------------
+// Free the settings struct passed from XBMC
+//-----------------------------------------------------------------------------
+extern "C" void ADDON_FreeSettings()
+{
+}
+
+//-- UpdateSetting ------------------------------------------------------------
+// Handle setting change request from XBMC
+//-----------------------------------------------------------------------------
+extern "C" ADDON_STATUS ADDON_SetSetting(const char* id, const void* value)
+{
+  return ADDON_STATUS_UNKNOWN;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -114,9 +175,7 @@ void LoadSettings()
 	SetDefaults();
 
 	char szXMLFile[1024];
-	strcpy(szXMLFile, "Q:\\screensavers\\");
-	strcat(szXMLFile, gScrName);
-	strcat(szXMLFile, ".xml");
+  strcpy(szXMLFile, CONFIG_FILE);
 
 	// Load the config file
 	if (doc.Load(szXMLFile) >= 0)
@@ -157,16 +216,3 @@ extern "C" void GetInfo(SCR_INFO* pInfo)
 {
 	return;
 }
-
-////////////////////////////////////////////////////////////////////////////
-//
-extern "C" void __declspec(dllexport) get_module(struct ScreenSaver* pScr)
-{
-	pScr->Create = Create;
-	pScr->Start = Start;
-	pScr->Render = Render;
-	pScr->Stop = Stop;
-	pScr->GetInfo = GetInfo;
-}
-
-

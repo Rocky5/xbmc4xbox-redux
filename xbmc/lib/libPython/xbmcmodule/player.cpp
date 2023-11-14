@@ -33,6 +33,7 @@
 #include "LangCodeExpander.h"
 #include "settings/Settings.h"
 #include "utils/log.h"
+#include "pythreadstate.h"
 
 using namespace MUSIC_INFO;
 
@@ -62,8 +63,12 @@ namespace PYXBMC
     if (!PyArg_ParseTuple(args, (char*)"|i", &playerCore)) return NULL;
 
     self->iPlayList = PLAYLIST_MUSIC;
+
+    CPyThreadState pyState;
     self->pPlayer = new CPythonPlayer();
-    self->pPlayer->SetCallback((PyObject*)self);
+    pyState.Restore();
+
+    self->pPlayer->SetCallback(PyThreadState_Get(), (PyObject*)self);
     self->playerCore = EPC_NONE;
 
     if (playerCore == EPC_DVDPLAYER ||
@@ -79,7 +84,12 @@ namespace PYXBMC
 
   void Player_Dealloc(Player* self)
   {
-    if (self->pPlayer) delete self->pPlayer;
+    self->pPlayer->SetCallback(NULL, NULL);
+
+    CPyThreadState pyState;
+    self->pPlayer->Release();
+    pyState.Restore();
+
     self->pPlayer = NULL;
     self->ob_type->tp_free((PyObject*)self);
   }

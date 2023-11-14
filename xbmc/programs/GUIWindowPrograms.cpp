@@ -180,7 +180,10 @@ void CGUIWindowPrograms::GetContextButtons(int itemNumber, CContextButtons &butt
           buttons.Add(CONTEXT_BUTTON_TRAINER_OPTIONS, 12015); // trainer options
       }
       buttons.Add(CONTEXT_BUTTON_SCAN_TRAINERS, 12012); // scan trainers
-  
+
+      if (item->IsPlugin() || item->GetPath().Left(9).Equals("script://") || m_vecItems->IsPlugin())
+        buttons.Add(CONTEXT_BUTTON_PLUGIN_SETTINGS, 1045);
+
       buttons.Add(CONTEXT_BUTTON_GOTO_ROOT, 20128); // Go to Root
     }  
   }
@@ -715,7 +718,7 @@ bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemL
 CStdString CGUIWindowPrograms::GetStartFolder(const CStdString &dir)
 {
   if (dir.Equals("Plugins") || dir.Equals("Addons"))
-    return "plugin://programs/";
+    return "addons://sources/executable/";
     
   SetupShares();
   VECSOURCES shares;

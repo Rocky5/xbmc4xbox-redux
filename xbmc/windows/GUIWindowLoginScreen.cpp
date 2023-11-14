@@ -31,7 +31,7 @@
 #include "utils/Weather.h"
 #include "utils/FanController.h"
 #include "xbox/network.h"
-#include "SkinInfo.h"
+#include "addons/Skin.h"
 #include "settings/Profile.h"
 #include "GUIWindowManager.h"
 #include "dialogs/GUIDialogOK.h"
@@ -100,11 +100,6 @@ bool CGUIWindowLoginScreen::OnMessage(CGUIMessage& message)
 
           if (bOkay)
           {
-            if (CFile::Exists("special://scripts/autoexec.py") && 
-                watch.GetElapsedMilliseconds() < 5000.f)
-            {
-              while (watch.GetElapsedMilliseconds() < 5000) Sleep(10);
-            }
             LoadProfile(iItem);
           }
           else
@@ -290,9 +285,9 @@ void CGUIWindowLoginScreen::LoadProfile(unsigned int profile)
   g_settings.SaveProfiles(PROFILES_FILE);
 
   g_weatherManager.Refresh();
-  g_pythonParser.bLogin = true;
+  g_pythonParser.m_bLogin = true;
 
-  g_windowManager.ChangeActiveWindow(g_SkinInfo.GetFirstWindow());
+  g_windowManager.ChangeActiveWindow(g_SkinInfo->GetFirstWindow());
 
   g_application.UpdateLibraries();
 }

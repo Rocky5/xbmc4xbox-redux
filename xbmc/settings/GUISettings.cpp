@@ -38,6 +38,7 @@
 #include "GUIFont.h" // for FONT_STYLE_* definitions
 
 using namespace std;
+using namespace ADDON;
 
 // String id's of the masks
 #define MASK_MINS   14044
@@ -52,7 +53,8 @@ using namespace std;
 
 class CGUISettings g_guiSettings;
 
-#define DEFAULT_VISUALISATION "milkdrop.vis"
+#define DEFAULT_VISUALISATION "visualization.milkdrop"
+
 struct sortsettings
 {
   bool operator()(const CSetting* pSetting1, const CSetting* pSetting2)
@@ -174,6 +176,12 @@ CSettingPath::CSettingPath(int iOrder, const char *strSetting, int iLabel, const
 {
 }
 
+CSettingAddon::CSettingAddon(int iOrder, const char *strSetting, int iLabel, const char *strData, const TYPE type)
+  : CSettingString(iOrder, strSetting, iLabel, strData, BUTTON_CONTROL_STANDARD, false, -1)
+  , m_type(type)
+{
+}
+
 void CSettingsGroup::GetCategories(vecSettingsCategory &vecCategories)
 {
   vecCategories.clear();
@@ -230,8 +238,8 @@ void CGUISettings::Initialize()
   AddString(wea, "weather.areacode2", 14020, "UKXX0085 - London, United Kingdom", BUTTON_CONTROL_STANDARD);
   AddString(wea, "weather.areacode3", 14021, "JAXX0085 - Tokyo, Japan", BUTTON_CONTROL_STANDARD);
   AddSeparator(wea, "weather.sep1");
-  AddString(wea, "weather.plugin", 23000, "", SPIN_CONTROL_TEXT, true);
-  AddString(wea, "weather.pluginsettings", 23001, "", BUTTON_CONTROL_STANDARD, true);
+  AddDefaultAddon(wea, "weather.addon", 24027, DEFAULT_WEATHER_ADDON, ADDON_SCRIPT_WEATHER);
+  AddString(wea, "weather.addonsettings", 21417, "", BUTTON_CONTROL_STANDARD, true);
 
   // My Music Settings
   AddGroup(3, 2);
@@ -240,8 +248,8 @@ void CGUISettings::Initialize()
   AddBool(ml, "musiclibrary.showcompilationartists", 13414, true);
   AddSeparator(ml,"musiclibrary.sep1");
   AddBool(ml,"musiclibrary.downloadinfo", 20192, false);
-  AddString(ml, "musiclibrary.scraper", 20194, "tadb.xml", SPIN_CONTROL_TEXT);
-  AddString(ml, "musiclibrary.scrapersettings", 21417, "", BUTTON_CONTROL_STANDARD);
+  AddDefaultAddon(ml, "musiclibrary.albumscraper", 20193, "metadata.albums.tadb.com", ADDON_SCRAPER_ALBUMS);
+  AddDefaultAddon(ml, "musiclibrary.artistscraper", 20194, "metadata.artists.tadb.com", ADDON_SCRAPER_ARTISTS);
   AddBool(ml, "musiclibrary.updateonstartup", 22000, false);
   AddBool(NULL, "musiclibrary.backgroundupdate", 22001, false);
   AddSeparator(ml,"musiclibrary.sep2");
@@ -260,7 +268,7 @@ void CGUISettings::Initialize()
   AddInt(mp, "musicplayer.crossfade", 13314, 0, 0, 1, 15, SPIN_CONTROL_INT_PLUS, MASK_SECS, TEXT_OFF);
   AddBool(mp, "musicplayer.crossfadealbumtracks", 13400, true);
   AddSeparator(mp, "musicplayer.sep2");
-  AddString(mp, "musicplayer.visualisation", 250, DEFAULT_VISUALISATION, SPIN_CONTROL_TEXT);
+  AddDefaultAddon(mp, "musicplayer.visualisation", 250, DEFAULT_VISUALISATION, ADDON_VIZ);
   AddSeparator(mp, "musicplayer.sep3");
   AddInt(mp, "musicplayer.defaultplayer", 22003, PLAYER_PAPLAYER, PLAYER_MPLAYER, 1, PLAYER_PAPLAYER, SPIN_CONTROL_TEXT);
 #ifdef _XBOX
@@ -467,12 +475,10 @@ void CGUISettings::Initialize()
   AddBool(NULL, "postprocessing.autobrightnesscontrastlevels", 310, false);
   AddBool(NULL, "postprocessing.dering", 311, false);
 
-  CSettingsCategory* scp = AddCategory(5, "scrapers", 21412);
-  AddString(scp, "scrapers.moviedefault", 21413, "tmdb.xml", SPIN_CONTROL_TEXT);
-  AddString(scp, "scrapers.tvshowdefault", 21414, "tvdb.xml", SPIN_CONTROL_TEXT);
-  AddString(scp, "scrapers.musicvideodefault", 21415, "mtv.xml", SPIN_CONTROL_TEXT);
-  AddSeparator(scp,"scrapers.sep2");
-  AddBool(scp, "scrapers.langfallback", 21416, false);
+  AddDefaultAddon(NULL, "scrapers.moviesdefault", 21413, "metadata.movies.themoviedb.org", ADDON_SCRAPER_MOVIES);
+  AddDefaultAddon(NULL, "scrapers.tvshowsdefault", 21414, "metadata.tvshows.themoviedb.org", ADDON_SCRAPER_TVSHOWS);
+  AddDefaultAddon(NULL, "scrapers.musicvideosdefault", 21415, "metadata.musicvideos.nfo", ADDON_SCRAPER_MUSICVIDEOS);
+  AddBool(NULL, "scrapers.langfallback", 21416, false);
 
   // network settings
   AddGroup(6, 705);
@@ -488,7 +494,7 @@ void CGUISettings::Initialize()
   AddString(srv,"services.webserverport",    730, "80", EDIT_CONTROL_NUMBER_INPUT, false, 730);
   AddString(srv,"services.webserverusername",1048, "xbmc", EDIT_CONTROL_INPUT);
   AddString(srv,"services.webserverpassword",733, "", EDIT_CONTROL_HIDDEN_INPUT, true, 733);
-
+  AddDefaultAddon(srv, "services.webskin",199, DEFAULT_WEB_INTERFACE, ADDON_WEB_INTERFACE);
 #ifdef HAS_EVENT_SERVER
   AddSeparator(srv,"services.sep1");
   AddBool(srv,  "services.esenabled",         794, true);
@@ -536,7 +542,7 @@ void CGUISettings::Initialize()
   // appearance settings
   AddGroup(7, 480);
   CSettingsCategory* laf = AddCategory(7,"lookandfeel", 166);
-  AddString(laf, "lookandfeel.skin",166,DEFAULT_SKIN, SPIN_CONTROL_TEXT);
+  AddDefaultAddon(laf, "lookandfeel.skin",166,DEFAULT_SKIN, ADDON_SKIN);
   AddString(laf, "lookandfeel.skintheme",15111,"SKINDEFAULT", SPIN_CONTROL_TEXT);
   AddString(laf, "lookandfeel.skincolors",14078, "SKINDEFAULT", SPIN_CONTROL_TEXT);
   AddString(laf, "lookandfeel.font",13303,"Default", SPIN_CONTROL_TEXT);
@@ -580,14 +586,12 @@ void CGUISettings::Initialize()
 
   CSettingsCategory* ss = AddCategory(7, "screensaver", 360);
   AddInt(ss, "screensaver.time", 355, 3, 1, 1, 60, SPIN_CONTROL_INT_PLUS, MASK_MINS);
-  AddString(ss, "screensaver.mode", 356, "Dim", SPIN_CONTROL_TEXT);
+  AddDefaultAddon(ss, "screensaver.mode", 356, "screensaver.xbmc.builtin.dim", ADDON_SCREENSAVER);
+  AddString(ss, "screensaver.settings", 21417, "", BUTTON_CONTROL_STANDARD);
+  AddString(ss, "screensaver.preview", 1000, "", BUTTON_CONTROL_STANDARD);
+  AddSeparator(ss, "screensaver.sep1");
   AddBool(ss, "screensaver.usemusicvisinstead", 13392, true);
   AddBool(ss, "screensaver.usedimonpause", 22014, true);
-  AddSeparator(ss, "screensaver.sep1");
-  AddInt(ss, "screensaver.dimlevel", 362, 20, 0, 10, 80, SPIN_CONTROL_INT_PLUS, MASK_PERCENT);
-  AddPath(ss, "screensaver.slideshowpath", 774, "F:\\Pictures\\", BUTTON_CONTROL_PATH_INPUT, false, 657);
-  AddSeparator(ss, "screensaver.sep2");
-  AddString(ss, "screensaver.preview", 1000, "", BUTTON_CONTROL_STANDARD);
 
   AddPath(NULL,"system.playlistspath",20006,"set default",BUTTON_CONTROL_PATH_INPUT,false);
 }
@@ -808,6 +812,14 @@ void CGUISettings::AddPath(CSettingsCategory* cat, const char *strSetting, int i
   settingsMap.insert(pair<CStdString, CSetting*>(CStdString(strSetting).ToLower(), pSetting));
 }
 
+void CGUISettings::AddDefaultAddon(CSettingsCategory* cat, const char *strSetting, int iLabel, const char *strData, const TYPE type)
+{
+  int iOrder = cat?++cat->m_entries:0;
+  CSettingAddon* pSetting = new CSettingAddon(iOrder, CStdString(strSetting).ToLower(), iLabel, strData, type);
+  if (!pSetting) return ;
+  settingsMap.insert(pair<CStdString, CSetting*>(CStdString(strSetting).ToLower(), pSetting));
+}
+
 const CStdString &CGUISettings::GetString(const char *strSetting, bool bPrompt) const
 {
   ASSERT(settingsMap.size());
@@ -970,23 +982,20 @@ void CGUISettings::LoadFromXML(TiXmlElement *pRootElement, mapIter &it, bool adv
     if (pChild)
     {
       const TiXmlElement *pGrandChild = pChild->FirstChildElement(strSplit[1].c_str());
-      if (pGrandChild && pGrandChild->FirstChild())
+      if (pGrandChild)
       {
-        CStdString strValue = pGrandChild->FirstChild()->Value();
-        if (strValue.size() )
-        {
-          if (strValue != "-")
-          { // update our item
-            if ((*it).second->GetType() == SETTINGS_TYPE_PATH)
-            { // check our path
-              int pathVersion = 0;
-              pGrandChild->Attribute("pathversion", &pathVersion);
-              strValue = CSpecialProtocol::ReplaceOldPath(strValue, pathVersion);
-            }
-            (*it).second->FromString(strValue);
-            if (advanced)
-              (*it).second->SetAdvanced();
+        CStdString strValue = pGrandChild->FirstChild() ? pGrandChild->FirstChild()->Value() : "";
+        if (strValue != "-")
+        { // update our item
+          if ((*it).second->GetType() == SETTINGS_TYPE_PATH)
+          { // check our path
+            int pathVersion = 0;
+            pGrandChild->Attribute("pathversion", &pathVersion);
+            strValue = CSpecialProtocol::ReplaceOldPath(strValue, pathVersion);
           }
+          (*it).second->FromString(strValue);
+          if (advanced)
+            (*it).second->SetAdvanced();
         }
       }
     }

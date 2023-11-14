@@ -19,8 +19,9 @@
  */
 
 #include "pyutil.h"
+#include "pythreadstate.h"
 #include <wchar.h>
-#include "SkinInfo.h"
+#include "addons/Skin.h"
 #include "tinyXML/tinyxml.h"
 #include "Application.h"
 #include "ApplicationMessenger.h"
@@ -99,10 +100,9 @@ namespace PYXBMC
 
   void PyXBMCWaitForThreadMessage(int message, int param1, int param2)
   {
-    Py_BEGIN_ALLOW_THREADS
+    CPyThreadState pyState;
     ThreadMessage tMsg = {message, param1, param2};
     g_application.getApplicationMessenger().SendMessage(tMsg, true);
-    Py_END_ALLOW_THREADS
   }
 
   static char defaultImage[1024];
@@ -120,7 +120,7 @@ namespace PYXBMC
     control.SetAttribute("type", cControlType);
     TiXmlElement filler("description");
     control.InsertEndChild(filler);
-    g_SkinInfo.ResolveIncludes(&control);
+    g_SkinInfo->ResolveIncludes(&control);
 
     // ok, now check for our texture type
     TiXmlElement *pTexture = control.FirstChildElement(cTextureType);
@@ -170,4 +170,79 @@ namespace PYXBMC
       return PyLong_AsLong(value);
   }
 
+  bool PyXBMCGetAddonId(std::string &addonId)
+  {
+    // we need to retrieve the addon's ID from python using
+    // __xbmcaddonid__ so let's get a reference to the main
+    // module and global dictionary
+    PyObject* main_module = PyImport_AddModule((char*)"__main__");
+    PyObject* global_dict = PyModule_GetDict(main_module);
+
+    // extract a reference to the function "func_name"
+    // from the global dictionary
+    PyObject* pyid = PyDict_GetItemString(global_dict, "__xbmcaddonid__");
+
+    // if we were unable to retrieve the addon's ID return false
+    if (pyid == NULL)
+     return false;
+
+    addonId = PyString_AsString(pyid);
+    return true;
+  }
+}
+
+struct SPending
+{
+  int(*func)(void*);
+  void*          args;
+  PyThreadState* state;
+};
+
+typedef std::vector<SPending> CallQueue;
+static CallQueue g_callQueue;
+static CCriticalSection g_critSectionPyCall;
+
+void _PyXBMC_AddPendingCall(PyThreadState* state, int(*func)(void*), void *arg)
+{
+  CSingleLock lock(g_critSectionPyCall);
+  SPending p;
+  p.func  = func;
+  p.args  = arg;
+  p.state = state;
+  g_callQueue.push_back(p);
+}
+
+void _PyXBMC_ClearPendingCalls(PyThreadState* state)
+{
+  CSingleLock lock(g_critSectionPyCall);
+  for(CallQueue::iterator it = g_callQueue.begin(); it!= g_callQueue.end();)
+  {
+    if(it->state = state)
+      it = g_callQueue.erase(it);
+    else
+      it++;
+  }
+}
+
+void _PyXBMC_MakePendingCalls()
+{
+  CSingleLock lock(g_critSectionPyCall);
+  CallQueue::iterator iter = g_callQueue.begin();
+  while (iter != g_callQueue.end())
+  {
+    SPending p(*iter);
+    // only call when we are in the right thread state
+    if(p.state != PyThreadState_Get())
+    {
+      iter++;
+      continue;
+    }
+    g_callQueue.erase(iter);
+    lock.Leave();
+    if (p.func)
+      p.func(p.args);
+    //(*((*iter).first))((*iter).second);
+    lock.Enter();
+    iter = g_callQueue.begin();
+  }
 }

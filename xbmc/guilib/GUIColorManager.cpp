@@ -22,7 +22,7 @@
 #include "GUIColorManager.h"
 #include "utils/URIUtils.h"
 #include "FileSystem/SpecialProtocol.h"
-#include "SkinInfo.h"
+#include "addons/Skin.h"
 
 CGUIColorManager g_colorManager;
 
@@ -47,12 +47,12 @@ void CGUIColorManager::Load(const CStdString &colorFile)
 
   // load the global color map if it exists
   TiXmlDocument xmlDoc;
-  if (xmlDoc.LoadFile(PTH_IC("special://xbmc/system/colors.xml")))
+  if (xmlDoc.LoadFile(CSpecialProtocol::TranslatePathConvertCase("special://xbmc/system/colors.xml")))
     LoadXML(xmlDoc);
 
   // first load the default color map if it exists
   CStdString path, basePath;
-  URIUtils::AddFileToFolder(g_SkinInfo.GetBaseDir(), "colors", basePath);
+  URIUtils::AddFileToFolder(g_SkinInfo->Path(), "colors", basePath);
   URIUtils::AddFileToFolder(basePath, "defaults.xml", path);
 
   if (xmlDoc.LoadFile(path))

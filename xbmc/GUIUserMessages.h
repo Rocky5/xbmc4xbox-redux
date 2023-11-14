@@ -80,10 +80,11 @@
 #define GUI_MSG_QUEUE_NEXT_ITEM         GUI_MSG_USER + 16
 
 // Visualisation messages when loading/unloading
-#define GUI_MSG_VISUALISATION_UNLOADING GUI_MSG_USER + 17 // sent by vis
-#define GUI_MSG_VISUALISATION_LOADED    GUI_MSG_USER + 18 // sent by vis
-#define GUI_MSG_GET_VISUALISATION       GUI_MSG_USER + 19 // request to vis for the visualisation object
-#define GUI_MSG_VISUALISATION_ACTION    GUI_MSG_USER + 20 // request the vis perform an action
+#define GUI_MSG_VISUALISATION_UNLOADING GUI_MSG_USER + 117 // sent by vis
+#define GUI_MSG_VISUALISATION_LOADED    GUI_MSG_USER + 118 // sent by vis
+#define GUI_MSG_GET_VISUALISATION       GUI_MSG_USER + 119 // request to vis for the visualisation object
+#define GUI_MSG_VISUALISATION_ACTION    GUI_MSG_USER + 120 // request the vis perform an action
+#define GUI_MSG_VISUALISATION_RELOAD    GUI_MSG_USER + 121 // request the vis to reload
 
 #define GUI_MSG_VIDEO_MENU_STARTED      GUI_MSG_USER + 21 // sent by dvdplayer on entry to the menu
 
@@ -126,6 +127,9 @@
 
 // Sent from filesystem if a path is known to have changed
 #define GUI_MSG_UPDATE_PATH           GUI_MSG_USER + 33
+
+// Sent to the AddonSetting dialogs from addons if they updated a setting
+#define GUI_MSG_SETTING_UPDATED       GUI_MSG_USER + 35
 
 // Message sent to CGUIWindowSlideshow to show picture
 #define GUI_MSG_SHOW_PICTURE          GUI_MSG_USER + 36

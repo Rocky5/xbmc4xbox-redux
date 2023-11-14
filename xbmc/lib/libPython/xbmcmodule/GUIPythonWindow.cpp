@@ -29,10 +29,20 @@
 
 using namespace PYXBMC;
 
+PyXBMCAction::~PyXBMCAction() {
+     if (pObject) {
+       Py_DECREF(pObject);
+     }
+
+     pObject = NULL;
+     Py_DECREF(pCallbackWindow);
+}
+
 CGUIPythonWindow::CGUIPythonWindow(int id)
 : CGUIWindow(id, "")
 {
   pCallbackWindow = NULL;
+  m_threadState = NULL;
   m_actionEvent = CreateEvent(NULL, true, false, NULL);
   m_loadType = LOAD_ON_GUI_INIT;
 }
@@ -55,12 +65,11 @@ bool CGUIPythonWindow::OnAction(const CAction &action)
 
   if(pCallbackWindow)
   {
-    PyXBMCAction* inf = new PyXBMCAction;
+    PyXBMCAction* inf = new PyXBMCAction(pCallbackWindow);
     inf->pObject = Action_FromAction(action);
-    inf->pCallbackWindow = pCallbackWindow;
 
     // aquire lock?
-    Py_AddPendingCall(Py_XBMC_Event_OnAction, inf);
+    PyXBMC_AddPendingCall(m_threadState, Py_XBMC_Event_OnAction, inf);
     PulseActionEvent();
   }
   return ret;
@@ -97,8 +106,7 @@ bool CGUIPythonWindow::OnMessage(CGUIMessage& message)
       int iControl=message.GetSenderId();
       if(pCallbackWindow)
       {
-        PyXBMCAction* inf = new PyXBMCAction;
-        inf->pObject = NULL;
+        PyXBMCAction* inf = new PyXBMCAction(pCallbackWindow);
         // find python control object with same iControl
         std::vector<Control*>::iterator it = ((PYXBMC::Window*)pCallbackWindow)->vecControls.begin();
         while (it != ((PYXBMC::Window*)pCallbackWindow)->vecControls.end())
@@ -120,17 +128,17 @@ bool CGUIPythonWindow::OnMessage(CGUIMessage& message)
             ControlButton_CheckExact(inf->pObject) || ControlRadioButton_CheckExact(inf->pObject) ||
             ControlCheckMark_CheckExact(inf->pObject))
           {
-            // create a new call and set it in the python queue
-            inf->pCallbackWindow = pCallbackWindow;
-
             // aquire lock?
-            Py_AddPendingCall(Py_XBMC_Event_OnControl, inf);
+            PyXBMC_AddPendingCall(m_threadState, Py_XBMC_Event_OnControl, inf);
             PulseActionEvent();
 
             // return true here as we are handling the event
             return true;
           }
         }
+
+        // if we get here, we didn't add the action
+        delete inf;
       }
     }
     break;
@@ -139,9 +147,10 @@ bool CGUIPythonWindow::OnMessage(CGUIMessage& message)
   return CGUIWindow::OnMessage(message);
 }
 
-void CGUIPythonWindow::SetCallbackWindow(PyObject *object)
+void CGUIPythonWindow::SetCallbackWindow(PyThreadState *state, PyObject *object)
 {
   pCallbackWindow = object;
+  m_threadState   = state;
 }
 
 void CGUIPythonWindow::WaitForActionEvent(unsigned int timeout)
