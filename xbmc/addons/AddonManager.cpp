@@ -247,10 +247,7 @@ bool CAddonMgr::Init()
   // would allow partial unloading of addon framework
   m_cp_context = m_cpluff->create_context(&status);
   assert(m_cp_context);
-  if (!CSpecialProtocol::XBMCIsHome())
-  {
-    status = m_cpluff->register_pcollection(m_cp_context, CSpecialProtocol::TranslatePath("special://home/addons"));
-  }
+  status = m_cpluff->register_pcollection(m_cp_context, CSpecialProtocol::TranslatePath("special://home/addons"));
   status = m_cpluff->register_pcollection(m_cp_context, CSpecialProtocol::TranslatePath("special://xbmc/addons"));
   if (status != CP_OK)
   {
