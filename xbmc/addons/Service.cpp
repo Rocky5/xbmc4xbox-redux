@@ -30,14 +30,18 @@ namespace ADDON
 {
 
 CService::CService(const cp_extension_t *ext)
-  : CAddon(ext), m_type(UNKNOWN)
+  : CAddon(ext), m_type(UNKNOWN), m_startOption(LOGIN)
 {
   BuildServiceType();
+
+  CStdString start = CAddonMgr::Get().GetExtValue(ext->configuration, "@start");
+  if (start.Equals("startup"))
+    m_startOption = STARTUP;
 }
 
 
 CService::CService(const AddonProps &props)
-  : CAddon(props), m_type(UNKNOWN)
+  : CAddon(props), m_type(UNKNOWN), m_startOption(LOGIN)
 {
   BuildServiceType();
 }

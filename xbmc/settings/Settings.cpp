@@ -60,6 +60,7 @@
 #include "utils/CharsetConverter.h"
 #include "utils/log.h"
 #include "utils/FileUtils.h"
+#include "addons/AddonManager.h"
 
 using namespace std;
 using namespace XFILE;
@@ -1264,6 +1265,8 @@ bool CSettings::LoadProfile(unsigned int index)
 
     CUtil::DeleteMusicDatabaseDirectoryCache();
     CUtil::DeleteVideoDatabaseDirectoryCache();
+
+    ADDON::CAddonMgr::Get().StartServices(false);
 
     return true;
   }

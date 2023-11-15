@@ -1077,6 +1077,8 @@ int CBuiltins::Execute(const CStdString& execString)
     if (musicScan && musicScan->IsScanning())
       musicScan->StopScanning();
 
+    ADDON::CAddonMgr::Get().StopServices(true);
+
     g_application.getNetwork().NetworkMessage(CNetwork::SERVICES_DOWN,1);
     g_application.getNetwork().Deinitialize();
 #ifdef HAS_XBOX_HARDWARE
