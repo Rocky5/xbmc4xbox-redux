@@ -315,12 +315,25 @@ int CGUIWindowAddonBrowser::SelectAddonID(TYPE type, CStdString &addonID, bool s
     return 0;
 
   ADDON::VECADDONS addons;
-  CAddonMgr::Get().GetAddons(type, addons);
+  if (type == ADDON_AUDIO)
+    CAddonsDirectory::GetScriptsAndPlugins("audio",addons);
+  else if (type == ADDON_EXECUTABLE)
+    CAddonsDirectory::GetScriptsAndPlugins("executable",addons);
+  else if (type == ADDON_IMAGE)
+    CAddonsDirectory::GetScriptsAndPlugins("image",addons);
+  else if (type == ADDON_VIDEO)
+    CAddonsDirectory::GetScriptsAndPlugins("video",addons);
+  else
+    CAddonMgr::Get().GetAddons(type, addons);
+
+  CFileItemList items;
+  for (ADDON::IVECADDONS i = addons.begin(); i != addons.end(); ++i)
+    items.Add(CAddonsDirectory::FileItemFromAddon(*i, ""));
+
   dialog->SetHeading(TranslateType(type, true));
   dialog->Reset();
   dialog->SetUseDetails(true);
   dialog->EnableButton(true, 21452);
-  CFileItemList items;
   if (showNone)
   {
     CFileItemPtr item(new CFileItem("", false));
@@ -329,8 +342,6 @@ int CGUIWindowAddonBrowser::SelectAddonID(TYPE type, CStdString &addonID, bool s
     item->SetIconImage("DefaultAddonNone.png");
     items.Add(item);
   }
-  for (ADDON::IVECADDONS i = addons.begin(); i != addons.end(); ++i)
-    items.Add(CAddonsDirectory::FileItemFromAddon(*i, ""));
   dialog->SetItems(&items);
   dialog->DoModal();
   if (dialog->IsButtonPressed())
