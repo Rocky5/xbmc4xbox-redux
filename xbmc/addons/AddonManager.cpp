@@ -135,7 +135,10 @@ AddonPtr CAddonMgr::Factory(const cp_extension_t *props)
           if (URIUtils::GetExtension(library).Equals(".py", false))
             return AddonPtr(new CScreenSaver(props));
         }
-#if defined(_LINUX) && !defined(__APPLE__)
+#if defined(TARGET_ANDROID)                                                                                                                                                      
+          if ((value = GetExtValue(props->plugin->extensions->configuration, "@library_android")) && value.empty())                                                                
+            break;                                                                                                                                                                 
+ #elif defined(_LINUX) && !defined(TARGET_DARWIN)
         if ((value = GetExtValue(props->plugin->extensions->configuration, "@library_linux")) && value.empty())
           break;
 #elif defined(_WIN32) && defined(HAS_SDL_OPENGL)
@@ -144,7 +147,7 @@ AddonPtr CAddonMgr::Factory(const cp_extension_t *props)
 #elif defined(_WIN32) && defined(HAS_DX)
         if ((value = GetExtValue(props->plugin->extensions->configuration, "@library_windx")) && value.empty())
           break;
-#elif defined(__APPLE__)
+#elif defined(TARGET_DARWIN)
         if ((value = GetExtValue(props->plugin->extensions->configuration, "@library_osx")) && value.empty())
           break;
 #elif defined(_XBOX)
@@ -416,7 +419,7 @@ bool CAddonMgr::GetAddon(const CStdString &str, AddonPtr &addon, const TYPE &typ
   {
     addon = GetAddonFromDescriptor(cpaddon);
     m_cpluff->release_info(m_cp_context, cpaddon);
-    if (enabledOnly && m_database.IsAddonDisabled(addon->ID()))
+    if (addon.get() && enabledOnly && m_database.IsAddonDisabled(addon->ID()))
       return false;
     return NULL != addon.get();
   }
@@ -596,14 +599,18 @@ bool CAddonMgr::PlatformSupportsAddon(const cp_plugin_info_t *plugin) const
     {
       if (platforms[i] == "all")
         return true;
-#if defined(_LINUX) && !defined(__APPLE__)
+#if defined(TARGET_ANDROID)
+      if (platforms[i] == "android")
+#elif defined(_LINUX) && !defined(TARGET_DARWIN)
       if (platforms[i] == "linux")
 #elif defined(_WIN32) && defined(HAS_SDL_OPENGL)
       if (platforms[i] == "wingl")
 #elif defined(_WIN32) && defined(HAS_DX)
       if (platforms[i] == "windx")
-#elif defined(__APPLE__)
+#elif defined(TARGET_DARWIN_OSX)
       if (platforms[i] == "osx")
+#elif defined(TARGET_DARWIN_IOS)
+      if (platforms[i] == "ios")
 #endif
         return true;
     }
