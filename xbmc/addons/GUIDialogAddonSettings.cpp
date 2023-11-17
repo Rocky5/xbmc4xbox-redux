@@ -330,7 +330,11 @@ bool CGUIDialogAddonSettings::ShowVirtualKeyboard(int iControl)
             if (!source || strcmpi(source, "local") != 0)
               g_mediaManager.GetNetworkLocations(networkShares);
             localShares.insert(localShares.end(), networkShares.begin(), networkShares.end());
-            shares = &localShares;
+          }
+          else // always append local drives
+          {
+            localShares = *shares;
+            g_mediaManager.GetLocalDrives(localShares);
           }
 
           if (strcmpi(type, "folder") == 0)
@@ -340,12 +344,12 @@ bool CGUIDialogAddonSettings::ShowVirtualKeyboard(int iControl)
             if (option)
               bWriteOnly = (strcmpi(option, "writeable") == 0);
 
-            if (CGUIDialogFileBrowser::ShowAndGetDirectory(*shares, label, value, bWriteOnly))
+            if (CGUIDialogFileBrowser::ShowAndGetDirectory(localShares, label, value, bWriteOnly))
               ((CGUIButtonControl*) control)->SetLabel2(value);
           }
           else if (strcmpi(type, "image") == 0)
           {
-            if (CGUIDialogFileBrowser::ShowAndGetImage(*shares, label, value))
+            if (CGUIDialogFileBrowser::ShowAndGetImage(localShares, label, value))
               ((CGUIButtonControl*) control)->SetLabel2(value);
           }
           else
@@ -390,7 +394,7 @@ bool CGUIDialogAddonSettings::ShowVirtualKeyboard(int iControl)
               bUseFileDirectories = find(options.begin(), options.end(), "treatasfolder") != options.end();
             }
 
-            if (CGUIDialogFileBrowser::ShowAndGetFile(*shares, strMask, label, value))
+            if (CGUIDialogFileBrowser::ShowAndGetFile(localShares, strMask, label, value))
               ((CGUIButtonControl*) control)->SetLabel2(value);
           }
         }
