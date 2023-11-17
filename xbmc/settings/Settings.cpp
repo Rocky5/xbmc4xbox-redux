@@ -99,6 +99,7 @@ void CSettings::Initialize()
   m_bStartVideoWindowed = false;
   m_bAddonAutoUpdate = false;
   m_bAddonNotifications = true;
+  m_bAddonForeignFilter = false;
 
   m_nVolumeLevel = 0;
   m_dynamicRangeCompressionLevel = 0;
@@ -778,6 +779,7 @@ bool CSettings::LoadSettings(const CStdString& strSettingsFile)
     GetInteger(pElement, "httpapibroadcastport", m_HttpApiBroadcastPort, 8278, 1, 65535);
     XMLUtils::GetBoolean(pElement, "addonautoupdate", m_bAddonAutoUpdate);
     XMLUtils::GetBoolean(pElement, "addonnotifications", m_bAddonNotifications);
+    XMLUtils::GetBoolean(pElement, "addonforeignfilter", m_bAddonForeignFilter);
   }
 
   pElement = pRootElement->FirstChildElement("defaultvideosettings");
@@ -1137,6 +1139,7 @@ bool CSettings::SaveSettings(const CStdString& strSettingsFile, CGUISettings *lo
   XMLUtils::SetInt(pNode, "httpapibroadcastlevel", m_HttpApiBroadcastLevel);
   XMLUtils::SetBoolean(pNode, "addonautoupdate", m_bAddonAutoUpdate);
   XMLUtils::SetBoolean(pNode, "addonnotifications", m_bAddonNotifications);
+  XMLUtils::SetBoolean(pNode, "addonforeignfilter", m_bAddonForeignFilter);
 
   // default video settings
   TiXmlElement videoSettingsNode("defaultvideosettings");
