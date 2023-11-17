@@ -2822,12 +2822,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					RelativePath=".\xbmc\addons\DllLibCPluff.h">
 				</File>
 				<File
-					RelativePath=".\xbmc\addons\DllScreenSaver.h">
-				</File>
-				<File
-					RelativePath=".\xbmc\addons\DllVisualisation.h">
-				</File>
-				<File
 					RelativePath=".\xbmc\addons\fft.cpp">
 				</File>
 				<File
