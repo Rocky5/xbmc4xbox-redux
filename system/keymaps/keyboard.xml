@@ -366,4 +366,9 @@
       <space>Highlight</space>
     </keyboard>
   </FileBrowser>
+  <AddonSettings>
+    <keyboard>
+      <delete>Delete</delete>
+    </keyboard>
+  </AddonSettings>
 </keymap>

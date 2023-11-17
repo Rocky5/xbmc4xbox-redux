@@ -320,4 +320,9 @@
       <Y>Highlight</Y>
     </gamepad>
   </FileBrowser>
+  <AddonSettings>
+    <keyboard>
+      <B>Delete</B>
+    </keyboard>
+  </AddonSettings>
 </keymap>
