@@ -19,7 +19,7 @@
  *
  */
 #include "Visualisation.h"
-#include "fft.h"
+#include "utils/fft.h"
 #include "GUIInfoManager.h"
 #include "Application.h"
 #include "settings/Settings.h"
