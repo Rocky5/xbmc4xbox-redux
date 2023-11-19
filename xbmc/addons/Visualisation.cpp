@@ -91,6 +91,7 @@ bool CVisualisation::Create(int x, int y, int w, int h)
   m_pInfo->name = strdup(Name().c_str());
   m_pInfo->presets = strdup(CSpecialProtocol::TranslatePath(Path()).c_str());
   m_pInfo->profile = strdup(CSpecialProtocol::TranslatePath(Profile()).c_str());
+  m_pInfo->submodule = NULL;
 
   if (CAddonDll<DllVisualisation, Visualisation, VIS_PROPS>::Create())
   {
@@ -218,16 +219,12 @@ bool CVisualisation::OnAction(VIS_ACTION action, void *param)
       if ( action == VIS_ACTION_UPDATE_TRACK && param )
       {
         const CMusicInfoTag* tag = (const CMusicInfoTag*)param;
-        CStdString artist(StringUtils::Join(tag->GetArtist(), g_advancedSettings.m_musicItemSeparator));
-        CStdString albumArtist(StringUtils::Join(tag->GetAlbumArtist(), g_advancedSettings.m_musicItemSeparator));
-        CStdString genre(StringUtils::Join(tag->GetGenre(), g_advancedSettings.m_musicItemSeparator));
-
         VisTrack track;
         track.title       = tag->GetTitle().c_str();
-        track.artist      = artist.c_str();
+        track.artist      = StringUtils::Join(tag->GetArtist(), g_advancedSettings.m_musicItemSeparator).c_str();
         track.album       = tag->GetAlbum().c_str();
-        track.albumArtist = albumArtist.c_str();
-        track.genre       = genre.c_str();
+        track.albumArtist = StringUtils::Join(tag->GetAlbumArtist(), g_advancedSettings.m_musicItemSeparator).c_str();
+        track.genre       = StringUtils::Join(tag->GetGenre(), g_advancedSettings.m_musicItemSeparator).c_str();
         track.comment     = tag->GetComment().c_str();
         track.lyrics      = tag->GetLyrics().c_str();
         track.trackNumber = tag->GetTrackNumber();
@@ -260,13 +257,12 @@ void CVisualisation::OnInitialize(int iChannels, int iSamplesPerSec, int iBitsPe
   UpdateTrack();
 
   CLog::Log(LOGDEBUG, "OnInitialize() done");
-} 
+}
 
 void CVisualisation::OnAudioData(const unsigned char* pAudioData, int iAudioDataLength)
 {
   if (!m_pStruct)
     return ;
-  if (Initialized())
 
   // FIXME: iAudioDataLength should never be less than 0
   if (iAudioDataLength<0)
@@ -446,6 +442,13 @@ CStdString CVisualisation::GetFriendlyName(const CStdString& strVisz,
 
 bool CVisualisation::IsLocked()
 {
+  if (!m_presets.empty())
+  {
+    if (!m_pStruct)
+      return false;
+
+    return m_pStruct->IsLocked();
+  }
   return false;
 }
 
@@ -487,3 +490,4 @@ CStdString CVisualisation::GetPresetName()
   else
     return "";
 }
+
