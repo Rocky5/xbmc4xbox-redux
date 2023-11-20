@@ -117,61 +117,6 @@ const CStdString GetIcon(const ADDON::TYPE& type)
   return "";
 }
 
-/**
- * AddonVersion
- *
- */
-
-bool AddonVersion::operator==(const AddonVersion &rhs) const
-{
-  return str.Equals(rhs.str);
-}
-
-bool AddonVersion::operator!=(const AddonVersion &rhs) const
-{
-  return !(*this == rhs);
-}
-
-bool AddonVersion::operator>(const AddonVersion &rhs) const
-{
-  return (strverscmp(str.c_str(), rhs.str.c_str()) > 0);
-}
-
-bool AddonVersion::operator>=(const AddonVersion &rhs) const
-{
-  return (*this == rhs) || (*this > rhs);
-}
-
-bool AddonVersion::operator<(const AddonVersion &rhs) const
-{
-  return (strverscmp(str.c_str(), rhs.str.c_str()) < 0);
-}
-
-bool AddonVersion::operator<=(const AddonVersion &rhs) const
-{
-  return (*this == rhs) || !(*this > rhs);
-}
-
-CStdString AddonVersion::Print() const
-{
-  CStdString out;
-  out.Format("%s %s", g_localizeStrings.Get(24051), str); // "Version <str>"
-  return CStdString(out);
-}
-
-bool AddonVersion::SplitFileName(CStdString& ID, CStdString& version,
-                                  const CStdString& filename)
-{
-  int dpos = filename.rfind("-");
-  if (dpos < 0)
-    return false;
-  ID = filename.Mid(0,dpos);
-  version = filename.Mid(dpos+1);
-  version = version.Mid(0,version.size()-4);
-
-  return true;
-}
-
 #define EMPTY_IF(x,y) \
   { \
     CStdString fan=CAddonMgr::Get().GetExtValue(metadata->configuration, x); \
@@ -232,7 +177,7 @@ void AddonProps::BuildDependencies(const cp_plugin_info_t *plugin)
     return;
   for (unsigned int i = 0; i < plugin->num_imports; ++i)
     dependencies.insert(make_pair(CStdString(plugin->imports[i].plugin_id),
-                        make_pair(AddonVersion(plugin->imports[i].version), plugin->imports[i].optional != 0)));
+                        make_pair(AddonVersion(version), plugin->imports[i].optional != 0)));
 }
 
 /**

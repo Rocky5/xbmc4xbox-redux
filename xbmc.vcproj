@@ -2819,6 +2819,12 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					RelativePath=".\xbmc\addons\AddonStatusHandler.h">
 				</File>
 				<File
+					RelativePath=".\xbmc\addons\AddonVersion.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\addons\AddonVersion.h">
+				</File>
+				<File
 					RelativePath=".\xbmc\addons\DllAddon.h">
 				</File>
 				<File

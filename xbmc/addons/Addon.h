@@ -20,6 +20,7 @@
  */
 
 #include "IAddon.h"
+#include "addons/AddonVersion.h"
 #include "tinyXML/tinyxml.h"
 #include "Util.h"
 #include "URL.h"
@@ -41,25 +42,6 @@ namespace ADDON
 const CStdString    TranslateType(const TYPE &type, bool pretty=false);
 const CStdString    GetIcon(const TYPE &type);
       TYPE          TranslateType(const CStdString &string);
-
-class AddonVersion
-{
-public:
-  AddonVersion(const CStdString &str) : str(str) {}
-  bool operator==(const AddonVersion &rhs) const;
-  bool operator!=(const AddonVersion &rhs) const;
-  bool operator>(const AddonVersion &rhs) const;
-  bool operator>=(const AddonVersion &rhs) const;
-  bool operator<(const AddonVersion &rhs) const;
-  bool operator<=(const AddonVersion &rhs) const;
-  CStdString Print() const;
-  const char *c_str() const { return str.c_str(); };
-
-  static bool SplitFileName(CStdString& ID, CStdString& version,
-                            const CStdString& filename);
-private:
-  CStdString str;
-};
 
 class AddonProps
 {
