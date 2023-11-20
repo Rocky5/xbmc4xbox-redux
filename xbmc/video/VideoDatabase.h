@@ -521,11 +521,24 @@ public:
    */
   bool GetItemsForPath(const CStdString &content, const CStdString &path, CFileItemList &items);
 
+  /*! \brief Check whether a given scraper is in use.
+   \param scraperID the scraper to check for.
+   \return true if the scraper is in use, false otherwise.
+   */
+  bool ScraperInUse(const CStdString &scraperID) const;
+
   // scanning hashes and paths scanned
   bool SetPathHash(const CStdString &path, const CStdString &hash);
   bool GetPathHash(const CStdString &path, CStdString &hash);
   bool GetPaths(std::set<CStdString> &paths);
   bool GetPathsForTvShow(int idShow, std::vector<int>& paths);
+
+  /*! \brief retrieve subpaths of a given path.  Assumes a heirarchical folder structure
+   \param basepath the root path to retrieve subpaths for
+   \param subpaths the returned subpaths
+   \return true if we successfully retrieve subpaths (may be zero), false on error
+   */
+  bool GetSubPaths(const CStdString& basepath, std::vector<int>& subpaths);
 
   // for music + musicvideo linkups - if no album and title given it will return the artist id, else the id of the matching video
   int GetMatchingMusicVideo(const CStdString& strArtist, const CStdString& strAlbum = "", const CStdString& strTitle = "");

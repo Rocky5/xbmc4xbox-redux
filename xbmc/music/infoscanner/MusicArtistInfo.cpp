@@ -26,17 +26,9 @@
 #include "CharsetConverter.h"
 #include "utils/log.h"
 
-using namespace MUSIC_GRABBER;
 using namespace std;
-
-CMusicArtistInfo::CMusicArtistInfo(void)
-{
-  m_bLoaded = false;
-}
-
-CMusicArtistInfo::~CMusicArtistInfo(void)
-{
-}
+using namespace XFILE;
+using namespace MUSIC_GRABBER;
 
 CMusicArtistInfo::CMusicArtistInfo(const CStdString& strArtist, const CScraperUrl& strArtistURL)
 {
@@ -45,110 +37,14 @@ CMusicArtistInfo::CMusicArtistInfo(const CStdString& strArtist, const CScraperUr
   m_bLoaded = false;
 }
 
-const CArtist& CMusicArtistInfo::GetArtist() const
-{
-  return m_artist;
-}
-
-CArtist& CMusicArtistInfo::GetArtist()
-{
-  return m_artist;
-}
-
 void CMusicArtistInfo::SetArtist(const CArtist& artist)
 {
   m_artist = artist;
   m_bLoaded = true;
 }
 
-const CScraperUrl& CMusicArtistInfo::GetArtistURL() const
+bool CMusicArtistInfo::Load(CCurlFile& http, const ADDON::ScraperPtr& scraper,
+  const CStdString &strSearch)
 {
-  return m_artistURL;
-}
-
-bool CMusicArtistInfo::Parse(const TiXmlElement* artist, bool bChained)
-{
-  if (!m_artist.Load(artist,bChained))
-    return false;
-
-  SetLoaded(true);
-
-  return true;
-}
-
-bool CMusicArtistInfo::Load(XFILE::CCurlFile& http, const ADDON::ScraperPtr& scraper, const CStdString& strFunction, const CScraperUrl* url)
-{
-  // load our scraper xml
-  if (!m_parser.Load(scraper))
-    return false;
-
-  bool bChained=true;
-  if (!url)
-  {
-    bChained=false;
-    url = &GetArtistURL();
-  }
-
-  vector<CStdString> strHTML;
-  for (unsigned int i=0;i<url->m_url.size();++i)
-  {
-    CStdString strCurrHTML;
-    if (!CScraperUrl::Get(url->m_url[i],strCurrHTML, http, m_parser.GetFilename()) || strCurrHTML.size() == 0)
-      return false;
-    strHTML.push_back(strCurrHTML);
-  }
-
-  // now grab our details using the scraper
-  for (unsigned int i=0;i<strHTML.size();++i)
-    m_parser.m_param[i] = strHTML[i];
-
-  m_parser.m_param[strHTML.size()] = m_strSearch;
-
-  CStdString strXML = m_parser.Parse(strFunction);
-  CLog::Log(LOGDEBUG,"scraper: %s returned %s",strFunction.c_str(),strXML.c_str());
-  if (strXML.IsEmpty())
-  {
-    CLog::Log(LOGERROR, "%s: Unable to parse web site",__FUNCTION__);
-    return false;
-  }
-
-  // abit ugly, but should work. would have been better if parser
-  // set the charset of the xml, and we made use of that
-  if (!XMLUtils::HasUTF8Declaration(strXML))
-    g_charsetConverter.unknownToUTF8(strXML);
-
-    // ok, now parse the xml file
-  TiXmlDocument doc;
-  doc.Parse(strXML.c_str(),0,TIXML_ENCODING_UTF8);
-  if (!doc.RootElement())
-  {
-    CLog::Log(LOGERROR, "%s: Unable to parse xml",__FUNCTION__);
-    return false;
-  }
-  
-  bool ret = Parse(doc.RootElement(),bChained);
-  TiXmlElement* pRoot = doc.RootElement();
-  TiXmlElement* xurl = pRoot->FirstChildElement("url");
-  while (xurl && xurl->FirstChild())
-  {
-    const char* szFunction = xurl->Attribute("function");
-    if (szFunction)
-    {
-      CScraperUrl scrURL(xurl);
-      Load(http,scraper,szFunction,&scrURL);
-    }
-    xurl = xurl->NextSiblingElement("url");
-  }
-
-  return ret;
-}
-
-void CMusicArtistInfo::SetLoaded(bool bOnOff)
-{
-  m_bLoaded = bOnOff;
-}
-
-bool CMusicArtistInfo::Loaded() const
-{
-  return m_bLoaded;
+  return m_bLoaded = scraper->GetArtistDetails(http, m_artistURL, strSearch, m_artist);
 }

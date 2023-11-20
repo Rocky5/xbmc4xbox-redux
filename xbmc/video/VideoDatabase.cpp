@@ -44,7 +44,7 @@
 #include "utils/variant.h"
 #include "interfaces/AnnouncementManager.h"
 #include "utils/log.h"
-#include "XBDateTime.h"
+#include "DateTime.h"
 #include "video/VideoDbUrl.h"
 #include "SmartPlaylist.h"
 #include "utils/GroupUtils.h"
@@ -556,6 +556,31 @@ bool CVideoDatabase::GetPathsForTvShow(int idShow, vector<int>& paths)
   catch (...)
   {
     CLog::Log(LOGERROR, "%s error during query: %s",__FUNCTION__, strSQL.c_str());
+  }
+  return false;
+}
+
+bool CVideoDatabase::GetSubPaths(const CStdString &basepath, vector<int>& subpaths)
+{
+  CStdString sql;
+  try
+  {
+    if (!m_pDB.get() || !m_pDS.get())
+      return false;
+
+    sql = PrepareSQL("SELECT idPath FROM path WHERE strPath LIKE '%s%%'", basepath.c_str());
+    m_pDS->query(sql.c_str());
+    while (!m_pDS->eof())
+    {
+      subpaths.push_back(m_pDS->fv(0).get_asInt());
+      m_pDS->next();
+    }
+    m_pDS->close();
+    return true;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s error during query: %s",__FUNCTION__, sql.c_str());
   }
   return false;
 }
@@ -3640,6 +3665,27 @@ void CVideoDatabase::SetScraperForPath(const CStdString& filePath, const Scraper
   {
     CLog::Log(LOGERROR, "%s (%s) failed", __FUNCTION__, filePath.c_str());
   }
+}
+
+bool CVideoDatabase::ScraperInUse(const CStdString &scraperID) const
+{
+  try
+  {
+    if (NULL == m_pDB.get()) return false;
+    if (NULL == m_pDS.get()) return false;
+
+    CStdString sql = PrepareSQL("select count(1) from path where strScraper='%s'", scraperID.c_str());
+    if (!m_pDS->query(sql.c_str()) || m_pDS->num_rows() == 0)
+      return false;
+    bool found = m_pDS->fv(0).get_asInt() > 0;
+    m_pDS->close();
+    return found;
+  }
+  catch (...)
+  {
+    CLog::Log(LOGERROR, "%s(%s) failed", __FUNCTION__, scraperID.c_str());
+  }
+  return false;
 }
 
 bool CVideoDatabase::UpdateOldVersion(int iVersion)
@@ -8709,7 +8755,7 @@ void CVideoDatabase::ImportFromXML(const CStdString &path)
         info.Load(movie);
         CFileItem item(info);
         bool useFolders = info.m_basePath.IsEmpty() ? LookupByFolders(item.GetPath()) : false;
-        scanner.AddMovie(&item,CONTENT_MOVIES,info,useFolders);
+        scanner.AddVideo(&item, CONTENT_MOVIES, useFolders);
         SetPlayCount(item, info.m_playCount, info.m_lastPlayed);
         CStdString file(GetSafeFile(moviesDir, info.m_strTitle));
         CFile::Cache(file + ".tbn", item.GetCachedVideoThumb());
@@ -8723,7 +8769,7 @@ void CVideoDatabase::ImportFromXML(const CStdString &path)
         info.Load(movie);
         CFileItem item(info);
         bool useFolders = info.m_basePath.IsEmpty() ? LookupByFolders(item.GetPath()) : false;
-        scanner.AddMovie(&item,CONTENT_MUSICVIDEOS,info,useFolders);
+        scanner.AddVideo(&item, CONTENT_MUSICVIDEOS, useFolders);
         SetPlayCount(item, info.m_playCount, info.m_lastPlayed);
         CStdString file(GetSafeFile(musicvideosDir, StringUtils::Join(info.m_artist, g_advancedSettings.m_videoItemSeparator) + "." + info.m_strTitle));
         CFile::Cache(file + ".tbn", item.GetCachedVideoThumb());
@@ -8738,7 +8784,7 @@ void CVideoDatabase::ImportFromXML(const CStdString &path)
         DeleteTvShow(info.m_strPath);
         CFileItem item(info);
         bool useFolders = info.m_basePath.IsEmpty() ? LookupByFolders(item.GetPath(), true) : false;
-        int showID = scanner.AddMovie(&item,CONTENT_TVSHOWS,info,useFolders);
+        int showID = scanner.AddVideo(&item, CONTENT_TVSHOWS, useFolders);
         current++;
         CStdString showDir(GetSafeFile(tvshowsDir, info.m_strTitle));
         CFile::Cache(URIUtils::AddFileToFolder(showDir, "folder.jpg"), item.GetCachedVideoThumb());
@@ -8753,7 +8799,7 @@ void CVideoDatabase::ImportFromXML(const CStdString &path)
           CVideoInfoTag info;
           info.Load(episode);
           CFileItem item(info);
-          scanner.AddMovie(&item,CONTENT_TVSHOWS,info,false,showID);
+          scanner.AddVideo(&item, CONTENT_TVSHOWS, false, showID);
           SetPlayCount(item, info.m_playCount, info.m_lastPlayed);
           CStdString file;
           file.Format("s%02ie%02i.tbn", info.m_iSeason, info.m_iEpisode);

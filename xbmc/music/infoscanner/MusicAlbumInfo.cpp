@@ -29,19 +29,9 @@
 #include "utils/StringUtils.h"
 #include "settings/AdvancedSettings.h"
 
-using namespace MUSIC_GRABBER;
 using namespace std;
 
-CMusicAlbumInfo::CMusicAlbumInfo(void)
-{
-  m_strTitle2 = "";
-  m_bLoaded = false;
-  m_relevance = -1;
-}
-
-CMusicAlbumInfo::~CMusicAlbumInfo(void)
-{
-}
+using namespace MUSIC_GRABBER;
 
 CMusicAlbumInfo::CMusicAlbumInfo(const CStdString& strAlbumInfo, const CScraperUrl& strAlbumURL)
 {
@@ -51,7 +41,8 @@ CMusicAlbumInfo::CMusicAlbumInfo(const CStdString& strAlbumInfo, const CScraperU
   m_bLoaded = false;
 }
 
-CMusicAlbumInfo::CMusicAlbumInfo(const CStdString& strAlbum, const CStdString& strArtist, const CStdString& strAlbumInfo, const CScraperUrl& strAlbumURL)
+CMusicAlbumInfo::CMusicAlbumInfo(const CStdString& strAlbum, const CStdString& strArtist,
+  const CStdString& strAlbumInfo, const CScraperUrl& strAlbumURL)
 {
   m_album.strAlbum = strAlbum;
   m_album.artist = StringUtils::Split(strArtist, g_advancedSettings.m_musicItemSeparator);
@@ -59,16 +50,6 @@ CMusicAlbumInfo::CMusicAlbumInfo(const CStdString& strAlbum, const CStdString& s
   m_albumURL = strAlbumURL;
   m_relevance = -1;
   m_bLoaded = false;
-}
-
-const CAlbum& CMusicAlbumInfo::GetAlbum() const
-{
-  return m_album;
-}
-
-CAlbum& CMusicAlbumInfo::GetAlbum()
-{
-  return m_album;
 }
 
 void CMusicAlbumInfo::SetAlbum(CAlbum& album)
@@ -79,121 +60,11 @@ void CMusicAlbumInfo::SetAlbum(CAlbum& album)
   m_bLoaded = true;
 }
 
-const VECSONGS &CMusicAlbumInfo::GetSongs() const
+bool CMusicAlbumInfo::Load(XFILE::CCurlFile& http, const ADDON::ScraperPtr& scraper)
 {
-  return m_album.songs;
-}
-
-void CMusicAlbumInfo::SetSongs(VECSONGS &songs)
-{
-  m_album.songs = songs;
-}
-
-void CMusicAlbumInfo::SetTitle(const CStdString& strTitle)
-{
-  m_album.strAlbum = strTitle;
-}
-
-const CScraperUrl& CMusicAlbumInfo::GetAlbumURL() const
-{
-  return m_albumURL;
-}
-
-const CStdString& CMusicAlbumInfo::GetTitle2() const
-{
-  return m_strTitle2;
-}
-
-const CStdString& CMusicAlbumInfo::GetDateOfRelease() const
-{
-  return m_album.m_strDateOfRelease;
-}
-
-bool CMusicAlbumInfo::Parse(const TiXmlElement* album, bool bChained)
-{
-  if (!m_album.Load(album,bChained))
-    return false;
-
-  if (m_strTitle2.IsEmpty()) 
+  bool fSuccess = scraper->GetAlbumDetails(http, m_albumURL, m_album);
+  if (fSuccess && m_strTitle2.empty()) 
     m_strTitle2 = m_album.strAlbum;
-
-  SetLoaded(true);
-
-  return true;
-}
-
-
-bool CMusicAlbumInfo::Load(XFILE::CCurlFile& http, const ADDON::ScraperPtr& scraper, const CStdString& strFunction, const CScraperUrl* url)
-{
-  // load our scraper xml
-  if (!m_parser.Load(scraper))
-    return false;
-
-  bool bChained=true;
-  if (!url)
-  {
-    bChained=false;
-    url = &GetAlbumURL();
-  }
-
-  vector<CStdString> strHTML;
-  for (unsigned int i=0;i<url->m_url.size();++i)
-  {
-    CStdString strCurrHTML;
-    if (!CScraperUrl::Get(url->m_url[i],strCurrHTML,http,m_parser.GetFilename()) || strCurrHTML.size() == 0)
-      return false;
-    strHTML.push_back(strCurrHTML);
-  }
-
-  // now grab our details using the scraper
-  for (unsigned int i=0;i<strHTML.size();++i)
-    m_parser.m_param[i] = strHTML[i];
-
-  CStdString strXML = m_parser.Parse(strFunction);
-  CLog::Log(LOGDEBUG,"scraper: %s returned %s",strFunction.c_str(),strXML.c_str());
-  if (strXML.IsEmpty())
-  {
-    CLog::Log(LOGERROR, "%s: Unable to parse web site",__FUNCTION__);
-    return false;
-  }
-
-  // abit ugly, but should work. would have been better if parser
-  // set the charset of the xml, and we made use of that
-  if (!XMLUtils::HasUTF8Declaration(strXML))
-    g_charsetConverter.unknownToUTF8(strXML);
-
-    // ok, now parse the xml file
-  TiXmlDocument doc;
-  doc.Parse(strXML.c_str(),0,TIXML_ENCODING_UTF8);
-  if (!doc.RootElement())
-  {
-    CLog::Log(LOGERROR, "%s: Unable to parse xml",__FUNCTION__);
-    return false;
-  }
-
-  bool ret = Parse(doc.RootElement(),bChained);
-  TiXmlElement* pRoot = doc.RootElement();
-  TiXmlElement* xurl = pRoot->FirstChildElement("url");
-  while (xurl && xurl->FirstChild())
-  {
-    const char* szFunction = xurl->Attribute("function");
-    if (szFunction)
-    {      
-      CScraperUrl scrURL(xurl);
-      Load(http,scraper,szFunction,&scrURL);
-    }
-    xurl = xurl->NextSiblingElement("url");
-  }
-  
-  return ret;
-}
-
-void CMusicAlbumInfo::SetLoaded(bool bOnOff)
-{
-  m_bLoaded = bOnOff;
-}
-
-bool CMusicAlbumInfo::Loaded() const
-{
-  return m_bLoaded;
+  SetLoaded(fSuccess);
+  return fSuccess;
 }
