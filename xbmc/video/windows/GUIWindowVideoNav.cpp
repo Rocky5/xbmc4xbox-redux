@@ -671,14 +671,6 @@ void CGUIWindowVideoNav::OnDeleteItem(CFileItemPtr pItem)
         !pItem->GetPath().Left(9).Equals("newtag://"))
       CGUIWindowVideoBase::OnDeleteItem(pItem);
   }
-  else if (m_vecItems->GetPath().Equals("plugin://video/"))
-  {
-    CStdString path;
-    URIUtils::GetDirectory(pItem->GetPath(),path);
-    path.Replace("plugin://","special://home/plugins/");
-    CFileItemPtr item2 = CFileItemPtr(new CFileItem(path,true));
-    CFileUtils::DeleteItem(item2);
-  }
   else if (StringUtils2::StartsWith(pItem->GetPath(), "videodb://movies/sets/") &&
            pItem->GetPath().size() > 22 && pItem->m_bIsFolder)
   {

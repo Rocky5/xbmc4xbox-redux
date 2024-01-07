@@ -700,9 +700,6 @@ namespace PYXBMC
     if (URIUtils::IsDOSPath(strText))
       strText = CSpecialProtocol::ReplaceOldPath(strText, 0);
 
-    if (URIUtils::IsPlugin(strText))
-      strText.Replace("plugin://", "special://home/plugins/");
-
     strPath = CSpecialProtocol::TranslatePath(strText);
 
     return Py_BuildValue((char*)"s", strPath.c_str());
