@@ -84,7 +84,7 @@ void CDVDClock::SetSpeed(int iSpeed)
   if(iSpeed == DVD_PLAYSPEED_PAUSE)
   {
     if(!m_pauseClock)
-      m_pauseClock = CurrentHostFrequency();
+      m_pauseClock = CurrentHostCounter();
     return;
   }
   
@@ -105,7 +105,7 @@ void CDVDClock::SetSpeed(int iSpeed)
 void CDVDClock::Discontinuity(double currentPts)
 {
   CExclusiveLock lock(m_critSection);
-  m_startClock = CurrentHostFrequency();
+  m_startClock = CurrentHostCounter();
   if(m_pauseClock)
     m_pauseClock = m_startClock;
   m_iDisc = currentPts;
@@ -116,7 +116,7 @@ void CDVDClock::Pause()
 {
   CExclusiveLock lock(m_critSection);
   if(!m_pauseClock)
-    m_pauseClock = CurrentHostFrequency();
+    m_pauseClock = CurrentHostCounter();
 }
 
 void CDVDClock::Resume()
