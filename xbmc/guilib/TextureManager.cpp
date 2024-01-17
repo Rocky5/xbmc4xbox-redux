@@ -28,11 +28,12 @@
 #include "utils/StringUtils.h"
 #include "pictures/Picture.h"
 #include "utils/CharsetConverter.h"
-#include "../xbmc/utils/URIUtils.h"
-#include "../xbmc/FileSystem/File.h"
-#include "../xbmc/FileSystem/Directory.h"
-#include "../xbmc/FileSystem/SpecialProtocol.h"
+#include "filesystem/File.h"
+#include "filesystem/Directory.h"
+#include "filesystem/SpecialProtocol.h"
 #include "settings/AdvancedSettings.h"
+#include "utils/TimeUtils.h"
+#include "utils/URIUtils.h"
 #include "addons/Skin.h"
 
 #ifdef HAS_XBOX_D3D
