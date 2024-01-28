@@ -19,15 +19,14 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
-#include <map>
-#include <memory>
 
-#include "utils/CriticalSection.h"
 #include "utils/StdString.h"
 // #include "lib/sqLite/mysqldataset.h"
 #include "lib/sqLite/sqlitedataset.h"
 
-struct DatabaseSettings; // forward
+#include <memory>
+
+class DatabaseSettings; // forward
 class CDbUrl;
 struct SortDescription;
 
@@ -139,6 +138,9 @@ public:
   virtual bool BuildSQL(const CStdString &strBaseDir, const CStdString &strQuery, Filter &filter, CStdString &strSQL, CDbUrl &dbUrl, SortDescription &sorting);
 
 protected:
+  friend class CDatabaseManager;
+  bool Update(const DatabaseSettings &db);
+
   void Split(const CStdString& strFileNameAndPath, CStdString& strPath, CStdString& strFileName);
   DWORD ComputeCRC(const CStdString &text);
 
@@ -147,12 +149,10 @@ protected:
   virtual bool UpdateOldVersion(int version) { return true; };
 
   virtual int GetMinVersion() const=0;
-  virtual const char *GetDefaultDBName() const=0;
+  virtual const char *GetBaseDBName() const=0;
 
+  int GetDBVersion();
   bool UpdateVersion(const CStdString &dbName);
-
-  bool m_bOpen;
-  CStdString m_strDatabaseFile;
 
   bool BuildSQL(const CStdString &strQuery, const Filter &filter, CStdString &strSQL);
 
@@ -163,13 +163,11 @@ protected:
   std::auto_ptr<dbiplus::Dataset> m_pDS2;
 
 private:
-  bool Connect(const DatabaseSettings &db, bool create);
+  void InitSettings(DatabaseSettings &dbSettings);
+  bool Connect(const CStdString &dbName, const DatabaseSettings &db, bool create);
   bool UpdateVersionNumber();
 
   bool m_bMultiWrite; /*!< True if there are any queries in the queue, false otherwise */
 
-  int m_iRefCount;
-
-  CCriticalSection m_critSect;
-  static std::map<std::string, bool> m_updated;
+  unsigned int m_openCount;
 };

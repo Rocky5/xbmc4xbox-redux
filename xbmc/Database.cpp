@@ -18,25 +18,23 @@
  *
  */
 
-#include "utils/log.h"
-#include "utils/SortUtils.h"
-#include "AutoPtrHandle.h"
 #include "Database.h"
-#include "utils/URIUtils.h"
 #include "settings/Settings.h"
 #include "settings/AdvancedSettings.h"
 #include "utils/Crc32.h"
 #include "filesystem/SpecialProtocol.h"
-#include "AutoPtrHandle.h"
-#include "utils/SingleLock.h"
+#include "filesystem/File.h"
+#include "utils/AutoPtrHandle.h"
+#include "utils/log.h"
+#include "utils/SortUtils.h"
+#include "utils/URIUtils.h"
+#include "DatabaseManager.h"
 #include "DbUrl.h"
 
 using namespace AUTOPTR;
 using namespace dbiplus;
 
 #define MAX_COMPRESS_COUNT 20
-
-std::map<std::string, bool> CDatabase::m_updated;
 
 void CDatabase::Filter::AppendField(const std::string &strField)
 {
@@ -99,8 +97,7 @@ void CDatabase::Filter::AppendGroup(const std::string &strGroup)
 
 CDatabase::CDatabase(void)
 {
-  m_bOpen = false;
-  m_iRefCount = 0;
+  m_openCount = 0;
   m_sqlite = true;
   m_bMultiWrite = false;
 }
@@ -307,45 +304,116 @@ bool CDatabase::Open()
 
 bool CDatabase::Open(const DatabaseSettings &settings)
 {
-  // take a copy - we're gonna be messing with it and we don't want to touch the original
-  DatabaseSettings dbSettings = settings;
   if (IsOpen())
   {
-    m_iRefCount++;
+    m_openCount++;
     return true;
   }
 
+  // check our database manager to see if this database can be opened
+  if (!CDatabaseManager::Get().CanOpen(GetBaseDBName()))
+    return false;
+
+  DatabaseSettings dbSettings = settings;
+  InitSettings(dbSettings);
+
+  CStdString dbName = dbSettings.name;
+  dbName.AppendFormat("%d", GetMinVersion());
+  return Connect(dbName, dbSettings, false);
+}
+
+void CDatabase::InitSettings(DatabaseSettings &dbSettings)
+{
   m_sqlite = true;
 
   if ( dbSettings.type.Equals("mysql") )
   {
     // check we have all information before we cancel the fallback
-    if ( ! (dbSettings.host.IsEmpty() || dbSettings.user.IsEmpty() || dbSettings.pass.IsEmpty()) )
+    if ( ! (dbSettings.host.IsEmpty() ||
+            dbSettings.user.IsEmpty() || dbSettings.pass.IsEmpty()) )
       m_sqlite = false;
     else
-      CLog::Log(LOGINFO, "essential mysql database information is missing (eg. host, user, pass)");
+      CLog::Log(LOGINFO, "Essential mysql database information is missing. Require at least host, user and pass defined.");
   }
-
-  // set default database name if appropriate
-  if ( dbSettings.name.IsEmpty() )
-    dbSettings.name = GetDefaultDBName();
-
-  // always safely fallback to sqlite3
-  if (m_sqlite)
+  else
   {
     dbSettings.type = "sqlite3";
     dbSettings.host = CSpecialProtocol::TranslatePath(g_settings.GetDatabaseFolder());
   }
 
-  if (Connect(dbSettings, true) && UpdateVersion(dbSettings.name))
+  // use separate, versioned database
+  if (dbSettings.name.IsEmpty())
+    dbSettings.name = GetBaseDBName();
+}
+
+bool CDatabase::Update(const DatabaseSettings &settings)
+{
+  DatabaseSettings dbSettings = settings;
+  InitSettings(dbSettings);
+
+  int version = GetMinVersion();
+  CStdString latestDb = dbSettings.name;
+  latestDb.AppendFormat("%d", version);
+
+  while (version >= 0)
+  {
+    CStdString dbName = dbSettings.name;
+    if (version)
+      dbName.AppendFormat("%d", version);
+
+    if (Connect(dbName, dbSettings, false))
+    {
+      // Database exists, take a copy for our current version (if needed) and reopen that one
+      if (version < GetMinVersion())
+      {
+        CLog::Log(LOGNOTICE, "Old database found - updating from version %i to %i", version, GetMinVersion());
+
+        bool copy_fail = false;
+
+        try
+        {
+          m_pDB->copy(latestDb);
+        }
+        catch(...)
+        {
+          CLog::Log(LOGERROR, "Unable to copy old database %s to new version %s", dbName.c_str(), latestDb.c_str());
+          copy_fail = true;
+        }
+
+        Close();
+
+        if ( copy_fail )
+          return false;
+
+        if (!Connect(latestDb, dbSettings, false))
+        {
+          CLog::Log(LOGERROR, "Unable to open freshly copied database %s", latestDb.c_str());
+          return false;
+        }
+      }
+
+      // yay - we have a copy of our db, now do our worst with it
+      if (UpdateVersion(latestDb))
+        return true;
+
+      // update failed - loop around and see if we have another one available
+      Close();
+    }
+
+    // drop back to the previous version and try that
+    version--;
+  }
+  // try creating a new one
+  if (Connect(latestDb, dbSettings, true))
     return true;
+
   // failed to update or open the database
   Close();
-  CLog::Log(LOGERROR, "Unable to open database %s", dbSettings.name.c_str());
+  CLog::Log(LOGERROR, "Unable to create new database");
   return false;
 }
 
-bool CDatabase::Connect(const DatabaseSettings &dbSettings, bool create)
+bool CDatabase::Connect(const CStdString &dbName, const DatabaseSettings &dbSettings, bool create)
 {
   // create the appropriate database structure
   if (dbSettings.type.Equals("sqlite3"))
@@ -378,14 +446,11 @@ bool CDatabase::Connect(const DatabaseSettings &dbSettings, bool create)
     m_pDB->setPasswd(dbSettings.pass.c_str());
 
   // database name is always required
-  m_pDB->setDatabase(dbSettings.name.c_str());
+  m_pDB->setDatabase(dbName.c_str());
 
   // create the datasets
   m_pDS.reset(m_pDB->CreateDataset());
   m_pDS2.reset(m_pDB->CreateDataset());
-
-  CLog::Log(LOGDEBUG, "CDatabase: Connecting to database %s at %s:%s",
-            dbSettings.name.c_str(), dbSettings.host.c_str(), dbSettings.port.c_str());
 
   if (m_pDB->connect(create) != DB_CONNECTION_OK)
     return false;
@@ -408,9 +473,6 @@ bool CDatabase::Connect(const DatabaseSettings &dbSettings, bool create)
     CreateTables();
   }
 
-  // Mark our db as open here to make our destructor to properly close the file handle
-  m_bOpen = true;
-
   // sqlite3 post connection operations
   if (dbSettings.type.Equals("sqlite3"))
   {
@@ -421,21 +483,21 @@ bool CDatabase::Connect(const DatabaseSettings &dbSettings, bool create)
     m_pDS->exec("PRAGMA count_changes='OFF'\n");
   }
 
-  m_iRefCount++;
+  m_openCount = 1; // our database is open
   return true;
+}
+
+int CDatabase::GetDBVersion()
+{
+  m_pDS->query("SELECT idVersion FROM version\n");
+  if (m_pDS->num_rows() > 0)
+    return m_pDS->fv("idVersion").get_asInt();
+  return 0;
 }
 
 bool CDatabase::UpdateVersion(const CStdString &dbName)
 {
-  CSingleLock lock(m_critSect);
-  if (m_updated[dbName])
-    return true;
-
-  int version = 0;
-  m_pDS->query("SELECT idVersion FROM version\n");
-  if (m_pDS->num_rows() > 0)
-    version = m_pDS->fv("idVersion").get_asInt();
-
+  int version = GetDBVersion();
   if (version < GetMinVersion())
   {
     CLog::Log(LOGNOTICE, "Attempting to update the database %s from version %i to %i", dbName.c_str(), version, GetMinVersion());
@@ -452,29 +514,26 @@ bool CDatabase::UpdateVersion(const CStdString &dbName)
     CLog::Log(LOGERROR, "Can't open the database %s as it is a NEWER version than what we were expecting?", dbName.c_str());
     return false;
   }
-
-  m_updated[dbName] = true;
   return true;
 }
 
 bool CDatabase::IsOpen()
 {
-  return m_bOpen;
+  return m_openCount > 0;
 }
 
 void CDatabase::Close()
 {
-  if (!m_bOpen)
-    return ;
+  if (m_openCount == 0)
+    return;
 
-  if (m_iRefCount > 1)
+  if (m_openCount > 1)
   {
-    m_iRefCount--;
-    return ;
+    m_openCount--;
+    return;
   }
 
-  m_iRefCount--;
-  m_bOpen = false;
+  m_openCount = 0;
 
   if (NULL == m_pDB.get() ) return ;
   if (NULL != m_pDS.get()) m_pDS->close();
@@ -588,6 +647,8 @@ bool CDatabase::UpdateVersionNumber()
   {
     CStdString strSQL=PrepareSQL("UPDATE version SET idVersion=%i\n", GetMinVersion());
     m_pDS->exec(strSQL.c_str());
+
+    CommitTransaction();
   }
   catch(...)
   {
