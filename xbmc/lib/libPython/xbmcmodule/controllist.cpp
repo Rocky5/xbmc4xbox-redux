@@ -17,16 +17,16 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
- 
-#include "system.h"
+
 #include "lib/libPython/python/Include/Python.h"
-#include "../XBPythonDll.h"
-#include "GUIListContainer.h"
-#include "GUIFontManager.h"
-#include "GUILabel.h"
+
+#include "guilib/GUIListContainer.h"
+#include "guilib/GUIFontManager.h"
+#include "guilib/GUIWindowManager.h"
+#include "guilib/GUILabel.h"
 #include "control.h"
 #include "pyutil.h"
-#ifndef DEBUG
+#ifndef _DEBUG
 #include "listproviders/StaticProvider.h"
 #endif
 using namespace std;
@@ -65,8 +65,8 @@ namespace PYXBMC
     //char* cShadowColor = NULL;
     self = (ControlList*)type->tp_alloc(type, 0);
     if (!self) return NULL;
-    new(&self->strFont) string();    
-    new(&self->strTextureButton) string();    
+    new(&self->strFont) string();
+    new(&self->strTextureButton) string();
     new(&self->strTextureButtonFocus) string();
     new(&self->vecItems) std::vector<PYXBMC::ListItem*>();
 
@@ -157,11 +157,11 @@ namespace PYXBMC
     }
     self->vecItems.clear();
     self->vecItems.~vector();
-    
+
     self->strFont.~string();
     self->strTextureButton.~string();
     self->strTextureButtonFocus.~string();
-    
+
     self->ob_type->tp_free((PyObject*)self);
   }
 
@@ -237,16 +237,13 @@ PyDoc_STRVAR(addItem__doc__,
     self->vecItems.push_back(pListItem);
 
     // construct a CFileItemList to pass 'em on to the list
-    CFileItemList items;
+    CGUIListItemPtr items(new CFileItemList());
     for (unsigned int i = 0; i < self->vecItems.size(); i++)
-      items.Add(self->vecItems[i]->item);
+      ((CFileItemList*)items.get())->Add(self->vecItems[i]->item);
 
-    CGUIMessage msg(GUI_MSG_LABEL_BIND, self->iParentId, self->iControlId, 0, 0, &items);
-
-    // send message
-    PyXBMCGUILock();
-    if (self->pGUIControl) self->pGUIControl->OnMessage(msg);
-    PyXBMCGUIUnlock();
+    CGUIMessage msg(GUI_MSG_LABEL_BIND, self->iParentId, self->iControlId, 0, 0, items);
+    msg.SetPointer(items.get());
+    g_windowManager.SendThreadMessage(msg, self->iParentId);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -280,7 +277,7 @@ PyDoc_STRVAR(addItems__doc__,
       return NULL;
     }
 
-    CFileItemList items;
+    CGUIListItemPtr items(new CFileItemList());
     for (int item = 0; item < PyList_Size(pList); item++)
     {
       PyObject *pItem = PyList_GetItem(pList, item);
@@ -303,17 +300,13 @@ PyDoc_STRVAR(addItems__doc__,
 
       // add item to objects vector
       self->vecItems.push_back(pListItem);
-      items.Add(pListItem->item);
+      ((CFileItemList*)items.get())->Add(pListItem->item);
     }
 
     // create message
-    CGUIMessage msg(GUI_MSG_LABEL_BIND, self->iParentId, self->iControlId, 0, 0, &items);
-
-    // send message
-    PyXBMCGUILock();
-    if (self->pGUIControl) self->pGUIControl->OnMessage(msg);
-    PyXBMCGUIUnlock();
-
+    CGUIMessage msg(GUI_MSG_LABEL_BIND, self->iParentId, self->iControlId, 0, 0, items);
+    msg.SetPointer(items.get());
+    g_windowManager.SendThreadMessage(msg, self->iParentId);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -341,9 +334,7 @@ PyDoc_STRVAR(addItems__doc__,
     CGUIMessage msg(GUI_MSG_ITEM_SELECT, self->iParentId, self->iControlId, itemIndex);
 
     // send message
-    PyXBMCGUILock();
-    if (self->pGUIControl) self->pGUIControl->OnMessage(msg);
-    PyXBMCGUIUnlock();
+    g_windowManager.SendThreadMessage(msg, self->iParentId);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -362,10 +353,7 @@ PyDoc_STRVAR(addItems__doc__,
     ControlList *pControl = (ControlList*)self;
     CGUIMessage msg(GUI_MSG_LABEL_RESET, pControl->iParentId, pControl->iControlId);
 
-    // send message
-    PyXBMCGUILock();
-    if (pControl->pGUIControl) pControl->pGUIControl->OnMessage(msg);
-    PyXBMCGUIUnlock();
+    g_windowManager.SendThreadMessage(msg, pControl->iParentId);
 
     // delete all items from vector
     // delete all ListItem from vector
@@ -611,28 +599,28 @@ PyDoc_STRVAR(addItems__doc__,
   }
 
   // getItemHeight() Method
-    PyDoc_STRVAR(getItemHeight__doc__,
-        "getItemHeight() -- Returns the control's current item height as an integer.\n"
-        "\n"
-        "example:\n"
-        "  - item_height = self.cList.getItemHeight()\n");
+  PyDoc_STRVAR(getItemHeight__doc__,
+    "getItemHeight() -- Returns the control's current item height as an integer.\n"
+    "\n"
+    "example:\n"
+    "  - item_height = self.cList.getItemHeight()\n");
 
   PyObject* ControlList_GetItemHeight(ControlList *self)
-    {
-        return Py_BuildValue((char*)"l", self->itemHeight);
-    }
+  {
+    return Py_BuildValue((char*)"l", self->itemHeight);
+  }
 
   // getSpace() Method
-    PyDoc_STRVAR(getSpace__doc__,
-        "getSpace() -- Returns the control's space between items as an integer.\n"
-        "\n"
-        "example:\n"
-        "  - gap = self.cList.getSpace()\n");
+  PyDoc_STRVAR(getSpace__doc__,
+    "getSpace() -- Returns the control's space between items as an integer.\n"
+    "\n"
+    "example:\n"
+    "  - gap = self.cList.getSpace()\n");
 
   PyObject* ControlList_GetSpace(ControlList *self)
-    {
-        return Py_BuildValue((char*)"l", self->space);
-    }
+  {
+    return Py_BuildValue((char*)"l", self->space);
+  }
 
 PyDoc_STRVAR(setStaticContent__doc__,
     "setStaticContent(items) -- Fills a static list with a list of listitems.\n"
@@ -659,9 +647,9 @@ PyDoc_STRVAR(setStaticContent__doc__,
       PyErr_SetString(PyExc_TypeError, "Object should be of type List");
       return NULL;
     }
-#ifndef DEBUG
+#ifndef _DEBUG
     vector<CGUIStaticItemPtr> items;
-    
+
     for (int item = 0; item < PyList_Size(pList); item++)
     {
       PyObject *pItem = PyList_GetItem(pList, item);

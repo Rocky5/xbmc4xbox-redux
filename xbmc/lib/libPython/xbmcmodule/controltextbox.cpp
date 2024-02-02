@@ -18,11 +18,11 @@
  *
  */
 
-#include "system.h"
 #include "lib/libPython/python/Include/Python.h"
-#include "../XBPythonDll.h"
-#include "GUITextBox.h"
-#include "GUIFontManager.h"
+
+#include "guilib/GUITextBox.h"
+#include "guilib/GUIFontManager.h"
+#include "guilib/GUIWindowManager.h"
 #include "control.h"
 #include "pyutil.h"
 
@@ -53,7 +53,7 @@ namespace PYXBMC
     self = (ControlTextBox*)type->tp_alloc(type, 0);
     if (!self) return NULL;
 
-    new(&self->strFont) string();        
+    new(&self->strFont) string();
 
     // parse arguments to constructor
     if (!PyArg_ParseTupleAndKeywords(
@@ -84,7 +84,7 @@ namespace PYXBMC
   void ControlTextBox_Dealloc(ControlTextBox* self)
   {
     //Py_DECREF(self->pControlSpin);
-    self->strFont.~string();       
+    self->strFont.~string();
     self->ob_type->tp_free((PyObject*)self);
   }
 
@@ -120,7 +120,7 @@ namespace PYXBMC
   {
     PyObject *pObjectText;
     string strText;
-    if (!PyArg_ParseTuple(args, (char*)"O", &pObjectText))  return NULL;
+    if (!PyArg_ParseTuple(args, (char*)"O", &pObjectText)) return NULL;
     if (!PyXBMCGetUnicodeString(strText, pObjectText, 1)) return NULL;
 
     // create message
@@ -129,10 +129,7 @@ namespace PYXBMC
     msg.SetLabel(strText);
 
     // send message
-    PyXBMCGUILock();
-    if (pControl->pGUIControl) pControl->pGUIControl->OnMessage(msg);
-    PyXBMCGUIUnlock();
-
+    g_windowManager.SendThreadMessage(msg, pControl->iParentId);
     Py_INCREF(Py_None);
     return Py_None;
   }
@@ -170,11 +167,7 @@ namespace PYXBMC
     // create message
     ControlTextBox *pControl = (ControlTextBox*)self;
     CGUIMessage msg(GUI_MSG_LABEL_RESET, pControl->iParentId, pControl->iControlId);
-
-    // send message
-    PyXBMCGUILock();
-    if (pControl->pGUIControl) pControl->pGUIControl->OnMessage(msg);
-    PyXBMCGUIUnlock();
+    g_windowManager.SendThreadMessage(msg, pControl->iParentId);
 
     Py_INCREF(Py_None);
     return Py_None;
