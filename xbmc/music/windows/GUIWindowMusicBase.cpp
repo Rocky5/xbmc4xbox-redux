@@ -1031,8 +1031,7 @@ void CGUIWindowMusicBase::OnRipCD()
     if (!g_application.CurrentFileItem().IsCDDA())
     {
 #ifdef HAS_CDDA_RIPPER
-      CCDDARipper ripper;
-      ripper.RipCD();
+      CCDDARipper::GetInstance().RipCD();
 #endif
     }
     else
@@ -1048,9 +1047,8 @@ void CGUIWindowMusicBase::OnRipTrack(int iItem)
     if (!g_application.CurrentFileItem().IsCDDA())
     {
 #ifdef HAS_CDDA_RIPPER
-      CCDDARipper ripper;
       CFileItemPtr item = m_vecItems->Get(iItem);
-      ripper.RipTrack(item.get());
+      CCDDARipper::GetInstance().RipTrack(item.get());
 #endif
     }
     else

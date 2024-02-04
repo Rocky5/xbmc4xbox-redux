@@ -2683,6 +2683,12 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					RelativePath=".\xbmc\cdrip\CDDAReader.h">
 				</File>
 				<File
+					RelativePath=".\xbmc\cdrip\CDDARipJob.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\cdrip\CDDARipJob.h">
+				</File>
+				<File
 					RelativePath=".\xbmc\cdrip\CDDARipper.cpp">
 				</File>
 				<File
