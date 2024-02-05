@@ -18,6 +18,7 @@
  *
  */
 
+#include "xbox/Network.h"
 #include "system.h"
 #include "utils/log.h"
 #include "Application.h"
@@ -111,7 +112,6 @@
 #endif
 #include "AudioContext.h"
 #include "GUIFontTTF.h"
-#include "xbox/network.h"
 #include "utils/Win32Exception.h"
 #include "lib/libGoAhead/XBMChttp.h"
 #include "lib/libGoAhead/WebServer.h"
@@ -314,6 +314,7 @@ CApplication::CApplication(void)
   , m_videoInfoScanner(new CVideoInfoScanner)
   , m_musicInfoScanner(new CMusicInfoScanner)
 {
+  m_network = NULL;
   m_iPlaySpeed = 1;
   m_bSpinDown = false;
   m_bNetworkSpinDown = false;
@@ -354,6 +355,9 @@ CApplication::CApplication(void)
 CApplication::~CApplication(void)
 {
   delete m_currentStack;
+
+  if (m_network != NULL)
+     delete m_network;
 }
 
 // text out routine for below
@@ -537,10 +541,10 @@ void CApplication::FatalErrorHandler(bool InitD3D, bool MapDrives, bool InitNetw
       std::vector<int>::iterator it;
       for( it = netorder.begin();it != netorder.end(); it++)
       {
-        m_network.Deinitialize();
+        m_network->Deinitialize();
 
 #ifdef HAS_XBOX_NETWORK
-        if (!m_network.IsEthernetConnected())
+        if (!m_network->IsEthernetConnected())
         {
           FEH_TextOut(pFont, iLine, L"Network cable unplugged");
           break;
@@ -550,15 +554,15 @@ void CApplication::FatalErrorHandler(bool InitD3D, bool MapDrives, bool InitNetw
         {
           case NETWORK_DASH:
             FEH_TextOut(pFont, iLine, L"Init network using dash settings...");
-            m_network.Initialize(NETWORK_DASH, "","","","","");
+            m_network->Initialize(NETWORK_DASH, "","","","","");
             break;
           case NETWORK_DHCP:
             FEH_TextOut(pFont, iLine, L"Init network using DHCP...");
-            m_network.Initialize(NETWORK_DHCP, "","","","","");
+            m_network->Initialize(NETWORK_DHCP, "","","","","");
             break;
           default:
             FEH_TextOut(pFont, iLine, L"Init network using static ip...");
-            m_network.Initialize(NETWORK_STATIC,
+            m_network->Initialize(NETWORK_STATIC,
                   "192.168.0.42",
                   "255.255.255.0",
                   "192.168.0.1",
@@ -572,7 +576,7 @@ void CApplication::FatalErrorHandler(bool InitD3D, bool MapDrives, bool InitNetw
 
         while (dwState == XNET_GET_XNADDR_PENDING)
         {
-          dwState = m_network.UpdateState();
+          dwState = m_network->UpdateState();
 
           if (HaveGamepad && AnyButtonDown())
             m_applicationMessenger.Restart();
@@ -614,7 +618,7 @@ void CApplication::FatalErrorHandler(bool InitD3D, bool MapDrives, bool InitNetw
 
   if( NetworkUp )
   {
-    FEH_TextOut(pFont, iLine++, L"IP Address: %S", m_network.m_networkinfo.ip);
+    FEH_TextOut(pFont, iLine++, L"IP Address: %S", m_network->m_networkinfo.ip);
     ++iLine;
   }
 
@@ -706,6 +710,13 @@ extern "C" void __stdcall update_emu_environ();
 
 HRESULT CApplication::Create(HWND hWnd)
 {
+#if defined(HAS_LINUX_NETWORK)
+  m_network = new CNetworkLinux();
+#elif defined(HAS_WIN32_NETWORK)
+  m_network = new CNetworkWin32();
+#else
+  m_network = new CNetwork();
+#endif
 
 #ifdef HAS_XBOX_HARDWARE
   // better 128mb ram support
@@ -1271,7 +1282,7 @@ HRESULT CApplication::Initialize()
 
   /* setup network based on our settings */
   /* network will start it's init procedure */
-  m_network.SetupNetwork();
+  m_network->SetupNetwork();
 
   // initialize (and update as needed) our databases
   CDatabaseManager::Get().Initialize();
@@ -1451,12 +1462,12 @@ void CApplication::StopIdleThread()
 
 void CApplication::StartWebServer()
 {
-  if (g_guiSettings.GetBool("services.webserver") && m_network.IsAvailable() )
+  if (g_guiSettings.GetBool("services.webserver") && m_network->IsAvailable() )
   {
     CLog::Log(LOGNOTICE, "Webserver: Starting...");
     CSectionLoader::Load("LIBHTTP");
     m_pWebServer = new CWebServer();
-    m_pWebServer->Start(m_network.m_networkinfo.ip, atoi(g_guiSettings.GetString("services.webserverport")), "Q:\\web", false);
+    m_pWebServer->Start(m_network->m_networkinfo.ip, atoi(g_guiSettings.GetString("services.webserverport")), "Q:\\web", false);
     if (m_pWebServer)
     {
       m_pWebServer->SetUserName(g_guiSettings.GetString("services.webserverusername").c_str());
@@ -1483,7 +1494,7 @@ void CApplication::StopWebServer()
 void CApplication::StartFtpServer()
 {
 #ifdef HAS_FTP_SERVER
-  if ( g_guiSettings.GetBool("services.ftpserver") && m_network.IsAvailable() )
+  if ( g_guiSettings.GetBool("services.ftpserver") && m_network->IsAvailable() )
   {
     CLog::Log(LOGNOTICE, "XBFileZilla: Starting...");
     if (!m_pFileZilla)
@@ -1545,7 +1556,7 @@ void CApplication::StopFtpServer()
 void CApplication::StartTimeServer()
 {
 #ifdef HAS_TIME_SERVER
-  if (g_guiSettings.GetBool("locale.timeserver") && m_network.IsAvailable() )
+  if (g_guiSettings.GetBool("locale.timeserver") && m_network->IsAvailable() )
   {
     if( !m_psntpClient )
     {
@@ -1830,7 +1841,7 @@ void CApplication::CheckDate()
 
 void CApplication::StopServices()
 {
-  m_network.NetworkMessage(CNetwork::SERVICES_DOWN, 0);
+  m_network->NetworkMessage(CNetwork::SERVICES_DOWN, 0);
 
   CLog::Log(LOGNOTICE, "stop dvd detect media");
   m_DetectDVDType.StopThread();
@@ -5199,7 +5210,7 @@ void CApplication::Process()
 void CApplication::ProcessSlow()
 {
   // check our network state every 15 seconds or when net status changes
-  m_network.CheckNetwork(30);
+  m_network->CheckNetwork(30);
   
   // check if we need 2 spin down the harddisk
   CheckNetworkHDSpinDown();
@@ -5908,7 +5919,7 @@ CApplicationMessenger& CApplication::getApplicationMessenger()
 
 CNetwork& CApplication::getNetwork()
 {
-   return m_network;
+   return *m_network;
 }
 
 bool CApplication::IsCurrentThread() const

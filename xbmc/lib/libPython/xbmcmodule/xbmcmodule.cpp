@@ -18,6 +18,7 @@
  *
  */
 
+#include "xbox/Network.h"
 #include "system.h"
 #include "lib/libPython/python/Include/Python.h"
 #include "../XBPythonDll.h"

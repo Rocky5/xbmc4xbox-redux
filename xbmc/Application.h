@@ -25,6 +25,7 @@
 
 #include "IMsgTargetCallback.h"
 #include "Key.h"
+#include "utils/GlobalsHandling.h"
 
 class CFileItem;
 class CFileItemList;
@@ -37,7 +38,6 @@ namespace ADDON
 
 #include "windows/GUIWindowPointer.h"   // Mouse pointer
 
-#include "xbox/Network.h"
 #include "utils/Idle.h"
 #include "utils/DelayController.h"
 #include "cores/IPlayer.h"
@@ -50,6 +50,8 @@ namespace ADDON
 #include "video/Bookmark.h"
 #include "utils/Stopwatch.h"
 #include "ApplicationMessenger.h"
+
+class CNetwork;
 
 namespace VIDEO
 {
@@ -332,12 +334,13 @@ protected:
   void InitDirectoriesXbox();
 
   CApplicationMessenger m_applicationMessenger;
-  CNetwork m_network;
+  CNetwork    *m_network;
   
 #ifdef HAS_EVENT_SERVER
   std::map<std::string, std::map<int, float> > m_lastAxisMap;
 #endif
 };
 
-extern CApplication g_application;
+XBMC_GLOBAL_REF(CApplication,g_application);
+#define g_application XBMC_GLOBAL_USE(CApplication)
 extern CStdString g_LoadErrorStr;

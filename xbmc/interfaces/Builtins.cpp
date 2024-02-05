@@ -18,6 +18,7 @@
  *
  */
 
+#include "xbox/Network.h"
 #include "system.h"
 #include "utils/SystemInfo.h"
 #include "XBVideoConfig.h"

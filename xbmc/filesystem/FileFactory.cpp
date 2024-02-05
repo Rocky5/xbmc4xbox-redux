@@ -18,7 +18,7 @@
  *
  */
 
-
+#include "xbox/Network.h"
 #include "system.h"
 #include "FileFactory.h"
 #include "HDFile.h"

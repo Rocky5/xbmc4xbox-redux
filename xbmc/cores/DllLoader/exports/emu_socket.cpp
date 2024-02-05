@@ -17,7 +17,8 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
- 
+
+#include "xbox/Network.h"
 #include "system.h"
 #include "utils/log.h"
 #include "../DllLoaderContainer.h"

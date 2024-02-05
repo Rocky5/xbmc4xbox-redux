@@ -31,6 +31,7 @@
 #include "GUIWindow.h"
 #include "IWindowManagerCallback.h"
 #include "IMsgTargetCallback.h"
+#include "utils/GlobalsHandling.h"
 
 class CGUIDialog;
 
@@ -154,6 +155,7 @@ private:
  \ingroup winman
  \brief
  */
-extern CGUIWindowManager g_windowManager;
+XBMC_GLOBAL_REF(CGUIWindowManager,g_windowManager);
+#define g_windowManager XBMC_GLOBAL_USE(CGUIWindowManager)
 #endif
 

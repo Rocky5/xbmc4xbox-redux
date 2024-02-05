@@ -18,6 +18,7 @@
  *
  */
 
+#include "xbox/Network.h"
 #include "utils/log.h"
 #include "CurlFile.h"
 #include "Util.h"

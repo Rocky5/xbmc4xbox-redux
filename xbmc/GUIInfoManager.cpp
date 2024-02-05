@@ -18,6 +18,7 @@
  *
  */
 
+#include "xbox/Network.h"
 #include "system.h"
 #include "dialogs/GUIDialogSeekBar.h"
 #include "windows/GUIMediaWindow.h"

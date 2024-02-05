@@ -18,6 +18,7 @@
  *
  */
 
+#include "xbox/Network.h"
 #include "system.h"
 #include "music/MusicDatabase.h"
 #include "network/cddb.h"
