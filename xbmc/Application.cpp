@@ -131,6 +131,7 @@
 #include "utils/EventServer.h"
 #endif
 #include "interfaces/AnnouncementManager.h"
+#include "music/infoscanner/MusicInfoScanner.h"
 
 // Windows includes
 #include "GUIWindowManager.h"
@@ -174,7 +175,6 @@
 #include "profiles/dialogs/GUIDialogProfileSettings.h"
 #include "profiles/dialogs/GUIDialogLockSettings.h"
 #include "settings/dialogs/GUIDialogContentSettings.h"
-#include "video/dialogs/GUIDialogVideoScan.h"
 #include "dialogs/GUIDialogBusy.h"
 #include "dialogs/GUIDialogTextViewer.h"
 
@@ -182,6 +182,7 @@
 #include "dialogs/GUIDialogYesNo.h"
 #include "dialogs/GUIDialogOK.h"
 #include "dialogs/GUIDialogProgress.h"
+#include "dialogs/GUIDialogExtendedProgressBar.h"
 #include "dialogs/GUIDialogSelect.h"
 #include "dialogs/GUIDialogSeekBar.h"
 #include "dialogs/GUIDialogKaiToast.h"
@@ -194,7 +195,6 @@
 #include "dialogs/GUIDialogFavourites.h"
 #include "dialogs/GUIDialogButtonMenu.h"
 #include "dialogs/GUIDialogContextMenu.h"
-#include "music/dialogs/GUIDialogMusicScan.h"
 #include "dialogs/GUIDialogPlayerControls.h"
 #include "music/dialogs/GUIDialogSongInfo.h"
 #include "dialogs/GUIDialogSmartPlaylistEditor.h"
@@ -1302,6 +1302,7 @@ HRESULT CApplication::Initialize()
   g_windowManager.Add(new CGUIWindowGameSaves);               // window id = 35
   g_windowManager.Add(new CGUIDialogYesNo);              // window id = 100
   g_windowManager.Add(new CGUIDialogProgress);           // window id = 101
+  g_windowManager.Add(new CGUIDialogExtendedProgressBar);     // window id = 148
   g_windowManager.Add(new CGUIDialogKeyboard);           // window id = 103
   g_windowManager.Add(new CGUIDialogVolumeBar);          // window id = 104
   g_windowManager.Add(new CGUIDialogSeekBar);            // window id = 115
@@ -1311,7 +1312,6 @@ HRESULT CApplication::Initialize()
   g_windowManager.Add(new CGUIDialogNumeric);            // window id = 109
   g_windowManager.Add(new CGUIDialogGamepad);            // window id = 110
   g_windowManager.Add(new CGUIDialogButtonMenu);         // window id = 111
-  g_windowManager.Add(new CGUIDialogMusicScan);          // window id = 112
   g_windowManager.Add(new CGUIDialogMuteBug);            // window id = 113
   g_windowManager.Add(new CGUIDialogPlayerControls);     // window id = 114
   g_windowManager.Add(new CGUIDialogSlider);             // window id = 145
@@ -1325,7 +1325,6 @@ HRESULT CApplication::Initialize()
   g_windowManager.Add(new CGUIDialogNetworkSetup);  // window id = 128
   g_windowManager.Add(new CGUIDialogMediaSource);   // window id = 129
   g_windowManager.Add(new CGUIDialogProfileSettings); // window id = 130
-  g_windowManager.Add(new CGUIDialogVideoScan);      // window id = 133
   g_windowManager.Add(new CGUIDialogFavourites);     // window id = 134
   g_windowManager.Add(new CGUIDialogSongInfo);       // window id = 135
   g_windowManager.Add(new CGUIDialogSmartPlaylistEditor);       // window id = 136
@@ -3512,7 +3511,6 @@ HRESULT CApplication::Cleanup()
     g_windowManager.Delete(WINDOW_DIALOG_SUB_MENU);
     g_windowManager.Delete(WINDOW_DIALOG_BUTTON_MENU);
     g_windowManager.Delete(WINDOW_DIALOG_CONTEXT_MENU);
-    g_windowManager.Delete(WINDOW_DIALOG_MUSIC_SCAN);
     g_windowManager.Delete(WINDOW_DIALOG_PLAYER_CONTROLS);
     g_windowManager.Delete(WINDOW_DIALOG_MUSIC_OSD);
     g_windowManager.Delete(WINDOW_DIALOG_VIS_SETTINGS);
@@ -3530,7 +3528,6 @@ HRESULT CApplication::Cleanup()
     g_windowManager.Delete(WINDOW_DIALOG_VIDEO_OSD_SETTINGS);
     g_windowManager.Delete(WINDOW_DIALOG_AUDIO_OSD_SETTINGS);
     g_windowManager.Delete(WINDOW_DIALOG_VIDEO_BOOKMARKS);
-    g_windowManager.Delete(WINDOW_DIALOG_VIDEO_SCAN);
     g_windowManager.Delete(WINDOW_DIALOG_CONTENT_SETTINGS);
     g_windowManager.Delete(WINDOW_DIALOG_FAVOURITES);
     g_windowManager.Delete(WINDOW_DIALOG_SONG_INFO);
@@ -5728,20 +5725,21 @@ void CApplication::StopMusicScan()
     m_musicInfoScanner->Stop();
 }
 
+void CApplication::StartVideoCleanup()
+{
+  if (m_videoInfoScanner->IsScanning())
+    return;
+
+  m_videoInfoScanner->CleanDatabase();
+}
+
 void CApplication::StartVideoScan(const CStdString &strDirectory, bool scanAll)
 {
   if (m_videoInfoScanner->IsScanning())
     return;
 
-  if (!g_guiSettings.GetBool("videolibrary.backgroundupdate"))
-  {
-    CGUIDialogVideoScan *videoScan = (CGUIDialogVideoScan *)g_windowManager.GetWindow(WINDOW_DIALOG_VIDEO_SCAN);
-    if (videoScan)
-    {
-      m_videoInfoScanner->SetObserver(videoScan);
-      videoScan->ShowScan();
-    }
-  }
+  m_videoInfoScanner->ShowDialog(true);
+
   m_videoInfoScanner->Start(strDirectory,scanAll);
 }
 
@@ -5750,15 +5748,7 @@ void CApplication::StartMusicScan(const CStdString &strDirectory)
   if (m_musicInfoScanner->IsScanning())
     return;
 
-  if (!g_guiSettings.GetBool("musiclibrary.backgroundupdate"))
-  {
-    CGUIDialogMusicScan *musicScan = (CGUIDialogMusicScan *)g_windowManager.GetWindow(WINDOW_DIALOG_MUSIC_SCAN);
-    if (musicScan)
-    {
-      m_musicInfoScanner->SetObserver(musicScan);
-      musicScan->ShowScan();
-    }
-  }
+  m_musicInfoScanner->ShowDialog(true);
 
   m_musicInfoScanner->Start(strDirectory);
 }
@@ -5768,15 +5758,7 @@ void CApplication::StartMusicAlbumScan(const CStdString& strDirectory)
   if (m_musicInfoScanner->IsScanning())
     return;
 
-  if (!g_guiSettings.GetBool("musiclibrary.backgroundupdate"))
-  {
-    CGUIDialogMusicScan *musicScan = (CGUIDialogMusicScan *)g_windowManager.GetWindow(WINDOW_DIALOG_MUSIC_SCAN);
-    if (musicScan)
-    {
-      m_musicInfoScanner->SetObserver(musicScan);
-      musicScan->ShowScan();
-    }
-  }
+  m_musicInfoScanner->ShowDialog(true);
 
   m_musicInfoScanner->FetchAlbumInfo(strDirectory);
 }
@@ -5786,15 +5768,7 @@ void CApplication::StartMusicArtistScan(const CStdString& strDirectory)
   if (m_musicInfoScanner->IsScanning())
     return;
 
-  if (!g_guiSettings.GetBool("musiclibrary.backgroundupdate"))
-  {
-    CGUIDialogMusicScan *musicScan = (CGUIDialogMusicScan *)g_windowManager.GetWindow(WINDOW_DIALOG_MUSIC_SCAN);
-    if (musicScan)
-    {
-      m_musicInfoScanner->SetObserver(musicScan);
-      musicScan->ShowScan();
-    }
-  }
+  m_musicInfoScanner->ShowDialog(true);
 
   m_musicInfoScanner->FetchArtistInfo(strDirectory);
 }

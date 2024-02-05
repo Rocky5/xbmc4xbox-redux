@@ -32,11 +32,9 @@
 #include "dialogs/GUIDialogFileBrowser.h"
 #include "dialogs/GUIDialogKeyboard.h"
 #include "dialogs/GUIDialogKaiToast.h"
-#include "music/dialogs/GUIDialogMusicScan.h"
 #include "dialogs/GUIDialogNumeric.h"
 #include "dialogs/GUIDialogYesNo.h"
 #include "dialogs/GUIDialogProgress.h"
-#include "video/dialogs/GUIDialogVideoScan.h"
 #include "GUIUserMessages.h"
 #include "windows/GUIWindowLoginScreen.h"
 #include "video/windows/GUIWindowVideoBase.h"
@@ -59,6 +57,7 @@
 #include "utils/StringUtils.h"
 #include "Util.h"
 #include "video/VideoDatabase.h"
+#include "music/MusicDatabase.h"
 
 #include "filesystem/PluginDirectory.h"
 #include "filesystem/RarManager.h"
@@ -1131,22 +1130,10 @@ int CBuiltins::Execute(const CStdString& execString)
 
     g_application.StopPlaying();
     if (g_application.IsMusicScanning())
-    {
       g_application.StopMusicScan();
-      CGUIDialogMusicScan *musicScan = (CGUIDialogMusicScan *)g_windowManager.GetWindow(WINDOW_DIALOG_MUSIC_SCAN);
-      if (musicScan)
-        musicScan->Close(true);
-    }
 
     if (g_application.IsVideoScanning())
-    {
       g_application.StopVideoScan();
-      CGUIDialogVideoScan *videoScan = (CGUIDialogVideoScan *)g_windowManager.GetWindow(WINDOW_DIALOG_VIDEO_SCAN);
-      if (videoScan)
-      {
-        videoScan->Close(true);
-      }
-    }
 
     ADDON::CAddonMgr::Get().StopServices(true);
 
@@ -1227,14 +1214,9 @@ int CBuiltins::Execute(const CStdString& execString)
     if (!params.size() || params[0].Equals("video"))
     {
       if (!g_application.IsVideoScanning())
-      {
-         CVideoDatabase videodatabase;
-         videodatabase.Open();
-         videodatabase.CleanDatabase();
-         videodatabase.Close();
-      }
+         g_application.StartVideoCleanup();
       else
-        CLog::Log(LOGERROR, "XBMC.CleanLibrary is not possible while scanning for media info");
+        CLog::Log(LOGERROR, "XBMC.CleanLibrary is not possible while scanning or cleaning");
     }
     else if (params[0].Equals("music"))
     {
