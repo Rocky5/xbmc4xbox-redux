@@ -441,8 +441,17 @@ void CGUIWindowVideoNav::LoadVideoInfo(CFileItemList &items)
   CStdString content = m_database.GetContentForPath(items.GetPath());
   items.SetContent(content.IsEmpty() ? "files" : content);
 
-  bool fileMetaData = (g_guiSettings.GetBool("myvideos.filemetadata") &&
-                      !content.IsEmpty() );
+  /*
+    If we have a matching item in the library, so we can assign the metadata to it. In addition, we can choose
+    * whether the item is stacked down (eg in the case of folders representing a single item)
+    * whether or not we assign the library's labels to the item, or leave the item as is.
+    As certain users (read: certain developers) don't want either of these to occur, we compromise by stacking
+    items down only if stacking is available and enabled.
+    Similarly, we assign the "clean" library labels to the item only if the "Replace filenames with library titles"
+    setting is enabled.
+    */
+  const bool stackItems    = items.GetProperty("isstacked").asBoolean() || (StackingAvailable(items) && g_guiSettings.GetBool("myvideos.stackvideos"));
+  const bool replaceLabels = g_guiSettings.GetBool("myvideos.replacelabels");
 
   CFileItemList dbItems;
   /* NOTE: In the future when GetItemsForPath returns all items regardless of whether they're "in the library"
@@ -458,15 +467,13 @@ void CGUIWindowVideoNav::LoadVideoInfo(CFileItemList &items)
   {
     CFileItemPtr pItem = items[i];
     CFileItemPtr match;
-    if (!content.IsEmpty())
-      match = dbItems.Get(pItem->m_strPath);
+    if (!content.IsEmpty()) /* optical media will be stacked down, so it's path won't match the base path */
+      match = dbItems.Get(pItem->IsOpticalMediaFile() ? pItem->GetLocalMetadataPath() : pItem->GetPath());
     if (match)
     {
-      CStdString label (pItem->GetLabel ());
-      CStdString label2(pItem->GetLabel2());
-      pItem->UpdateInfo(*match);
+      pItem->UpdateInfo(*match, replaceLabels);
 
-      if (fileMetaData)
+      if (stackItems)
       {
         pItem->UpdateInfo(*match);
 
@@ -481,14 +488,6 @@ void CGUIWindowVideoNav::LoadVideoInfo(CFileItemList &items)
           items.SetSortIgnoreFolders(true);
           pItem->m_bIsFolder = match->m_bIsFolder;
         }
-      }
-      else
-      {
-        if (CFile::Exists(match->GetCachedFanart()))
-          pItem->SetProperty("fanart_image", match->GetCachedFanart());
-
-        pItem->SetLabel (label);
-        pItem->SetLabel2(label2);
       }
     }
     else
@@ -505,10 +504,6 @@ void CGUIWindowVideoNav::LoadVideoInfo(CFileItemList &items)
       // set the watched overlay
       if (pItem->HasVideoInfoTag())
         pItem->SetOverlayImage(CGUIListItem::ICON_OVERLAY_UNWATCHED, pItem->GetVideoInfoTag()->m_playCount > 0);
-
-      // Since the item is not in our db, as an alternative clean its name
-      if (fileMetaData)
-        pItem->CleanString();
     }
   }
 }

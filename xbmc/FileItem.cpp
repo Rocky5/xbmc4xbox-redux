@@ -1221,7 +1221,7 @@ bool CFileItem::IsSamePath(const CFileItem *item) const
   return false;
 }
 
-void CFileItem::UpdateInfo(const CFileItem &item)
+void CFileItem::UpdateInfo(const CFileItem &item, bool replaceLabels /*=true*/)
 {
   if (item.HasVideoInfoTag())
   { // copy info across (TODO: premiered info is normally stored in m_dateTime by the db)
@@ -1233,9 +1233,9 @@ void CFileItem::UpdateInfo(const CFileItem &item)
   if (item.HasPictureInfoTag())
     *GetPictureInfoTag() = *item.GetPictureInfoTag();
 
-  if (!item.GetLabel().IsEmpty())
+  if (replaceLabels && !item.GetLabel().IsEmpty())
     SetLabel(item.GetLabel());
-  if (!item.GetLabel2().IsEmpty())
+  if (replaceLabels && !item.GetLabel2().IsEmpty())
     SetLabel2(item.GetLabel2());
   if (!item.GetThumbnailImage().IsEmpty())
     SetThumbnailImage(item.GetThumbnailImage());
@@ -2009,7 +2009,7 @@ void CFileItemList::Stack(bool stackFiles /* = true */)
       IsLibraryFolder())
     return;
 
-  SetProperty("isstacked", "1");
+  SetProperty("isstacked", true);
 
   // items needs to be sorted for stuff below to work properly
   Sort(SortByLabel, SortOrderAscending);
@@ -2148,9 +2148,6 @@ void CFileItemList::StackFiles()
   while (i < Size())
   {
     CFileItemPtr item1 = Get(i);
-
-    // set property
-    item1->SetProperty("isstacked", "1");
 
     // skip folders, nfo files, playlists
     if (item1->m_bIsFolder
@@ -2747,13 +2744,16 @@ CStdString CFileItem::GetBaseMoviePath(bool bUseFolderNames) const
   if (IsMultiPath())
     strMovieName = CMultiPathDirectory::GetFirstPath(m_strPath);
 
+  if (IsOpticalMediaFile())
+    return GetLocalMetadataPath();
+
   if (URIUtils::IsStack(strMovieName))
     strMovieName = CStackDirectory::GetStackedTitlePath(strMovieName);
 
-  if ((!m_bIsFolder || IsDVDFile(false, true) || URIUtils::IsInArchive(m_strPath)) && bUseFolderNames)
+  if ((!m_bIsFolder || URIUtils::IsInArchive(m_strPath)) && bUseFolderNames)
   {
     URIUtils::GetParentPath(m_strPath, strMovieName);
-    if (URIUtils::IsInArchive(m_strPath) || strMovieName.Find( "VIDEO_TS" ) != -1)
+    if (URIUtils::IsInArchive(m_strPath))
     {
       CStdString strArchivePath;
       URIUtils::GetParentPath(strMovieName, strArchivePath);
@@ -2896,7 +2896,7 @@ CStdString CFileItem::GetLocalMetadataPath() const
   CStdString parentFolder(parent);
   URIUtils::RemoveSlashAtEnd(parentFolder);
   parentFolder = URIUtils::GetFileName(parentFolder);
-  if (parentFolder == "VIDEO_TS" || parentFolder == "BDMV")
+  if (parentFolder.CompareNoCase("VIDEO_TS") == 0 || parentFolder.CompareNoCase("BDMV") == 0)
   { // go back up another one
     parent = URIUtils::GetParentPath(parent);
   }
