@@ -21,6 +21,7 @@
 #include "GUIPythonWindowDialog.h"
 #include "GUIWindowManager.h"
 #include "Application.h"
+#include "threads/SingleLock.h"
 
 CGUIPythonWindowDialog::CGUIPythonWindowDialog(int id)
 :CGUIPythonWindow(id)
@@ -57,11 +58,10 @@ bool CGUIPythonWindowDialog::OnMessage(CGUIMessage& message)
 
 void CGUIPythonWindowDialog::Show(bool show /* = true */)
 {
-  int count = ExitCriticalSection(g_graphicsContext);
+  CSingleExit leaveIt(g_graphicsContext);
   ThreadMessage tMsg = {TMSG_GUI_PYTHON_DIALOG, 0, show ? 1 : 0};
   tMsg.lpVoid = this;
   g_application.getApplicationMessenger().SendMessage(tMsg, true);
-  RestoreCriticalSection(g_graphicsContext, count);
 }
 
 void CGUIPythonWindowDialog::Show_Internal(bool show /* = true */)

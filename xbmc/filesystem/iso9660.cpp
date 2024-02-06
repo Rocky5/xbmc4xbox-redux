@@ -41,10 +41,11 @@ ISO9660
 */
 #include "iso9660.h"
 #include "utils/CharsetConverter.h"
+#include "threads/SingleLock.h"
 #include "storage/DetectDVDType.h"  // for MODE2_DATA_SIZE etc.
 //#define _DEBUG_OUTPUT 1
 
-static CRITICAL_SECTION m_critSection;
+static CCriticalSection m_critSection;
 class iso9660 m_isoReader;
 #define BUFFER_SIZE MODE2_DATA_SIZE
 #define RET_ERR -1
@@ -423,7 +424,6 @@ struct iso_dirtree *iso9660::ReadRecursiveDirFromSector( DWORD sector, const cha
 iso9660::iso9660( )
 {
   memset(m_isoFiles, 0, sizeof(m_isoFiles));
-  InitializeCriticalSection(&m_critSection);
   m_hCDROM = NULL;
   Reset();
 }
@@ -444,7 +444,7 @@ void iso9660::Scan()
   m_info.Curr_dir = (char*)malloc( 4096 );
   strcpy( m_info.Curr_dir, "\\" );
 
-  EnterCriticalSection(&m_critSection);
+  CSingleLock lock(m_critSection);
 
   DWORD lpNumberOfBytesRead = 0;
   ::SetFilePointer( m_info.ISO_HANDLE, 0x8000, 0, FILE_BEGIN );
@@ -458,7 +458,6 @@ void iso9660::Scan()
     m_info.ISO_HANDLE = NULL;
     m_hCDROM = NULL;
     m_info.iso9660 = 0;
-    LeaveCriticalSection(&m_critSection);
     return ;
   }
   else
@@ -512,13 +511,11 @@ void iso9660::Scan()
 
   memcpy( &m_info.isodir, &m_info.iso.szRootDir, sizeof(m_info.isodir) );
   m_dirtree = ReadRecursiveDirFromSector( m_info.isodir.dwFileLocationLE, "\\" );
-  LeaveCriticalSection(&m_critSection);
 }
 
 //******************************************************************************************************************
 iso9660::~iso9660( )
 {
-  DeleteCriticalSection(&m_critSection);
   Reset();
 }
 
@@ -741,7 +738,7 @@ HANDLE iso9660::OpenFile(const char *filename)
 
   bool bError;
 
-  EnterCriticalSection(&m_critSection);
+  CSingleLock lock(m_critSection);
   bError = (CIoSupport::ReadSector(m_info.ISO_HANDLE, pContext->m_dwStartBlock, (char*) & (pContext->m_pBuffer[0])) < 0);
   if ( bError )
   {
@@ -749,7 +746,6 @@ HANDLE iso9660::OpenFile(const char *filename)
     if ( !bError )
       pContext->m_bUseMode2 = true;
   }
-  LeaveCriticalSection(&m_critSection);
   if (pContext->m_bUseMode2)
     pContext->m_dwFileSize = (pContext->m_dwFileSize / 2048) * MODE2_DATA_SIZE;
 
@@ -826,16 +822,17 @@ bool iso9660::ReadSectorFromCache(iso9660::isofile* pContext, DWORD sector, byte
     }
     // Ok, we're ready to read the sector into the cache
     bool bError;
-    EnterCriticalSection(&m_critSection);
-    if ( pContext->m_bUseMode2 )
     {
-      bError = (CIoSupport::ReadSectorMode2(m_info.ISO_HANDLE, sector, (char*) & (pContext->m_pBuffer[pContext->m_dwCircBuffEnd])) < 0);
+      CSingleLock lock(m_critSection);
+      if ( pContext->m_bUseMode2 )
+      {
+        bError = (CIoSupport::ReadSectorMode2(m_info.ISO_HANDLE, sector, (char*) & (pContext->m_pBuffer[pContext->m_dwCircBuffEnd])) < 0);
+      }
+      else
+      {
+        bError = (CIoSupport::ReadSector(m_info.ISO_HANDLE, sector, (char*) & (pContext->m_pBuffer[pContext->m_dwCircBuffEnd])) < 0);
+      }
     }
-    else
-    {
-      bError = (CIoSupport::ReadSector(m_info.ISO_HANDLE, sector, (char*) & (pContext->m_pBuffer[pContext->m_dwCircBuffEnd])) < 0);
-    }
-    LeaveCriticalSection(&m_critSection);
     if ( bError )
       return false;
     *ppBuffer = &(pContext->m_pBuffer[pContext->m_dwCircBuffEnd]);

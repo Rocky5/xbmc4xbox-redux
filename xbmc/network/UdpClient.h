@@ -22,6 +22,7 @@
 
 #include "utils/StdString.h"
 #include "threads/Thread.h"
+#include "threads/CriticalSection.h"
 
 class CUdpClient : CThread
 {
@@ -54,12 +55,12 @@ protected:
     DWORD binarySize;
   };
 
-  void DispatchNextCommand();
+  bool DispatchNextCommand();
 
   SOCKET client_socket;
 
   std::vector<UdpCommand> commands;
   typedef std::vector<UdpCommand> ::iterator COMMANDITERATOR;
 
-  CRITICAL_SECTION critical_section;
+  CCriticalSection critical_section;
 };

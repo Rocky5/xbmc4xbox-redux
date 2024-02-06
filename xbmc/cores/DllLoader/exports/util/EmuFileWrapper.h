@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include "system.h"
+#include "threads/CriticalSection.h"
 
 #define MAX_EMULATED_FILES    50
 #define FILE_WRAPPER_OFFSET   0x00000100
@@ -63,7 +64,7 @@ public:
   bool StreamIsEmulatedFile(FILE* stream);
 private:
   EmuFileObject m_files[MAX_EMULATED_FILES];
-  CRITICAL_SECTION m_criticalSection;
+  CCriticalSection m_criticalSection;
   bool m_initialized;
 };
 

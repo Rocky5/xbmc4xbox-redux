@@ -22,6 +22,7 @@
 
 #include "system.h"
 #include "DVDOverlay.h"
+#include "PlatformDefs.h"
 #include "cores/dvdplayer/DVDDemuxers/DVDDemux.h"
 
 // VC_ messages, messages can be combined

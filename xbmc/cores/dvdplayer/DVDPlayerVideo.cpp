@@ -782,32 +782,33 @@ void CDVDPlayerVideo::ProcessOverlays(DVDVideoPicture* pSource, YV12Image* pDest
     CDVDCodecUtils::CopyPicture(m_pTempOverlayPicture, pSource);
   else 
     CDVDCodecUtils::CopyPicture(pDest, pSource);
-  
-  m_pOverlayContainer->Lock();
 
-  VecOverlays* pVecOverlays = m_pOverlayContainer->GetOverlays();
-  VecOverlaysIter it = pVecOverlays->begin();
-
-  //Check all overlays and render those that should be rendered, based on time and forced
-  //Both forced and subs should check timeing, pts == 0 in the stillframe case
-  while (it != pVecOverlays->end())
   {
-    CDVDOverlay* pOverlay = *it++;
-    if(!pOverlay->bForced && !m_bRenderSubs)
-      continue;
+    CSingleLock lock(*m_pOverlayContainer);
 
-    double pts2 = pOverlay->bForced ? pts : pts - m_iSubtitleDelay;
+    VecOverlays* pVecOverlays = m_pOverlayContainer->GetOverlays();
+    VecOverlaysIter it = pVecOverlays->begin();
 
-    if((pOverlay->iPTSStartTime <= pts2 && (pOverlay->iPTSStopTime > pts2 || pOverlay->iPTSStopTime == 0LL)) || pts == 0)
+    //Check all overlays and render those that should be rendered, based on time and forced
+    //Both forced and subs should check timeing, pts == 0 in the stillframe case
+    while (it != pVecOverlays->end())
     {
-      if (bHasSpecialOverlay && m_pTempOverlayPicture) 
-        CDVDOverlayRenderer::Render(m_pTempOverlayPicture, pOverlay, pts2);
-      else 
-        CDVDOverlayRenderer::Render(pDest, pOverlay, pts2);
-    }
-  }
+      CDVDOverlay* pOverlay = *it++;
+      if(!pOverlay->bForced && !m_bRenderSubs)
+        continue;
 
-  m_pOverlayContainer->Unlock();
+      double pts2 = pOverlay->bForced ? pts : pts - m_iSubtitleDelay;
+
+      if((pOverlay->iPTSStartTime <= pts2 && (pOverlay->iPTSStopTime > pts2 || pOverlay->iPTSStopTime == 0LL)) || pts == 0)
+      {
+        if (bHasSpecialOverlay && m_pTempOverlayPicture) 
+          CDVDOverlayRenderer::Render(m_pTempOverlayPicture, pOverlay, pts2);
+        else 
+          CDVDOverlayRenderer::Render(pDest, pOverlay, pts2);
+      }
+    }
+
+  }
   
   if (bHasSpecialOverlay && m_pTempOverlayPicture)
     CDVDCodecUtils::CopyPicture(pDest, m_pTempOverlayPicture);

@@ -21,6 +21,7 @@
  */
 
 #include "DVDOverlay.h"
+#include <string.h>
 
 class CDVDOverlayText : public CDVDOverlay
 {

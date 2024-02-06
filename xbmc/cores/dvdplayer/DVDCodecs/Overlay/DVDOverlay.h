@@ -1,6 +1,7 @@
 #pragma once
 
 #include "system.h"
+#include "threads/Atomics.h"
 #include <assert.h>
 #include <vector>
 
@@ -38,7 +39,7 @@ public:
    */
   CDVDOverlay* Acquire()
   {
-    InterlockedIncrement(&m_references);
+    AtomicIncrement(&m_references);
     return this;
   }
   
@@ -47,7 +48,7 @@ public:
    */
   long Release()
   {
-    long count = InterlockedDecrement(&m_references);
+    long count = AtomicDecrement(&m_references);
     if (count == 0) delete this;
     return count;
   }

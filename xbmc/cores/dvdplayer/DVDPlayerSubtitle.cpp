@@ -33,6 +33,7 @@
 #include "DVDCodecs/DVDCodecs.h"
 #include "DVDCodecs/DVDFactoryCodec.h"
 #include "DVDDemuxers/DVDDemuxUtils.h"
+#include "threads/SingleLock.h"
 
 using namespace std;
 
@@ -215,7 +216,7 @@ void CDVDPlayerSubtitle::GetCurrentSubtitle(CStdString& strSubtitle, double pts)
   
   Process(pts); // TODO: move to separate thread?
 
-  m_pOverlayContainer->Lock();
+  CSingleLock lock(*m_pOverlayContainer);
   VecOverlays* pOverlays = m_pOverlayContainer->GetOverlays();
   if (pOverlays)
   {
@@ -241,6 +242,5 @@ void CDVDPlayerSubtitle::GetCurrentSubtitle(CStdString& strSubtitle, double pts)
       }
     }
   }
-  m_pOverlayContainer->Unlock();
   strSubtitle.TrimRight('\n');
 }
