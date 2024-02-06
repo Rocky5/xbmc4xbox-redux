@@ -21,7 +21,7 @@
 #include <limits.h>
 
 #include "MediaSettings.h"
-#include "utils/SingleLock.h"
+#include "threads/SingleLock.h"
 #include "utils/log.h"
 #include "utils/XBMCTinyXML.h"
 #include "utils/XMLUtils.h"

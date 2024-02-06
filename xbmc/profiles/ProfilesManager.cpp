@@ -40,7 +40,7 @@
 #if !defined(TARGET_WINDOWS) && defined(HAS_DVD_DRIVE)
 #include "storage/DetectDVDType.h"
 #endif
-#include "utils/SingleLock.h"
+#include "threads/SingleLock.h"
 #include "utils/CharsetConverter.h"
 #include "utils/FileUtils.h"
 #include "utils/log.h"

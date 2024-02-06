@@ -23,8 +23,8 @@
 
 #include <map>
 #include <string>
-#include "utils/CriticalSection.h"
-#include "utils/Event.h"
+#include "threads/CriticalSection.h"
+#include "threads/Event.h"
 
 class CDatabase;
 class DatabaseSettings;

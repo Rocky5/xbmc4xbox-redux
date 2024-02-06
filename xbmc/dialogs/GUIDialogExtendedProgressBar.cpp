@@ -21,7 +21,7 @@
 #include "GUIDialogExtendedProgressBar.h"
 #include "guilib/GUIProgressControl.h"
 #include "guilib/GUISliderControl.h"
-#include "utils/SingleLock.h"
+#include "threads/SingleLock.h"
 #include "utils/TimeUtils.h"
 
 #define CONTROL_LABELHEADER       30

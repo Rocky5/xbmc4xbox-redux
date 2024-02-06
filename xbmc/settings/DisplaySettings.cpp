@@ -22,7 +22,7 @@
 #include "guilib/gui3d.h"
 #include "settings/GUISettings.h"
 #include "settings/Settings.h"
-#include "utils/SingleLock.h"
+#include "threads/SingleLock.h"
 #include "utils/log.h"
 #include "utils/XMLUtils.h"
 

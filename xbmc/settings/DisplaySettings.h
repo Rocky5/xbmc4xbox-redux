@@ -24,7 +24,7 @@
 // #include "guilib/Resolution.h" -> try to move RESOLUTION and RESOLUTION_INFO to Resolution.h
 #include "guilib/GraphicContext.h"
 #include "settings/ISubSettings.h"
-#include "utils/CriticalSection.h"
+#include "threads/CriticalSection.h"
 
 class TiXmlNode;
 

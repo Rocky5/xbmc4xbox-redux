@@ -25,7 +25,7 @@
 #include "ViewState.h"
 #include "guilib/GraphicContext.h"
 #include "settings/ISubSettings.h"
-#include "utils/CriticalSection.h"
+#include "threads/CriticalSection.h"
 
 class TiXmlNode;
 

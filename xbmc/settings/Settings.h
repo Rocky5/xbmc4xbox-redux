@@ -23,7 +23,7 @@
 
 #include "settings/ISettingsHandler.h"
 #include "settings/ISubSettings.h"
-#include "utils/CriticalSection.h"
+#include "threads/CriticalSection.h"
 #include "utils/StdString.h"
 
 class CGUISettings;

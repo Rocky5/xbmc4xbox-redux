@@ -24,7 +24,7 @@
 
 #include "settings/ISubSettings.h"
 #include "settings/VideoSettings.h"
-#include "utils/CriticalSection.h"
+#include "threads/CriticalSection.h"
 
 #define VOLUME_DRC_MINIMUM 0    // 0dB
 #define VOLUME_DRC_MAXIMUM 3000 // 30dB

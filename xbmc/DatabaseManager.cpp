@@ -27,7 +27,7 @@
 #include "music/MusicDatabase.h"
 #include "video/VideoDatabase.h"
 #include "settings/AdvancedSettings.h"
-#include "utils/SingleLock.h" // this include should be removed after PR209
+#include "threads/SingleLock.h" // this include should be removed after PR209
 
 using namespace std;
 

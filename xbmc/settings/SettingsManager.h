@@ -30,7 +30,7 @@
 #include "ISubSettings.h"
 #include "SettingConditions.h"
 #include "SettingDependency.h"
-#include "utils/CriticalSection.h"
+#include "threads/CriticalSection.h"
 
 class CSettingSection;
 class CSettingUpdate;

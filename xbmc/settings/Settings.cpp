@@ -22,7 +22,7 @@
 #include "filesystem/File.h"
 #include "profiles/ProfilesManager.h"
 #include "settings/GUISettings.h"
-#include "utils/SingleLock.h"
+#include "threads/SingleLock.h"
 #include "utils/log.h"
 #include "utils/XBMCTinyXML.h"
 #ifdef HAS_XBOX_HARDWARE

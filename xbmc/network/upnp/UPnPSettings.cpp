@@ -20,7 +20,7 @@
 
 #include "UPnPSettings.h"
 #include "filesystem/File.h"
-#include "utils/SingleLock.h"
+#include "threads/SingleLock.h"
 #include "utils/log.h"
 #include "utils/StringUtils2.h"
 #include "utils/XBMCTinyXML.h"

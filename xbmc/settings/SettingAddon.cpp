@@ -21,7 +21,7 @@
 #include "SettingAddon.h"
 #include "addons/Addon.h"
 #include "settings/SettingsManager.h"
-#include "utils/SingleLock.h"
+#include "threads/SingleLock.h"
 #include "utils/log.h"
 #include "utils/XBMCTinyXML.h"
 #include "utils/XMLUtils.h"

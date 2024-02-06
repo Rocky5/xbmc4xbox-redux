@@ -29,7 +29,7 @@
 #include "SettingControl.h"
 #include "SettingDependency.h"
 #include "SettingUpdate.h"
-#include "utils/CriticalSection.h"
+#include "threads/CriticalSection.h"
 
 typedef enum {
   SettingTypeNone = 0,

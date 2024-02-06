@@ -22,7 +22,7 @@
 #include <string>
 
 #include "settings/ISettingsHandler.h"
-#include "utils/CriticalSection.h"
+#include "threads/CriticalSection.h"
 
 class CUPnPSettings : public ISettingsHandler
 {

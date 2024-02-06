@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include "utils/StdString.h"
 
-#include "utils/CriticalSection.h"
+#include "threads/CriticalSection.h"
 #include "utils/GlobalsHandling.h"
 
 #define LOG_LEVEL_NONE         -1 // nothing at all is logged
