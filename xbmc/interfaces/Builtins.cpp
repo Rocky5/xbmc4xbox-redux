@@ -996,7 +996,7 @@ int CBuiltins::Execute(const CStdString& execString)
 
     g_guiSettings.SetString("lookandfeel.skincolors", colorTheme);
 
-    g_application.DelayLoadSkin();
+    g_application.ReloadSkin();
   }
   else if (execute.Equals("skin.setstring") || execute.Equals("skin.setimage") || execute.Equals("skin.setfile") ||
            execute.Equals("skin.setpath") || execute.Equals("skin.setnumeric") || execute.Equals("skin.setlargeimage"))

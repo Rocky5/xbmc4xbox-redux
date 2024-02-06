@@ -126,8 +126,6 @@ public:
   bool LoadSkin(const CStdString& skinID);
   void UnloadSkin();
   bool LoadUserWindows();
-  void DelayLoadSkin();
-  void CancelDelayLoadSkin();
   void ReloadSkin();
   const CStdString& CurrentFile();
   CFileItem& CurrentFileItem();
@@ -238,7 +236,6 @@ public:
   inline bool IsInScreenSaver() { return m_bScreenSave; };
   int m_iScreenSaveLock; // spiff: are we checking for a lock? if so, ignore the screensaver state, if -1 we have failed to input locks
 
-  unsigned int m_skinReloadTime;
   bool m_bIsPaused;
   bool m_bPlaybackStarting;
   bool m_128MBHack;
