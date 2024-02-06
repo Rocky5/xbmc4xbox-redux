@@ -401,15 +401,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 				RelativePath=".\xbmc\DbUrl.cpp">
 			</File>
 			<File
-				RelativePath=".\xbmc\utils\EventClient.cpp">
-			</File>
-			<File
-				RelativePath=".\xbmc\utils\EventPacket.cpp">
-			</File>
-			<File
-				RelativePath=".\xbmc\utils\EventServer.cpp">
-			</File>
-			<File
 				RelativePath=".\xbmc\utils\FileUtils.cpp">
 			</File>
 			<File
@@ -2797,6 +2788,24 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					RelativePath=".\xbmc\network\DNSNameCache.h">
 				</File>
 				<File
+					RelativePath=".\xbmc\network\EventClient.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\network\EventClient.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\network\EventPacket.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\network\EventPacket.h">
+				</File>
+				<File
+					RelativePath=".\xbmc\network\EventServer.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\network\EventServer.h">
+				</File>
+				<File
 					RelativePath=".\xbmc\network\GUIDialogNetworkSetup.cpp">
 				</File>
 				<File
@@ -3284,15 +3293,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 			</File>
 			<File
 				RelativePath=".\xbmc\DynamicDll.h">
-			</File>
-			<File
-				RelativePath=".\xbmc\utils\EventClient.h">
-			</File>
-			<File
-				RelativePath=".\xbmc\utils\EventPacket.h">
-			</File>
-			<File
-				RelativePath=".\xbmc\utils\EventServer.h">
 			</File>
 			<File
 				RelativePath=".\xbmc\utils\FanController.h">

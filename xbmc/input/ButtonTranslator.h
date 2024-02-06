@@ -23,7 +23,7 @@
 
 #include <map>
 #ifdef HAS_EVENT_SERVER
-#include "utils/EventClient.h"
+#include "network/EventClient.h"
 #endif
 
 class CKey;

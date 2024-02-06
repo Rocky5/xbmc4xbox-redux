@@ -125,7 +125,7 @@
 #include <xfont.h>  // for textout functions
 #endif
 #ifdef HAS_EVENT_SERVER
-#include "utils/EventServer.h"
+#include "network/EventServer.h"
 #endif
 #include "interfaces/AnnouncementManager.h"
 #include "music/infoscanner/MusicInfoScanner.h"
