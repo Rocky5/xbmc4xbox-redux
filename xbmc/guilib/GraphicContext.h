@@ -98,6 +98,7 @@ struct RESOLUTION_INFO
   DWORD dwFlags;
   float fPixelRatio;
   CStdString strMode;
+  CStdString strId;
 public:
   RESOLUTION_INFO(int width = 1280, int height = 720, float aspect = 0, const CStdString &mode = "")
   {

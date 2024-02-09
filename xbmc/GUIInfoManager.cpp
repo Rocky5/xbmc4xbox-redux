@@ -556,7 +556,8 @@ const infomap fanart_labels[] =  {{ "color1",           FANART_COLOR1 },
                                   { "image",            FANART_IMAGE }};
 
 const infomap skin_labels[] =    {{ "currenttheme",     SKIN_THEME },
-                                  { "currentcolourtheme",SKIN_COLOUR_THEME }};
+                                  { "currentcolourtheme",SKIN_COLOUR_THEME },
+                                  { "aspectratio",      SKIN_ASPECT_RATIO}};
 
 const infomap window_bools[] =   {{ "ismedia",          WINDOW_IS_MEDIA },
                                   { "is",               WINDOW_IS },
@@ -1721,6 +1722,10 @@ CStdString CGUIInfoManager::GetLabel(int info, int contextWindow)
     break;
   case SKIN_COLOUR_THEME:
     strLabel = g_guiSettings.GetString("lookandfeel.skincolors");
+    break;
+  case SKIN_ASPECT_RATIO:
+    if (g_SkinInfo)
+      strLabel = g_SkinInfo->GetCurrentAspect();
     break;
 #ifdef HAS_LCD
   case LCD_PROGRESS_BAR:
