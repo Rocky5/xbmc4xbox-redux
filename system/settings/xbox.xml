@@ -586,12 +586,14 @@
     </category>
   </section>
   <section id="pictures">
-    <group id="1">
-      <setting id="pictures.displayresolution">
-        <visible>true</visible>
-        <default>10</default> <!-- RES_AUTORES -->
-      </setting>
-    </group>
+    <category id="pictures">
+      <group id="1">
+        <setting id="pictures.displayresolution">
+          <visible>true</visible>
+          <default>10</default> <!-- RES_AUTORES -->
+        </setting>
+      </group>
+    </category>
   </section>
   <section id="weather">
     <category id="weather">
