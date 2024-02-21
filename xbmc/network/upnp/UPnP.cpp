@@ -623,7 +623,7 @@ CUPnPServer::PopulateObjectFromTag(CVideoInfoTag&         tag,
 
     object.m_Description.description = tag.m_strTagLine;
     object.m_Description.long_description = tag.m_strPlot;
-    if (resource) resource->m_Duration = StringUtils::TimeStringToSeconds(tag.m_strRuntime.c_str());
+    if (resource) resource->m_Duration = tag.GetDuration();
 
     return NPT_SUCCESS;
 }
@@ -2473,7 +2473,7 @@ int CUPnP::PopulateTagFromObject(CVideoInfoTag&         tag,
     tag.m_strShowTitle = object.m_Recorded.series_title;
 
     if(resource)
-      tag.m_strRuntime.Format("%d",resource->m_Duration);
+      tag.m_duration = resource->m_Duration;
     return NPT_SUCCESS;
 }
 

@@ -499,7 +499,7 @@ namespace PYXBMC
           else if (strcmpi(PyString_AsString(key), "sorttitle") == 0)
             self->item->GetVideoInfoTag()->m_strSortTitle = tmp;
           else if (strcmpi(PyString_AsString(key), "duration") == 0)
-            self->item->GetVideoInfoTag()->m_strRuntime = tmp;
+            self->item->GetVideoInfoTag()->m_duration = CVideoInfoTag::GetDurationFromMinuteString(tmp);
           else if (strcmpi(PyString_AsString(key), "studio") == 0)
             self->item->GetVideoInfoTag()->m_studio = StringUtils::Split(tmp, g_advancedSettings.m_videoItemSeparator);
           else if (strcmpi(PyString_AsString(key), "tagline") == 0)
