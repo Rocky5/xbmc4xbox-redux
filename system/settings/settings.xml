@@ -152,7 +152,7 @@
           </constraints>
           <control type="list" format="string" />
         </setting>
-        <setting id="locale.timezone" type="string" label="14080" help="36118">
+        <setting id="locale.timezone" type="integer" label="14080" help="36118">
           <level>2</level>
           <default>default</default> <!-- will be properly set on startup -->
           <constraints>

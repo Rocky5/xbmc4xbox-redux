@@ -23,9 +23,6 @@
         <setting id="locale.timezonecountry">
           <visible>false</visible>
         </setting>
-        <setting id="locale.timezone" type="integer">
-          <control type="list" format="string" />
-        </setting>
         <setting id="locale.usedst" type="boolean" label="14075" help="">
           <level>2</level>
           <default>false</default>
