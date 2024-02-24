@@ -54,6 +54,7 @@
 #define PROFILES_FILE     "special://masterprofile/profiles.xml"
 
 #define XML_PROFILES      "profiles"
+#define XML_AUTO_LOGIN    "autologin"
 #define XML_LAST_LOADED   "lastloaded"
 #define XML_LOGIN_SCREEN  "useloginscreen"
 #define XML_NEXTID        "nextIdProfile"
@@ -65,7 +66,7 @@ using namespace XFILE;
 static CProfile EmptyProfile;
 
 CProfilesManager::CProfilesManager()
-  : m_usingLoginScreen(false), m_lastUsedProfile(0),
+  : m_usingLoginScreen(false), m_autoLoginProfile(-1), m_lastUsedProfile(0),
     m_currentProfile(0), m_nextProfileId(0)
 { }
 
@@ -135,6 +136,7 @@ bool CProfilesManager::Load(const std::string &file)
       {
         XMLUtils::GetUInt(rootElement, XML_LAST_LOADED, m_lastUsedProfile);
         XMLUtils::GetBoolean(rootElement, XML_LOGIN_SCREEN, m_usingLoginScreen);
+        XMLUtils::GetInt(rootElement, XML_AUTO_LOGIN, m_autoLoginProfile);
         XMLUtils::GetInt(rootElement, XML_NEXTID, m_nextProfileId);
         
         CStdString defaultDir("special://home/userdata");
@@ -176,6 +178,12 @@ bool CProfilesManager::Load(const std::string &file)
 
   m_currentProfile = m_lastUsedProfile;
 
+  // check the validity of the auto login profile index
+  if (m_autoLoginProfile < -1 || m_autoLoginProfile >= (int)m_profiles.size())
+    m_autoLoginProfile = -1;
+  else if (m_autoLoginProfile >= 0)
+    m_currentProfile = m_autoLoginProfile;
+
   // the login screen runs as the master profile, so if we're using this, we need to ensure
   // we switch to the master profile
   if (m_usingLoginScreen)
@@ -201,6 +209,7 @@ bool CProfilesManager::Save(const std::string &file) const
 
   XMLUtils::SetInt(pRoot, XML_LAST_LOADED, m_currentProfile);
   XMLUtils::SetBoolean(pRoot, XML_LOGIN_SCREEN, m_usingLoginScreen);
+  XMLUtils::SetInt(pRoot, XML_AUTO_LOGIN, m_autoLoginProfile);
   XMLUtils::SetInt(pRoot, XML_NEXTID, m_nextProfileId);      
 
   for (vector<CProfile>::const_iterator profile = m_profiles.begin(); profile != m_profiles.end(); profile++)
