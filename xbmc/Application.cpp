@@ -769,7 +769,6 @@ HRESULT CApplication::Create(HWND hWnd)
   init_emu_environ();
 
   CProfilesManager::Get().Load();
-  CSpecialProtocol::SetProfilePath(CProfilesManager::Get().GetProfileUserDataFolder());
 
   /* install win32 exception translator, win32 exceptions
    * can now be caught using c++ try catch */
