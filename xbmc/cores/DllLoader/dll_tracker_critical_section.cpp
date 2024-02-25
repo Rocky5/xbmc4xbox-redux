@@ -18,12 +18,14 @@
  *
  */
  
-#include "utils/log.h"
 #include "dll_tracker_critical_section.h"
 #include "dll_tracker.h"
 #include "dll.h"
 #include "DllLoader.h"
 #include "threads/SingleLock.h"
+#include "utils/log.h"
+#include "xbox/PlatformDefs.h"
+
 #include "exports/emu_kernel32.h"
 
 extern "C" inline void tracker_critical_section_track(uintptr_t caller, LPCRITICAL_SECTION cs)

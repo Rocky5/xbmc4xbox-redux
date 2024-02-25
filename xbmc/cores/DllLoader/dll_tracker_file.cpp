@@ -18,10 +18,12 @@
  *
  */
  
-#include "utils/log.h"
 #include "dll_tracker_file.h"
 #include "dll_tracker.h"
 #include "DllLoader.h"
+#include "threads/SingleLock.h"
+#include "utils/log.h"
+
 #include "exports/emu_msvcrt.h"
 #include <io.h>
 

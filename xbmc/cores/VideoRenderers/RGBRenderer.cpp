@@ -18,9 +18,10 @@
  *
  */
  
-#include "utils/log.h"
+#include "system.h" // SAFE_DELETE
 #include "RGBRenderer.h"
 #include "threads/SingleLock.h"
+#include "utils/log.h"
 
 #define SURFTOTEX(a) ((a)->Parent ? (a)->Parent : (D3DBaseTexture*)(a))
 

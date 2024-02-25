@@ -20,7 +20,7 @@
  *
  */
 
-#include "../../xbox/PlatformDefs.h"
+#include "xbox/PlatformDefs.h"
 #include "utils/StdString.h"
 
 namespace XFILE

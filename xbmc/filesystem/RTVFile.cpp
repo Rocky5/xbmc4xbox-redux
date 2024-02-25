@@ -22,10 +22,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "utils/log.h"
 #include "RTVFile.h"
 #include "SectionLoader.h"
 #include "URL.h"
+#include "utils/log.h"
 
 #include <sys/stat.h>
 extern "C"

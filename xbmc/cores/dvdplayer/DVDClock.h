@@ -20,6 +20,7 @@
  *
  */
 
+#include "system.h"
 #include "threads/SharedSection.h"
 #include "threads/CriticalSection.h"
 

@@ -1,13 +1,24 @@
+//////////////////////////////////////////////////////////////////////
+//
 // CriticalSection.h: interface for the CCriticalSection class.
 //
 //////////////////////////////////////////////////////////////////////
-
-#if !defined(AFX_CRITICALSECTION_H__FC7E6698_33C9_42D6_81EA_F7869FEE11B7__INCLUDED_)
-#define AFX_CRITICALSECTION_H__FC7E6698_33C9_42D6_81EA_F7869FEE11B7__INCLUDED_
+#ifndef _CRITICAL_SECTION_H_
+#define _CRITICAL_SECTION_H_
 
 #if _MSC_VER > 1000
 #pragma once
 #endif // _MSC_VER > 1000
+#ifdef _LINUX
+#include "PlatformDefs.h"
+#include "linux/XSyncUtils.h"
+#include "XCriticalSection.h"
+#elif defined(_XBOX)
+#include <xtl.h>
+#include "xbox/PlatformDefs.h"
+#else
+#include "win32/XCriticalSection.h"
+#endif
 
 /*
  *      Copyright (C) 2005-2013 Team XBMC
@@ -29,8 +40,6 @@
  *
  */
 
-#include "system.h"
-
 class CCriticalSection
 {
 public:
@@ -51,4 +60,4 @@ BOOL  NTAPI OwningCriticalSection(LPCRITICAL_SECTION section);               /* 
 DWORD NTAPI ExitCriticalSection(LPCRITICAL_SECTION section);                 /* leaves critical section fully, and returns count */ 
 VOID  NTAPI RestoreCriticalSection(LPCRITICAL_SECTION section, DWORD count); /* restores critical section count */
 
-#endif // !defined(AFX_CRITICALSECTION_H__FC7E6698_33C9_42D6_81EA_F7869FEE11B7__INCLUDED_)
+#endif

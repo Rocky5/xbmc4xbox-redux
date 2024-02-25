@@ -18,7 +18,6 @@
 * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#include "system.h"
 #include "CriticalSection.h"
 #ifdef _XBOX
 #include "xbox/Undocumented.h"

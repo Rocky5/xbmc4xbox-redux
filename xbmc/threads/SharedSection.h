@@ -20,7 +20,7 @@
  *
  */
 
-#include "system.h"
+#include "system.h" // for HANDLE, CRITICALSECTION
 
 class CSharedSection
 {

@@ -18,13 +18,13 @@
  *
  */
  
-#include "utils/log.h"
 #include "dll_tracker_library.h"
 #include "dll_tracker.h"
 #include "dll.h"
 #include "DllLoader.h"
 #include "DllLoaderContainer.h"
 #include "threads/SingleLock.h"
+#include "utils/log.h"
 
 extern "C" inline void tracker_library_track(uintptr_t caller, HMODULE hHandle)
 {
