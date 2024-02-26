@@ -10,9 +10,9 @@
 
 /********************************* Includes ***********************************/
 
+#include "boost/shared_ptr.hpp"
 #include "filesystem/VirtualDirectory.h"
 #include "includes.h"
-#include "boost/shared_ptr.hpp"
 
 class CFileItem; typedef boost::shared_ptr<CFileItem> CFileItemPtr;
 class CFileItemList;

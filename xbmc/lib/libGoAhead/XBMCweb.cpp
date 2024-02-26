@@ -11,10 +11,9 @@
 
 /********************************* Includes ***********************************/
 
-#include "system.h"
-#include "XBMCweb.h"
 #include "Application.h"
 #include "ApplicationMessenger.h"
+#include "XBMCweb.h"
 
 #include "Util.h"
 #include "PlayListPlayer.h"

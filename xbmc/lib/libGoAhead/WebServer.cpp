@@ -9,10 +9,9 @@
  * See the file "license.txt" for usage and redistribution license requirements
  */
 
-#include "system.h"
 #include "WebServer.h"
-#include "XBMCweb.h"
 #include "Application.h"
+#include "XBMCweb.h"
 #include "filesystem/SpecialProtocol.h"
 #include "utils/log.h"
 #include "utils/URIUtils.h"
