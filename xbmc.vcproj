@@ -919,12 +919,6 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					RelativePath=".\xbmc\ApplicationMessenger.cpp">
 				</File>
 				<File
-					RelativePath=".\xbmc\utils\ArabicShaping.cpp">
-				</File>
-				<File
-					RelativePath=".\xbmc\utils\ArabicShaping.h">
-				</File>
-				<File
 					RelativePath=".\xbmc\utils\Archive.cpp">
 				</File>
 				<File
@@ -3695,6 +3689,9 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 			</File>
 			<File
 				RelativePath=".\xbmc\Util.h">
+			</File>
+			<File
+				RelativePath=".\xbmc\utils\uXstrings.h">
 			</File>
 			<File
 				RelativePath=".\xbmc\utils\Weather.h">
