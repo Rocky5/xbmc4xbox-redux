@@ -142,8 +142,3 @@ void CSplash::Stop()
 {
   StopThread();
 }
-
-bool CSplash::IsRunning()
-{
-  return (m_ThreadHandle != NULL);
-}

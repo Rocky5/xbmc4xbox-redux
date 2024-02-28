@@ -29,7 +29,6 @@ public:
   CSplash(const CStdString& imageName);
   virtual ~CSplash();
 
-  bool IsRunning();
   bool Start();
   void Stop();
 private:
