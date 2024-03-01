@@ -89,6 +89,7 @@ CFileItem::CFileItem(const CStdString &path, const CAlbum& album)
   m_strLabel2 = StringUtils::Join(album.artist, g_advancedSettings.m_musicItemSeparator);
   URIUtils::AddSlashAtEnd(m_strPath);
   GetMusicInfoTag()->SetAlbum(album);
+  m_bIsAlbum = true;
   if (album.thumbURL.m_url.size() > 0)
     m_strThumbnailImage = album.thumbURL.m_url[0].m_url;
   else
@@ -312,6 +313,7 @@ const CFileItem& CFileItem::operator=(const CFileItem& item)
   m_mimetype = item.m_mimetype;
   m_extrainfo = item.m_extrainfo;
   m_specialSort = item.m_specialSort;
+  m_bIsAlbum = item.m_bIsAlbum;
   return *this;
 }
 
@@ -323,6 +325,7 @@ void CFileItem::Reset()
   FreeIcons();
   m_overlayIcon = ICON_OVERLAY_NONE;
   m_bSelected = false;
+  m_bIsAlbum = false;
   m_strDVDLabel.Empty();
   m_strTitle.Empty();
   m_strPath.Empty();
@@ -1220,6 +1223,11 @@ bool CFileItem::IsSamePath(const CFileItem *item) const
   if (HasProperty("original_listitem_url"))
     return (GetProperty("original_listitem_url") == item->GetPath());
   return false;
+}
+
+bool CFileItem::IsAlbum() const
+{
+  return m_bIsAlbum;
 }
 
 void CFileItem::UpdateInfo(const CFileItem &item, bool replaceLabels /*=true*/)
