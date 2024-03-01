@@ -36,6 +36,7 @@ bool CSaveFileStateJob::DoWork()
       CVideoDatabase videodatabase;
       if (videodatabase.Open())
       {
+        bool updateListing = false;
         // No resume & watched status for livetv
         if (!m_item.IsLiveTV())
         {
@@ -45,9 +46,7 @@ bool CSaveFileStateJob::DoWork()
 
             // consider this item as played
             videodatabase.IncrementPlayCount(m_item);
-            CUtil::DeleteVideoDatabaseDirectoryCache();
-            CGUIMessage message(GUI_MSG_NOTIFY_ALL, g_windowManager.GetActiveWindow(), 0, GUI_MSG_UPDATE, 0);
-            g_windowManager.SendMessage(message);
+            updateListing = true;
           }
 
           if (m_bookmark.timeInSeconds < 0.0f)
@@ -71,12 +70,16 @@ bool CSaveFileStateJob::DoWork()
              m_item.GetVideoInfoTag()->HasStreamDetails())
         {
           videodatabase.SetStreamDetailsForFile(m_item.GetVideoInfoTag()->m_streamDetails,progressTrackingFile);
+          updateListing = true;
+        }
+        videodatabase.Close();
+
+        if (updateListing)
+        {
           CUtil::DeleteVideoDatabaseDirectoryCache();
           CGUIMessage message(GUI_MSG_NOTIFY_ALL, g_windowManager.GetActiveWindow(), 0, GUI_MSG_UPDATE, 0);
-          g_windowManager.SendMessage(message);
+          g_windowManager.SendThreadMessage(message);
         }
-
-        videodatabase.Close();
       }
     }
 
