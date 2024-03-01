@@ -111,6 +111,7 @@
 #include "utils/md5.h"
 #include "utils/CharsetConverter.h"
 #include "utils/log.h"
+#include "video/VideoInfoTag.h"
 
 #include "defs_from_settings.h"
 
@@ -2043,7 +2044,7 @@ bool CUtil::ThumbCached(const CStdString& strFileName)
   return CThumbnailCache::GetThumbnailCache()->IsCached(strFileName);
 }
 
-void CUtil::PlayDVD()
+void CUtil::PlayDVD(const CStdString& strProtocol, bool restart)
 {
   if (CSettings::Get().GetBool("dvds.useexternaldvdplayer") && !CSettings::Get().GetString("dvds.externaldvdplayer").empty())
   {
@@ -2053,9 +2054,14 @@ void CUtil::PlayDVD()
   {
     CIoSupport::Dismount("Cdrom0");
     CIoSupport::RemapDriveLetter('D', "Cdrom0");
-    CFileItem item("dvd://1", false);
+    CStdString strPath;
+    strPath.Format("%s://1", strProtocol.c_str());
+    CFileItem item(strPath, false);
     item.SetLabel(CDetectDVDMedia::GetDVDLabel());
-    g_application.PlayFile(item);
+    item.GetVideoInfoTag()->m_strFileNameAndPath = "removable://"; // need to put volume label for resume point in videoInfoTag
+    item.GetVideoInfoTag()->m_strFileNameAndPath += CDetectDVDMedia::GetDVDLabel();
+    if (!restart) item.m_lStartOffset = STARTOFFSET_RESUME;
+    g_application.PlayFile(item, restart);
   }
 }
 

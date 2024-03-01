@@ -1055,7 +1055,7 @@ CStdString CGUIWindowVideoBase::GetResumeString(CFileItem item)
   {
     CBookmark bookmark;
     CStdString itemPath(item.GetPath());
-    if (item.IsVideoDb())
+    if (item.IsVideoDb() || item.IsDVD())
       itemPath = item.GetVideoInfoTag()->m_strFileNameAndPath;
 
     if (URIUtils::IsStack(itemPath) && CFileItem(CStackDirectory::GetFirstStackedFile(itemPath),false).IsDVDImage())
@@ -1139,7 +1139,7 @@ void CGUIWindowVideoBase::GetContextButtons(int itemNumber, CContextButtons &but
       if (!item->IsPlugin() /*&& !item->IsScript()*/ && !item->IsAddonsPath() && !item->IsLiveTV())
       {
         CStdString path(item->GetPath());
-        if (item->IsVideoDb() && item->HasVideoInfoTag())
+        if ((item->IsVideoDb() || item->IsDVD()) && item->HasVideoInfoTag())
           path = item->GetVideoInfoTag()->m_strFileNameAndPath;
 
         if (URIUtils::IsStack(path))
@@ -1183,7 +1183,8 @@ void CGUIWindowVideoBase::GetContextButtons(int itemNumber, CContextButtons &but
 
       // if autoresume is enabled then add restart video button
       // check to see if the Resume Video button is applicable
-      if (GetResumeItemOffset(item.get()) > 0)
+      // only if the video is NOT a DVD (in that case the resume button will be added by CGUIDialogContextMenu::GetContextButtons)
+      if (!item->IsDVD() && GetResumeItemOffset(item.get()) > 0)
       {
         buttons.Add(CONTEXT_BUTTON_RESUME_ITEM, GetResumeString(*(item.get())));     // Resume Video
       }

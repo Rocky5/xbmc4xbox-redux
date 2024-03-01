@@ -3751,7 +3751,10 @@ bool CApplication::PlayFile(const CFileItem& item, bool bRestart)
       {
         options.starttime = 0.0f;
         CBookmark bookmark;
-        if(dbs.GetResumeBookMark(item.GetPath(), bookmark))
+        CStdString path = item.GetPath();
+        if (item.IsDVD()) 
+          path = item.GetVideoInfoTag()->m_strFileNameAndPath;
+        if(dbs.GetResumeBookMark(path, bookmark))
         {
           options.starttime = bookmark.timeInSeconds;
           options.state = bookmark.playerState;

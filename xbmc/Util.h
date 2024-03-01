@@ -134,7 +134,7 @@ public:
   static bool ThumbCached(const CStdString& strFileName);
   static void ThumbCacheAdd(const CStdString& strFileName, bool bFileExists);
   static void ThumbCacheClear();
-  static void PlayDVD();
+  static void PlayDVD(const CStdString& strProtocol = "dvd", bool restart = false);
   static CStdString GetNextFilename(const CStdString &fn_template, int max);
   static void TakeScreenshot();
   static void TakeScreenshot(const CStdString& strFileName, bool flash);

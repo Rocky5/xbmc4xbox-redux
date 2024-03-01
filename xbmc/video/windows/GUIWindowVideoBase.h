@@ -78,6 +78,12 @@ public:
    */
   static void OnAssignContent(const CStdString &path);
 
+  /*! \brief checks the database for a resume position and puts together a string
+   \param item selected item
+   \return string containing the resume position or an empty string if there is no resume position
+   */
+  static CStdString GetResumeString(CFileItem item);
+
 private:
   bool IsCorrectDiskInDrive(const CStdString& strFileName, const CStdString& strDVDLabel);
 protected:
@@ -114,11 +120,7 @@ protected:
    \return true if the action is performed, false otherwise
    */
   bool OnFileAction(int item, int action);
-  /*! \brief checks the database for a resume position and puts together a string
-   \param item selected item
-   \return string containing the resume position or an empty string if there is no resume position
-   */
-  static CStdString GetResumeString(CFileItem item);
+
   void OnRestartItem(int iItem);
   bool OnResumeItem(int iItem);
   void PlayItem(int iItem);

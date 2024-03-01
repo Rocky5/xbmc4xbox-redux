@@ -48,6 +48,7 @@
 #include "utils/StringUtils.h"
 #include "xbox/IoSupport.h"
 #include "storage/DetectDVDType.h"
+#include "video/windows/GUIWindowVideoBase.h"
 
 using namespace std;
 
@@ -285,7 +286,13 @@ void CGUIDialogContextMenu::GetContextButtons(const CStdString &type, const CFil
   {
     // We need to check if there is a detected is inserted!
     if ( MEDIA_DETECT::CDetectDVDMedia::IsDiscInDrive() )
+    {
       buttons.Add(CONTEXT_BUTTON_PLAY_DISC, 341); // Play CD/DVD!
+      if (CGUIWindowVideoBase::GetResumeItemOffset(item.get()) > 0)
+      {
+        buttons.Add(CONTEXT_BUTTON_RESUME_DISC, CGUIWindowVideoBase::GetResumeString(*(item.get())));     // Resume Disc
+      }
+    }
     buttons.Add(CONTEXT_BUTTON_EJECT_DISC, 13391);  // Eject/Load CD/DVD!
   }
 
@@ -368,6 +375,9 @@ bool CGUIDialogContextMenu::OnContextButton(const CStdString &type, const CFileI
   switch (button)
   {
   case CONTEXT_BUTTON_PLAY_DISC:
+    return MEDIA_DETECT::CAutorun::PlayDisc(true); // restart
+
+  case CONTEXT_BUTTON_RESUME_DISC:
     return MEDIA_DETECT::CAutorun::PlayDisc();
 
   case CONTEXT_BUTTON_EJECT_DISC:
