@@ -1,5 +1,5 @@
 <fonts>
-	<fontset id="Default" unicode="true">
+	<fontset id="Default">
 		<font>
 			<name>font101</name>
 			<filename>FrancophilSans.ttf</filename>
@@ -34,7 +34,7 @@
 			<style>bold</style>
 		</font>
 	</fontset>
-	<fontset id="Arial TTF" unicode="true">
+	<fontset id="Arial TTF">
 		<font>
 			<name>font101</name>
 			<filename>Arial.ttf</filename>
@@ -69,7 +69,7 @@
 			<style>bold</style>
 		</font>
 	</fontset>
-	<fontset id="Arial TTF New" unicode="true">
+	<fontset id="Arial TTF New">
 		<font>
 			<name>font101</name>
 			<filename>Arial.ttf</filename>

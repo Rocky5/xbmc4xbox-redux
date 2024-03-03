@@ -23,7 +23,6 @@
 #include "FileItem.h"
 #include "Util.h"
 #include "filesystem/Directory.h"
-#include "guilib/GUIFontManager.h"
 #include "guilib/LocalizeStrings.h"
 #include "settings/AdvancedSettings.h"
 #include "settings/Setting.h"
@@ -449,14 +448,6 @@ bool CLangInfo::SetLanguage(const std::string &strLanguage)
   string strLangInfoPath = StringUtils2::Format("special://xbmc/language/%s/langinfo.xml", strLanguage.c_str());
   if (!Load(strLangInfoPath))
     return false;
-
-  if (ForceUnicodeFont() && !g_fontManager.IsFontSetUnicode())
-  {
-    CLog::Log(LOGINFO, "Language needs a ttf font, loading first ttf font available");
-    CStdString strFontSet;
-    if (!g_fontManager.GetFirstFontSetUnicode(strFontSet))
-      CLog::Log(LOGERROR, "No ttf font found but needed: %s", strFontSet.c_str());
-  }
 
   if (!g_localizeStrings.Load("special://xbmc/language/", strLanguage))
     return false;

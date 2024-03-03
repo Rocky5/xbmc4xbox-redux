@@ -1,5 +1,5 @@
 <fonts>
-	<fontset id="Default" unicode="true">
+	<fontset id="Default">
 	<!-- Normal Fonts -->
 		 <font>
 			<name>font10</name>
@@ -111,7 +111,7 @@
 		</font>
 	</fontset>
 
-	<fontset id="Default_NoCaps" unicode="true">
+	<fontset id="Default_NoCaps">
 	<!-- Normal Fonts -->
 	 	<font>
 			<name>font10</name>
@@ -220,7 +220,7 @@
 		</font>
 	</fontset>
 
-	<fontset id="Arial" unicode="true">
+	<fontset id="Arial">
 	<!-- Normal Fonts -->
 	 	<font>
 			<name>font10</name>
