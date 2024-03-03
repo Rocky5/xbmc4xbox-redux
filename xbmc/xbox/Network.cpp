@@ -31,9 +31,6 @@
 
 #include "defs_from_settings.h"
 
-// Time to wait before we give up on network init
-#define WAIT_TIME 10000
-
 #ifdef _XBOX
 static char* inet_ntoa (struct in_addr in)
 {
@@ -585,7 +582,7 @@ bool CNetwork::IsAvailable(bool wait)
 {
   // if network isn't up, wait for it to setup
   if( !m_networkup && wait )
-    WaitForSetup(WAIT_TIME);
+    WaitForSetup();
 
 #ifdef HAS_XBOX_NETWORK
   return m_networkup;

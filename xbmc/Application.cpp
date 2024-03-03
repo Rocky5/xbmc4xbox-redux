@@ -1258,7 +1258,8 @@ HRESULT CApplication::Initialize()
 
   /* setup network based on our settings */
   /* network will start it's init procedure */
-  m_network->SetupNetwork();
+  if(m_network->SetupNetwork())
+    m_network->WaitForSetup();
 
   // initialize (and update as needed) our databases
   CDatabaseManager::Get().Initialize();

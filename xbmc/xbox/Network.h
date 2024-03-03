@@ -24,6 +24,9 @@
 #include "utils/StdString.h"
 #include "threads/CriticalSection.h"
 
+// Time to wait before we give up on network init
+#define WAIT_TIME 10000
+
 struct network_info
 {
   char ip[32];
@@ -53,7 +56,7 @@ public:
   void Deinitialize();
 
   /* waits for network to finish init */
-  bool WaitForSetup(DWORD timeout);
+  bool WaitForSetup(DWORD timeout = WAIT_TIME);
   
   // Return true if the magic packet was send
   bool WakeOnLan(char *mac); 
