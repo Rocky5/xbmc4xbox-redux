@@ -6131,7 +6131,10 @@ msgctxt "#15105"
 msgid "* All genres"
 msgstr ""
 
-#empty string with id 15106
+#: xbmc/addons/Skin.cpp
+msgctxt "#15106"
+msgid "Skin built-in"
+msgstr ""
 
 msgctxt "#15107"
 msgid "Buffering..."
@@ -8187,7 +8190,7 @@ msgid "Enable mouse"
 msgstr ""
 
 msgctxt "#21370"
-msgid "Play navigation sounds during media playback"
+msgid "Play GUI sounds during media playback"
 msgstr ""
 
 msgctxt "#21371"
@@ -9144,7 +9147,11 @@ msgctxt "#24005"
 msgid "Media sources"
 msgstr ""
 
-#empty string with id 24006
+#. Name of an add-on type
+#: xbmc/addons/Addon.cpp
+msgctxt "#24006"
+msgid "GUI Sounds"
+msgstr ""
 
 #: xbmc/addons/addon.cpp
 msgctxt "#24007"
@@ -9235,7 +9242,12 @@ msgctxt "#24024"
 msgid "Add-on disabled"
 msgstr ""
 
-#empty strings from id 24025 to 24026
+#empty string with id 24025
+
+#: xbmc/addons/Addon.cpp
+msgctxt "#24026"
+msgid "Languages"
+msgstr ""
 
 #: xbmc/addons/addon.cpp
 msgctxt "#24027"
@@ -9550,7 +9562,14 @@ msgctxt "#24122"
 msgid "Update all"
 msgstr ""
 
-#empty strings from id 24123 to 24997
+#empty strings from id 24123 to 24131
+
+#: xbmc/addons/LanguageResource.cpp
+msgctxt "#24132"
+msgid "Would you like to switch to this language?"
+msgstr ""
+
+#empty strings from id 24133 to 24997
 
 msgctxt "#24998"
 msgid "My Add-ons"
@@ -10037,10 +10056,10 @@ msgctxt "#36109"
 msgid "Select the media window that XBMC displays on startup."
 msgstr ""
 
-#. Description of setting "Appearance -> Skin -> Navigation sounds" with label #15108
+#. Description of setting "Appearance -> Skin -> GUI sounds" with label #15108
 #: system/settings/settings.xml
 msgctxt "#36110"
-msgid "Select or disable the sound scheme used in the user interface."
+msgid "Select or disable the sounds used in the user interface."
 msgstr ""
 
 #. Description of setting "Appearance -> Skin -> Show RSS news feed" with label #13305

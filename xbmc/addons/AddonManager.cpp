@@ -21,6 +21,8 @@
 #include "AddonManager.h"
 #include "Addon.h"
 #include "DllLibCPluff.h"
+#include "LanguageResource.h"
+#include "UISoundsResource.h"
 #include "StringUtils.h"
 #include "URIUtils.h"
 #include "RegExp.h"
@@ -157,6 +159,10 @@ AddonPtr CAddonMgr::Factory(const cp_extension_t *props)
       }
     case ADDON_SKIN:
       return AddonPtr(new CSkinInfo(props));
+    case ADDON_RESOURCE_LANGUAGE:
+      return AddonPtr(new CLanguageResource(props));
+    case ADDON_RESOURCE_UISOUNDS:
+      return AddonPtr(new CUISoundsResource(props));
     case ADDON_VIZ_LIBRARY:
       return AddonPtr(new CAddonLibrary(props));
     case ADDON_REPOSITORY:
@@ -456,6 +462,9 @@ bool CAddonMgr::GetDefault(const TYPE &type, AddonPtr &addon)
   case ADDON_WEB_INTERFACE:
     setting = CSettings::Get().GetString("services.webskin");
     break;
+  case ADDON_RESOURCE_LANGUAGE:
+    setting = CSettings::Get().GetString("locale.language");
+    break;
   default:
     return false;
   }
@@ -486,6 +495,9 @@ bool CAddonMgr::SetDefault(const TYPE &type, const CStdString &addonID)
     break;
   case ADDON_SCRAPER_TVSHOWS:
     CSettings::Get().SetString("scrapers.tvshowsdefault",addonID);
+    break;
+  case ADDON_RESOURCE_LANGUAGE:
+    CSettings::Get().SetString("locale.language", addonID);
     break;
   default:
     return false;
@@ -568,6 +580,10 @@ AddonPtr CAddonMgr::AddonFromProps(AddonProps& addonProps)
       return AddonPtr(new CScreenSaver(addonProps));
     case ADDON_VIZ_LIBRARY:
       return AddonPtr(new CAddonLibrary(addonProps));
+    case ADDON_RESOURCE_LANGUAGE:
+      return AddonPtr(new CLanguageResource(addonProps));
+    case ADDON_RESOURCE_UISOUNDS:
+      return AddonPtr(new CUISoundsResource(addonProps));
     case ADDON_REPOSITORY:
       return AddonPtr(new CRepository(addonProps));
     default:
@@ -619,9 +635,9 @@ bool CAddonMgr::PlatformSupportsAddon(const cp_plugin_info_t *plugin) const
   return true; // assume no <platform> is equivalent to <platform>all</platform>
 }
 
-const cp_cfg_element_t *CAddonMgr::GetExtElement(cp_cfg_element_t *base, const char *path)
+cp_cfg_element_t *CAddonMgr::GetExtElement(cp_cfg_element_t *base, const char *path)
 {
-  const cp_cfg_element_t *element = NULL;
+  cp_cfg_element_t *element = NULL;
   if (base)
     element = m_cpluff->lookup_cfg_element(base, path);
   return element;

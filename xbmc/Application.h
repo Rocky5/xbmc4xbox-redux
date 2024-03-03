@@ -115,9 +115,9 @@ public:
   void Stop(bool bLCDStop = true);
   void RestartApp();
   bool LoadSkin(const CStdString& skinID);
-  void UnloadSkin();
+  void UnloadSkin(bool forReload = false);
   bool LoadUserWindows();
-  void ReloadSkin();
+  void ReloadSkin(bool confirm = false);
   const CStdString& CurrentFile();
   CFileItem& CurrentFileItem();
   virtual bool OnMessage(CGUIMessage& message);
@@ -251,7 +251,9 @@ protected:
   virtual void OnSettingAction(const CSetting *setting);
   virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode);
 
-  void LoadSkin(const boost::shared_ptr<ADDON::CSkinInfo>& skin);
+  bool LoadSkin(const boost::shared_ptr<ADDON::CSkinInfo>& skin);
+
+  bool m_skinReverting;
 
   // screensaver
   bool m_bScreenSave;

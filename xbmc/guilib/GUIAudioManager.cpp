@@ -28,6 +28,8 @@
 #include "threads/SingleLock.h"
 #include "utils/URIUtils.h"
 #include "utils/XBMCTinyXML.h"
+#include "filesystem/Directory.h"
+#include "addons/AddonManager.h"
 #include "addons/Skin.h"
 
 using namespace std;
@@ -38,7 +40,6 @@ CGUIAudioManager g_audioManager;
 CGUIAudioManager::CGUIAudioManager()
 {
   m_actionSound=NULL;
-  m_bEnabled=true;
 }
 
 CGUIAudioManager::~CGUIAudioManager()
@@ -57,6 +58,22 @@ void CGUIAudioManager::OnSettingChanged(const CSetting *setting)
     Enable(true);
     Load();
   }
+}
+
+bool CGUIAudioManager::OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode)
+{
+  if (setting == NULL)
+    return false;
+
+  if (setting->GetId() == "lookandfeel.soundskin")
+  {
+    //Migrate the old settings
+    if (((CSettingString*)setting)->GetValue() == "SKINDEFAULT")
+      ((CSettingString*)setting)->Reset();
+    else if (((CSettingString*)setting)->GetValue() == "OFF")
+      ((CSettingString*)setting)->SetValue("");
+  }
+  return true;
 }
 
 void CGUIAudioManager::Initialize(int iDevice)
@@ -155,7 +172,7 @@ void CGUIAudioManager::FreeUnused()
 void CGUIAudioManager::PlayActionSound(const CAction& action)
 {
   // it's not possible to play gui sounds when passthrough is active
-  if (!m_bEnabled || g_audioContext.IsPassthroughActive())
+  if (g_audioContext.IsPassthroughActive())
     return;
 
   CSingleLock lock(m_cs);
@@ -186,7 +203,7 @@ void CGUIAudioManager::PlayActionSound(const CAction& action)
 void CGUIAudioManager::PlayWindowSound(int id, WINDOW_SOUND event)
 {
   // it's not possible to play gui sounds when passthrough is active
-  if (!m_bEnabled || g_audioContext.IsPassthroughActive())
+  if (g_audioContext.IsPassthroughActive())
     return;
 
   CSingleLock lock(m_cs);
@@ -265,25 +282,33 @@ void CGUIAudioManager::PlayPythonSound(const CStdString& strFileName)
   sound->Play();
 }
 
+std::string GetSoundSkinPath()
+{
+  CSettingString* setting = static_cast<CSettingString*>(CSettings::Get().GetSetting("lookandfeel.soundskin"));
+  std::string value = setting->GetValue();
+  if (value.empty())
+    return "";
+
+  ADDON::AddonPtr addon;
+  if (!ADDON::CAddonMgr::Get().GetAddon(value, addon, ADDON::ADDON_RESOURCE_UISOUNDS))
+  {
+    CLog::Log(LOGNOTICE, "Unknown sounds addon '%s'. Setting default sounds.", value.c_str());
+    setting->Reset();
+  }
+  return URIUtils::AddFileToFolder("resource://", setting->GetValue());
+}
+
 // \brief Load the config file (sounds.xml) for nav sounds
-// Can be located in a folder "sounds" in the skin or from a
-// subfolder of the folder "sounds" in the root directory of
-// xbmc
 bool CGUIAudioManager::Load()
 {
   m_actionSoundMap.clear();
   m_windowSoundMap.clear();
 
-  if (CSettings::Get().GetString("lookandfeel.soundskin")=="OFF")
+  m_strMediaDir = GetSoundSkinPath();
+  if (m_strMediaDir.empty())
     return true;
 
-  if (CSettings::Get().GetString("lookandfeel.soundskin")=="SKINDEFAULT")
-  {
-    m_strMediaDir = URIUtils::AddFileToFolder(g_SkinInfo->Path(), "sounds");
-  }
-  else
-    m_strMediaDir = URIUtils::AddFileToFolder("special://xbmc/sounds", CSettings::Get().GetString("lookandfeel.soundskin"));
-
+  Enable(true);
   CStdString strSoundsXml = URIUtils::AddFileToFolder(m_strMediaDir, "sounds.xml");
 
   //  Load our xml file
@@ -385,9 +410,12 @@ void CGUIAudioManager::Enable(bool bEnable)
 {
   // Enable/Disable has no effect if nav sounds are turned off
   if (CSettings::Get().GetString("lookandfeel.soundskin")=="OFF")
-    return;
+    bEnable = false;
 
-  m_bEnabled=bEnable;
+  if (bEnable)
+    Initialize(CAudioContext::DEFAULT_DEVICE);
+  else
+    DeInitialize(CAudioContext::DEFAULT_DEVICE);
 }
 
 // \brief Sets the volume of all playing sounds

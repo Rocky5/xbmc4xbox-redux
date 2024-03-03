@@ -333,6 +333,7 @@ CApplication::CApplication(void)
   m_strPlayListFile = "";
   m_nextPlaylistItem = -1;
   m_bPlaybackStarting = false;
+  m_skinReverting = false;
 
   //true while we in IsPaused mode! Workaround for OnPaused, which must be add. after v2.0
   m_bIsPaused = false;
@@ -1250,7 +1251,6 @@ HRESULT CApplication::Initialize()
 
   CDirectory::Create("special://home/addons");
   CDirectory::Create("special://home/addons/packages");
-  CDirectory::Create("special://home/sounds");
   CUtil::WipeDir("special://temp/");
   CDirectory::Create("special://temp/temp"); // temp directory for python and dllGetTempPathA
 
@@ -1598,29 +1598,43 @@ void CApplication::StopServices()
 #endif  
 }
 
-void CApplication::ReloadSkin()
+void CApplication::ReloadSkin(bool confirm/*=false*/)
 {
+  std::string oldSkin = g_SkinInfo ? g_SkinInfo->ID() : "";
+
   CGUIMessage msg(GUI_MSG_LOAD_SKIN, -1, g_windowManager.GetActiveWindow());
   g_windowManager.SendMessage(msg);
 
-  // Reload the skin, restoring the previously focused control.  We need this as
-  // the window unload will reset all control states.
-  int iCtrlID = -1;
-  CGUIWindow* pWindow = g_windowManager.GetWindow(g_windowManager.GetActiveWindow());
-  if (pWindow)
-    iCtrlID = pWindow->GetFocusedControlID();
-
-  g_application.LoadSkin(CSettings::Get().GetString("lookandfeel.skin"));
-
-  if (iCtrlID != -1)
+  string newSkin = CSettings::Get().GetString("lookandfeel.skin");
+  if (LoadSkin(newSkin))
   {
-    pWindow = g_windowManager.GetWindow(g_windowManager.GetActiveWindow());
-    if (pWindow && pWindow->HasSaveLastControl())
+    /* The Reset() or SetString() below will cause recursion, so the m_skinReverting boolean is set so as to not prompt the
+       user as to whether they want to keep the current skin. */
+    if (confirm && !m_skinReverting)
     {
-      CGUIMessage msg3(GUI_MSG_SETFOCUS, g_windowManager.GetActiveWindow(), iCtrlID, 0);
-      pWindow->OnMessage(msg3);
+      bool cancelled;
+      if (!CGUIDialogYesNo::ShowAndGetInput(13123, 13111, -1, -1, -1, -1, cancelled, 10000))
+      {
+        m_skinReverting = true;
+        if (oldSkin.empty())
+          CSettings::Get().GetSetting("lookandfeel.skin")->Reset();
+        else
+          CSettings::Get().SetString("lookandfeel.skin", oldSkin);
+      }
     }
   }
+  else
+  {
+    // skin failed to load - we revert to the default only if we didn't fail loading the default
+    string defaultSkin = ((CSettingString*)CSettings::Get().GetSetting("lookandfeel.skin"))->GetDefault();
+    if (newSkin != defaultSkin)
+    {
+      m_skinReverting = true;
+      CSettings::Get().GetSetting("lookandfeel.skin")->Reset();
+      CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Error, g_localizeStrings.Get(24102), g_localizeStrings.Get(24103));
+    }
+  }
+  m_skinReverting = false;
 }
 
 bool CApplication::OnSettingsSaving() const
@@ -1698,35 +1712,21 @@ bool CApplication::LoadSkin(const CStdString& skinID)
   AddonPtr addon;
   if (CAddonMgr::Get().GetAddon(skinID, addon))
   {
-    LoadSkin(boost::dynamic_pointer_cast<ADDON::CSkinInfo>(addon));
-    return true;
+    if (LoadSkin(boost::dynamic_pointer_cast<ADDON::CSkinInfo>(addon)))
+      return true;
   }
+  CLog::Log(LOGERROR, "failed to load requested skin '%s'", skinID.c_str());
   return false;
 }
 
-void CApplication::LoadSkin(const SkinPtr& skin)
+bool CApplication::LoadSkin(const SkinPtr& skin)
 {
-  string defaultSkin = ((const CSettingString*)CSettings::Get().GetSetting("lookandfeel.skin"))->GetDefault();
   if (!skin)
-  {
-    CLog::Log(LOGERROR, "failed to load requested skin, fallback to \"%s\" skin", defaultSkin.c_str());
-    CSettings::Get().GetSetting("lookandfeel.skin")->Reset();
-    return ;
-  }
+    return false;
 
   skin->Start();
   if (!skin->HasSkinFile("Home.xml"))
-  {
-    // failed to find home.xml
-    // fallback to default skin
-    if (strcmpi(skin->ID().c_str(), defaultSkin.c_str()) != 0)
-    {
-      CLog::Log(LOGERROR, "home.xml doesn't exist in skin: %s, fallback to \"%s\" skin", skin->ID().c_str(), defaultSkin.c_str());
-      CSettings::Get().GetSetting("lookandfeel.skin")->Reset();
-      CGUIDialogKaiToast::QueueNotification(CGUIDialogKaiToast::Error, g_localizeStrings.Get(24102), g_localizeStrings.Get(24103));
-      return ;
-    }
-  }
+    return false;
 
   bool bPreviousPlayingState=false;
   bool bPreviousRenderingState=false;
@@ -1749,8 +1749,12 @@ void CApplication::LoadSkin(const SkinPtr& skin)
   // close the music and video overlays (they're re-opened automatically later)
   CSingleLock lock(g_graphicsContext);
 
-  // save the current window details
+  // save the current window details and focused control
   int currentWindow = g_windowManager.GetActiveWindow();
+  int iCtrlID = -1;
+  CGUIWindow* pWindow = g_windowManager.GetWindow(currentWindow);
+  if (pWindow)
+    iCtrlID = pWindow->GetFocusedControlID();
   vector<int> currentModelessWindows;
   g_windowManager.GetActiveModelessWindows(currentModelessWindows);
 
@@ -1810,7 +1814,7 @@ void CApplication::LoadSkin(const SkinPtr& skin)
   g_windowManager.AddMsgTarget(&g_infoManager);
   g_windowManager.SetCallback(*this);
   g_windowManager.Initialize();
-  g_audioManager.Initialize(CAudioContext::DEFAULT_DEVICE);
+  g_audioManager.Enable(true);
   g_audioManager.Load();
 
   if (g_SkinInfo->HasSkinFile("DialogFullScreenInfo.xml"))
@@ -1830,6 +1834,15 @@ void CApplication::LoadSkin(const SkinPtr& skin)
       CGUIDialog *dialog = (CGUIDialog *)g_windowManager.GetWindow(currentModelessWindows[i]);
       if (dialog) dialog->Show();
     }
+    if (iCtrlID != -1)
+    {
+      pWindow = g_windowManager.GetWindow(currentWindow);
+      if (pWindow && pWindow->HasSaveLastControl())
+      {
+        CGUIMessage msg(GUI_MSG_SETFOCUS, currentWindow, iCtrlID, 0);
+        pWindow->OnMessage(msg);
+      }
+    }
   }
 
   if (g_application.m_pPlayer && g_application.IsPlayingVideo())
@@ -1839,11 +1852,14 @@ void CApplication::LoadSkin(const SkinPtr& skin)
     if (bPreviousRenderingState)
       g_windowManager.ActivateWindow(WINDOW_FULLSCREEN_VIDEO);
   }
+  return true;
 }
 
-void CApplication::UnloadSkin()
+void CApplication::UnloadSkin(bool forReload /* = false */)
 {
-  g_audioManager.DeInitialize(CAudioContext::DEFAULT_DEVICE);
+  CLog::Log(LOGINFO, "Unloading old skin %s...", forReload ? "for reload " : "");
+
+  g_audioManager.Enable(false);
 
   g_windowManager.DeInitialize();
 
@@ -5696,11 +5712,20 @@ void CApplication::OnSettingChanged(const CSetting *setting)
     // which in turn will reload the skin.  Similarly, if the current skin font is not
     // the default, reset it as well.
     if (settingId == "lookandfeel.skin" && CSettings::Get().GetString("lookandfeel.skintheme") != "SKINDEFAULT")
+    {
       CSettings::Get().SetString("lookandfeel.skintheme", "SKINDEFAULT");
-    else if (settingId == "lookandfeel.skin" && CSettings::Get().GetString("lookandfeel.font") != "Default")
+      return;
+    }
+    if (settingId == "lookandfeel.skin" && CSettings::Get().GetString("lookandfeel.font") != "Default")
+    {
       CSettings::Get().SetString("lookandfeel.font", "Default");
-    else
-      CApplicationMessenger::Get().ExecBuiltIn("ReloadSkin");
+      return;
+    }
+
+    std::string builtin("ReloadSkin");
+    if (settingId == "lookandfeel.skin" && !m_skinReverting)
+      builtin += "(confirm)";
+    CApplicationMessenger::Get().ExecBuiltIn(builtin);
   }
   else if (settingId == "lookandfeel.skintheme")
   {
