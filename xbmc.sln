@@ -9,7 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xbmc", "xbmc.vcproj", "{311
 		{D33D36E6-6E4B-4C1B-A820-A12C94CB1411} = {D33D36E6-6E4B-4C1B-A820-A12C94CB1411}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XBFileZilla", "xbmc\lib\libFileZilla\XBFileZilla.vcproj", "{D33D36E6-6E4B-4C1B-A820-A12C94CB1411}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XBFileZilla", "lib\libFileZilla\XBFileZilla.vcproj", "{D33D36E6-6E4B-4C1B-A820-A12C94CB1411}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
@@ -17,20 +17,20 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "guilib", "xbmc\guilib\guili
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libPlatinum", "xbmc\lib\libUPnP\libPlatinum.vcproj", "{5AAA4F63-3B62-4C93-9BFE-76A42A935262}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libPlatinum", "lib\libUPnP\libPlatinum.vcproj", "{5AAA4F63-3B62-4C93-9BFE-76A42A935262}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnrarXLib", "xbmc\lib\UnrarXLib\UnrarXLib.vcproj", "{FE0A91C0-E30A-47CD-8A92-A508C9292452}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnrarXLib", "lib\UnrarXLib\UnrarXLib.vcproj", "{FE0A91C0-E30A-47CD-8A92-A508C9292452}"
 	ProjectSection(ProjectDependencies) = postProject
 		{9B28366B-79F0-4361-B5C5-4608DFA8CF17} = {9B28366B-79F0-4361-B5C5-4608DFA8CF17}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libhts_2003", "xbmc\lib\libhts\Win32\libhts_2003.vcproj", "{870DE8D3-B710-4CEF-9C73-36B37A9AF8A3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libhts_2003", "lib\libhts\Win32\libhts_2003.vcproj", "{870DE8D3-B710-4CEF-9C73-36B37A9AF8A3}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libapetag", "xbmc\lib\libapetag\libapetag.vcproj", "{2246C042-AF11-42A3-8E1E-0CE462F0FA99}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libapetag", "lib\libapetag\libapetag.vcproj", "{2246C042-AF11-42A3-8E1E-0CE462F0FA99}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject

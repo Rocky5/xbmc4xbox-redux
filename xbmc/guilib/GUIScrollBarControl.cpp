@@ -204,7 +204,7 @@ void CGUIScrollBar::UpdateBarSize()
     m_guiNibNoFocus.SetHeight(nibSize);
     m_guiNibFocus.SetHeight(nibSize);
     // nibSize may be altered by the border size of the nib (and bar).
-    nibSize = max(m_guiBarFocus.GetHeight(), m_guiNibFocus.GetHeight());
+    nibSize = std::max(m_guiBarFocus.GetHeight(), m_guiNibFocus.GetHeight());
 
     // and the position
     percent = (m_numItems == m_pageSize) ? 0 : (float)m_offset / (m_numItems - m_pageSize);

@@ -3,7 +3,7 @@
 #ifdef _LINUX
 #include <lzo1x.h>
 #else
-#include "../../xbmc/lib/liblzo/LZO1X.H"
+#include "../../lib/liblzo/LZO1X.H"
 #endif
 
 // alignment of file blocks - should be a multiple of the sector size of the disk and a power of 2

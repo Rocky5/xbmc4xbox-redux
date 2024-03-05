@@ -56,7 +56,7 @@
 #include "GUIColorManager.h"
 #include "GUITextLayout.h"
 #include "addons/Skin.h"
-#include "lib/libPython/XBPython.h"
+#include "libPython/XBPython.h"
 #include "input/ButtonTranslator.h"
 #include "GUIAudioManager.h"
 #include "GUIPassword.h"
@@ -115,7 +115,7 @@
 #include "AudioContext.h"
 #include "GUIFontTTF.h"
 #include "threads/platform/win/Win32Exception.h"
-#include "lib/libGoAhead/XBMChttp.h"
+#include "libGoAhead/XBMChttp.h"
 #ifdef HAS_XFONT
 #include <xfont.h>  // for textout functions
 #endif
@@ -231,58 +231,58 @@ using namespace ANNOUNCEMENT;
 #define USE_RELEASE_LIBS
 
 #ifdef HAS_LCD
-#pragma comment (lib,"xbmc/lib/libXenium/XeniumSPIg.lib")
+#pragma comment (lib,"lib/libXenium/XeniumSPIg.lib")
 #endif
 
 #if defined(_DEBUG) && !defined(USE_RELEASE_LIBS)
  #ifdef HAS_FILESYSTEM
-  #pragma comment (lib,"xbmc/lib/libsmb/libsmbd.lib")      // SECTIONNAME=LIBSMB
-  #pragma comment (lib,"xbmc/lib/libxdaap/libxdaapd.lib") // SECTIONNAME=LIBXDAAP
-  #pragma comment (lib,"xbmc/lib/libRTV/libRTVd.lib")    // SECTIONNAME=LIBRTV
+  #pragma comment (lib,"lib/libsmb/libsmbd.lib")      // SECTIONNAME=LIBSMB
+  #pragma comment (lib,"lib/libxdaap/libxdaapd.lib") // SECTIONNAME=LIBXDAAP
+  #pragma comment (lib,"lib/libRTV/libRTVd.lib")    // SECTIONNAME=LIBRTV
  #endif
  #ifdef _XBOX
-  #pragma comment (lib,"xbmc/lib/libGoAhead/goaheadd.lib") // SECTIONNAME=LIBHTTP
-  #pragma comment (lib,"xbmc/lib/sqLite/libSQLite3d.lib")
-  #pragma comment (lib,"xbmc/lib/libshout/libshoutd.lib" )
-  #pragma comment (lib,"xbmc/lib/libcdio/libcdiod.lib" )
-  #pragma comment (lib,"xbmc/lib/libiconv/libiconvd.lib")
-  #pragma comment (lib,"xbmc/lib/libfribidi/libfribidid.lib")
-  #pragma comment (lib,"xbmc/lib/libpcre/libpcred.lib")
+  #pragma comment (lib,"lib/libGoAhead/goaheadd.lib") // SECTIONNAME=LIBHTTP
+  #pragma comment (lib,"lib/sqLite/libSQLite3d.lib")
+  #pragma comment (lib,"lib/libshout/libshoutd.lib" )
+  #pragma comment (lib,"lib/libcdio/libcdiod.lib" )
+  #pragma comment (lib,"lib/libiconv/libiconvd.lib")
+  #pragma comment (lib,"lib/libfribidi/libfribidid.lib")
+  #pragma comment (lib,"lib/libpcre/libpcred.lib")
  #else
-  #pragma comment (lib,"../../xbmc/lib/libGoAhead/goahead_win32d.lib") // SECTIONNAME=LIBHTTP
-  #pragma comment (lib,"../../xbmc/lib/sqLite/libSQLite3_win32d.lib")
-  #pragma comment (lib,"../../xbmc/lib/libcdio/libcdio_win32d.lib" )
-  #pragma comment (lib,"../../xbmc/lib/libiconv/libiconvd.lib")
-  #pragma comment (lib,"../../xbmc/lib/libfribidi/libfribidid.lib")
-  #pragma comment (lib,"../../xbmc/lib/libpcre/libpcred.lib")
+  #pragma comment (lib,"../../lib/libGoAhead/goahead_win32d.lib") // SECTIONNAME=LIBHTTP
+  #pragma comment (lib,"../../lib/sqLite/libSQLite3_win32d.lib")
+  #pragma comment (lib,"../../lib/libcdio/libcdio_win32d.lib" )
+  #pragma comment (lib,"../../lib/libiconv/libiconvd.lib")
+  #pragma comment (lib,"../../lib/libfribidi/libfribidid.lib")
+  #pragma comment (lib,"../../lib/libpcre/libpcred.lib")
  #endif
  #ifdef HAS_MIKMOD
-  #pragma comment (lib,"xbmc/lib/mikxbox/mikxboxd.lib")  // SECTIONNAME=MOD_RW,MOD_RX
+  #pragma comment (lib,"lib/mikxbox/mikxboxd.lib")  // SECTIONNAME=MOD_RW,MOD_RX
  #endif
 #else
  #ifdef HAS_FILESYSTEM
-  #pragma comment (lib,"xbmc/lib/libsmb/libsmb.lib")
-  #pragma comment (lib,"xbmc/lib/libxdaap/libxdaap.lib") // SECTIONNAME=LIBXDAAP
-  #pragma comment (lib,"xbmc/lib/libRTV/libRTV.lib")
+  #pragma comment (lib,"lib/libsmb/libsmb.lib")
+  #pragma comment (lib,"lib/libxdaap/libxdaap.lib") // SECTIONNAME=LIBXDAAP
+  #pragma comment (lib,"lib/libRTV/libRTV.lib")
  #endif
  #ifdef _XBOX
-  #pragma comment (lib,"xbmc/lib/libGoAhead/goahead.lib")
-  #pragma comment (lib,"xbmc/lib/sqLite/libSQLite3.lib")
-  #pragma comment (lib,"xbmc/lib/libcdio/libcdio.lib")
-  #pragma comment (lib,"xbmc/lib/libiconv/libiconv.lib")
-  #pragma comment (lib,"xbmc/lib/libfribidi/libfribidi.lib")
-  #pragma comment (lib,"xbmc/lib/libpcre/libpcre.lib")
+  #pragma comment (lib,"lib/libGoAhead/goahead.lib")
+  #pragma comment (lib,"lib/sqLite/libSQLite3.lib")
+  #pragma comment (lib,"lib/libcdio/libcdio.lib")
+  #pragma comment (lib,"lib/libiconv/libiconv.lib")
+  #pragma comment (lib,"lib/libfribidi/libfribidi.lib")
+  #pragma comment (lib,"lib/libpcre/libpcre.lib")
  #else
-  #pragma comment (lib,"../../xbmc/lib/libGoAhead/goahead_win32.lib")
-  #pragma comment (lib,"../../xbmc/lib/sqLite/libSQLite3_win32.lib")
-  #pragma comment (lib,"../../xbmc/lib/libshout/libshout_win32.lib" )
-  #pragma comment (lib,"../../xbmc/lib/libcdio/libcdio_win32.lib" )
-  #pragma comment (lib,"../../xbmc/lib/libiconv/libiconv.lib")
-  #pragma comment (lib,"../../xbmc/lib/libfribidi/libfribidi.lib")
-  #pragma comment (lib,"../../xbmc/lib/libpcre/libpcre.lib")
+  #pragma comment (lib,"../../lib/libGoAhead/goahead_win32.lib")
+  #pragma comment (lib,"../../lib/sqLite/libSQLite3_win32.lib")
+  #pragma comment (lib,"../../lib/libshout/libshout_win32.lib" )
+  #pragma comment (lib,"../../lib/libcdio/libcdio_win32.lib" )
+  #pragma comment (lib,"../../lib/libiconv/libiconv.lib")
+  #pragma comment (lib,"../../lib/libfribidi/libfribidi.lib")
+  #pragma comment (lib,"../../lib/libpcre/libpcre.lib")
  #endif
  #ifdef HAS_MIKMOD
-  #pragma comment (lib,"xbmc/lib/mikxbox/mikxbox.lib")
+  #pragma comment (lib,"lib/mikxbox/mikxbox.lib")
  #endif
 #endif
 

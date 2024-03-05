@@ -227,7 +227,7 @@
 				RelativePath=".\Bundler.cpp">
 			</File>
 			<File
-				RelativePath="..\..\xbmc\lib\liblzo\lzo.lib">
+				RelativePath="..\..\lib\liblzo\lzo.lib">
 			</File>
 			<File
 				RelativePath=".\sha.c">
@@ -259,10 +259,10 @@
 				RelativePath=".\cmdlineargs.h">
 			</File>
 			<File
-				RelativePath="..\..\xbmc\lib\liblzo\Lzo1x.h">
+				RelativePath="..\..\lib\liblzo\Lzo1x.h">
 			</File>
 			<File
-				RelativePath="..\..\xbmc\lib\liblzo\Lzoconf.h">
+				RelativePath="..\..\lib\liblzo\Lzoconf.h">
 			</File>
 			<File
 				RelativePath=".\stdint_win.h">

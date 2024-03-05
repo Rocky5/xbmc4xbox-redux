@@ -22,7 +22,7 @@
 #include "Util.h"
 #include "utils/StringUtils.h"
 #ifndef _LINUX
-#include "lib/libfribidi/fribidi.h"
+#include "libfribidi/fribidi.h"
 #else
 #include <fribidi/fribidi.h>
 #endif
@@ -36,7 +36,7 @@
 #include <errno.h>
 
 #ifndef _LINUX
-#include "lib/libiconv/iconv.h"
+#include "libiconv/iconv.h"
 #else
 #include <iconv.h>
 #endif

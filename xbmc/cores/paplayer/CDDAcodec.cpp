@@ -19,7 +19,7 @@
  */
 
 #include "CDDAcodec.h"
-#include "lib/libcdio/sector.h"
+#include "libcdio/sector.h"
 
 #define SECTOR_COUNT 55 // max. sectors that can be read at once
 #define MAX_BUFFER_SIZE 2*SECTOR_COUNT*CDIO_CD_FRAMESIZE_RAW

@@ -26,7 +26,7 @@
 #include "Socket.h"
 #include "utils/log.h"
 #ifdef _XBOX
-#include "lib/libcdio/inttypes.h"
+#include "libcdio/inttypes.h"
 #endif
 
 using namespace EVENTPACKET;

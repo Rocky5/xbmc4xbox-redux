@@ -23,7 +23,7 @@
 #include "DynamicDll.h"
 
 extern "C" {
-#include "lib/cpluff/libcpluff/cpluff_xbox.h"
+#include "cpluff/libcpluff/cpluff_xbox.h"
 }
 
 class DllLibCPluffInterface

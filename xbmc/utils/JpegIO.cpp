@@ -21,7 +21,7 @@
 */
 
 #include "include.h"
-#include "lib/libexif/libexif.h"
+#include "libexif/libexif.h"
 #include "settings/DisplaySettings.h"
 #include "settings/Settings.h"
 #include "filesystem/File.h"

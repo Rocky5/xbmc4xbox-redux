@@ -66,7 +66,7 @@
 #include "FileItemListModification.h"
 #include "utils/FileUtils.h"
 #ifdef HAS_PYTHON
-#include "lib/libPython/XBPython.h"
+#include "libPython/XBPython.h"
 #endif
 
 #define CONTROL_BTNVIEWASICONS       2

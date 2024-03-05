@@ -1,6 +1,6 @@
-diff -uwr libdvdcss-1.2.12/src/device.c xbmc/lib/libdvd/libdvdcss/src/device.c
+diff -uwr libdvdcss-1.2.12/src/device.c lib/libdvd/libdvdcss/src/device.c
 --- libdvdcss-1.2.12/src/device.c	2012-03-12 00:07:48 +0100
-+++ xbmc/lib/libdvd/libdvdcss/src/device.c	2013-02-07 14:42:34 +0100
++++ lib/libdvd/libdvdcss/src/device.c	2013-02-07 14:42:34 +0100
 @@ -23,6 +23,10 @@
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
   *****************************************************************************/
@@ -203,9 +203,9 @@ diff -uwr libdvdcss-1.2.12/src/device.c xbmc/lib/libdvd/libdvdcss/src/device.c
  }
  
  static int aspi_read ( dvdcss_t dvdcss, void *p_buffer, int i_blocks )
-diff -uwr libdvdcss-1.2.12/src/ioctl.c xbmc/lib/libdvd/libdvdcss/src/ioctl.c
+diff -uwr libdvdcss-1.2.12/src/ioctl.c lib/libdvd/libdvdcss/src/ioctl.c
 --- libdvdcss-1.2.12/src/ioctl.c	2012-03-12 00:07:48 +0100
-+++ xbmc/lib/libdvd/libdvdcss/src/ioctl.c	2013-02-07 14:42:34 +0100
++++ lib/libdvd/libdvdcss/src/ioctl.c	2013-02-07 14:42:34 +0100
 @@ -373,6 +373,37 @@
  
      memcpy( p_key, dvdbs.discKeyStructures, DVD_DISCKEY_SIZE );
@@ -298,9 +298,9 @@ diff -uwr libdvdcss-1.2.12/src/ioctl.c xbmc/lib/libdvd/libdvdcss/src/ioctl.c
      }
      else
      {
-diff -uwr libdvdcss-1.2.12/src/ioctl.h xbmc/lib/libdvd/libdvdcss/src/ioctl.h
+diff -uwr libdvdcss-1.2.12/src/ioctl.h lib/libdvd/libdvdcss/src/ioctl.h
 --- libdvdcss-1.2.12/src/ioctl.h	2012-03-12 00:07:48 +0100
-+++ xbmc/lib/libdvd/libdvdcss/src/ioctl.h	2013-02-07 14:42:34 +0100
++++ lib/libdvd/libdvdcss/src/ioctl.h	2013-02-07 14:42:34 +0100
 @@ -324,7 +324,11 @@
  typedef DWORD (CALLBACK *GETASPI32SUPPORTINFO)(VOID);
  typedef DWORD (CALLBACK *SENDASPI32COMMAND)(LPVOID);
@@ -313,9 +313,9 @@ diff -uwr libdvdcss-1.2.12/src/ioctl.h xbmc/lib/libdvd/libdvdcss/src/ioctl.h
  #define ASPI_HAID           0
  #define ASPI_TARGET         0
  #define DTYPE_CDROM         0x05
-diff -uwr libdvdcss-1.2.12/src/libdvdcss.c xbmc/lib/libdvd/libdvdcss/src/libdvdcss.c
+diff -uwr libdvdcss-1.2.12/src/libdvdcss.c lib/libdvd/libdvdcss/src/libdvdcss.c
 --- libdvdcss-1.2.12/src/libdvdcss.c	2012-03-12 00:07:48 +0100
-+++ xbmc/lib/libdvd/libdvdcss/src/libdvdcss.c	2013-02-07 14:42:34 +0100
++++ lib/libdvd/libdvdcss/src/libdvdcss.c	2013-02-07 14:42:34 +0100
 @@ -195,6 +195,10 @@
      dvdcss->b_debug = 0;
      dvdcss->b_errors = 0;

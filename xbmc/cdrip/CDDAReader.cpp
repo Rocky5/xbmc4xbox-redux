@@ -21,7 +21,7 @@
 #include "system.h"
 #include "utils/log.h"
 #include "CDDAReader.h"
-#include "lib/libcdio/cdio.h"
+#include "libcdio/cdio.h"
 
 #define SECTOR_COUNT 55
 

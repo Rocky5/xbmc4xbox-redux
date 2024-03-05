@@ -1,4 +1,10 @@
 Release/
+Release_LTCG/
 Debug/
+Debug Xbox No Memory Tracking/
+Profile/
+Profile_FastCap/
 .vscode/
 svn_rev.h
+*.ncb
+*.suo

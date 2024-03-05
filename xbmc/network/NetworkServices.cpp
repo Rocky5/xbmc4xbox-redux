@@ -39,12 +39,12 @@
 #endif // HAS_UPNP
 
 #ifdef HAS_WEB_SERVER
-#include "lib/libGoAhead/WebServer.h"
-#include "lib/libGoAhead/XBMChttp.h"
+#include "libGoAhead/WebServer.h"
+#include "libGoAhead/XBMChttp.h"
 #endif // HAS_WEB_SERVER
 
 #ifdef HAS_FTP_SERVER
-#include "lib/libFileZilla/XBFileZilla.h"
+#include "libFileZilla/XBFileZilla.h"
 #endif
 
 #ifdef HAS_TIME_SERVER

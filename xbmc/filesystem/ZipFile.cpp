@@ -26,7 +26,7 @@
 
 #ifndef __GNUC__
 #ifndef _XBOX
-#pragma comment (lib,"../../xbmc/lib/zlib/zlib.lib")
+#pragma comment (lib,"../../lib/zlib/zlib.lib")
 #endif
 #endif
 

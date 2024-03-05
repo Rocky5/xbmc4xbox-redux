@@ -22,8 +22,8 @@
 
 #include "iplayer.h"
 #include "threads/Thread.h"
-#include "lib/mikxbox/mikmod.h"
-#include "lib/mikxbox/mikxbox.h"
+#include "mikxbox/mikmod.h"
+#include "mikxbox/mikxbox.h"
 
 class ModPlayer : public IPlayer, public CThread
 {

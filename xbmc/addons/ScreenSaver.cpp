@@ -22,7 +22,7 @@
 #include "settings/DisplaySettings.h"
 
 #ifdef HAS_PYTHON
-#include "lib/libPython/XBPython.h"
+#include "libPython/XBPython.h"
 #include "utils/AlarmClock.h"
 
 // What sound does a python screensaver make?

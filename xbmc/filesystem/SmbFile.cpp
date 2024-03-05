@@ -29,7 +29,7 @@
 #include "PasswordManager.h"
 #include "SMBDirectory.h"
 #include "Application.h"
-#include "lib/libsmb/xbLibSmb.h"
+#include "libsmb/xbLibSmb.h"
 #include "settings/AdvancedSettings.h"
 #include "settings/Settings.h"
 #include "threads/SingleLock.h"

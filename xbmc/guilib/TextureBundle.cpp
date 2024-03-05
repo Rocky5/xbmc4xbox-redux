@@ -9,16 +9,16 @@
 #else
 #include "DirectXGraphics.h"
 #endif
-#include "lib/liblzo/LZO1X.H"
+#include "liblzo/LZO1X.H"
 #include "addons/Skin.h"
 #include "settings/Settings.h"
 #include "utils/URIUtils.h"
 #include "filesystem/SpecialProtocol.h"
 
 #ifdef _XBOX
-#pragma comment(lib,"xbmc/lib/liblzo/lzo.lib")
+#pragma comment(lib,"lib/liblzo/lzo.lib")
 #elif !defined(__GNUC__)
-#pragma comment(lib,"../../xbmc/lib/liblzo/lzo.lib")
+#pragma comment(lib,"../../lib/liblzo/lzo.lib")
 #endif
 
 // alignment of file blocks - should be a multiple of the sector size of the disk and a power of 2

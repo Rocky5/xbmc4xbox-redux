@@ -24,7 +24,7 @@
 #include "StringUtils.h"
 #include "filesystem/Directory.h"
 #include "filesystem/File.h"
-#include "lib/libPython/XBPython.h"
+#include "libPython/XBPython.h"
 #include "URIUtils.h"
 #include "utils/log.h"
 #include <vector>

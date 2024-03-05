@@ -18,7 +18,6 @@
  *
  */
 
-#define NOMINMAX
 #include "GUILabel.h"
 #include "addons/Skin.h"
 #include "utils/CharsetConverter.h"

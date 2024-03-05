@@ -29,7 +29,7 @@ CGUIFixedListContainer::CGUIFixedListContainer(int parentID, int controlID, floa
   ControlType = GUICONTAINER_FIXEDLIST;
   m_type = VIEW_TYPE_LIST;
   m_fixedCursor = fixedPosition;
-  m_cursorRange = max(0, cursorRange);
+  m_cursorRange = std::max(0, cursorRange);
   m_cursor = m_fixedCursor;
 }
 
@@ -153,8 +153,8 @@ void CGUIFixedListContainer::ValidateOffset()
   int minCursor, maxCursor;
   GetCursorRange(minCursor, maxCursor);
   // assure our cursor is between these limits
-  m_cursor = max(m_cursor, minCursor);
-  m_cursor = min(m_cursor, maxCursor);
+  m_cursor = std::max(m_cursor, minCursor);
+  m_cursor = std::min(m_cursor, maxCursor);
   int minOffset, maxOffset;
   GetOffsetRange(minOffset, maxOffset);
   // and finally ensure our offset is valid
@@ -217,7 +217,7 @@ bool CGUIFixedListContainer::SelectItemFromPoint(const CPoint &point)
   { // scroll backward
     if (!InsideLayout(m_layout, point))
       return false;
-    float amount = min((start - pos) / sizeOfItem, mouse_max_amount);
+    float amount = std::min((start - pos) / sizeOfItem, mouse_max_amount);
     m_analogScrollCount += amount * amount * mouse_scroll_speed;
     if (m_analogScrollCount > 1)
     {
@@ -231,7 +231,7 @@ bool CGUIFixedListContainer::SelectItemFromPoint(const CPoint &point)
     if (!InsideLayout(m_layout, point))
       return false;
     // scroll forward
-    float amount = min((pos - end) / sizeOfItem, mouse_max_amount);
+    float amount = std::min((pos - end) / sizeOfItem, mouse_max_amount);
     m_analogScrollCount += amount * amount * mouse_scroll_speed;
     if (m_analogScrollCount > 1)
     {
@@ -266,9 +266,9 @@ void CGUIFixedListContainer::SelectItem(int item)
 
     int cursor = m_cursor;
     if ((int)m_items.size() - 1 - item <= maxCursor - m_fixedCursor)
-      cursor = max(m_fixedCursor, maxCursor + item - (int)m_items.size() + 1);
+      cursor = std::max(m_fixedCursor, maxCursor + item - (int)m_items.size() + 1);
     else if (item <= m_fixedCursor - minCursor)
-      cursor = min(m_fixedCursor, minCursor + item);
+      cursor = std::min(m_fixedCursor, minCursor + item);
     else
       cursor = m_fixedCursor;
     if (cursor != m_cursor)
@@ -298,8 +298,8 @@ int CGUIFixedListContainer::GetCurrentPage() const
 
 void CGUIFixedListContainer::GetCursorRange(int &minCursor, int &maxCursor) const
 {
-  minCursor = max(m_fixedCursor - m_cursorRange, 0);
-  maxCursor = min(m_fixedCursor + m_cursorRange, m_itemsPerPage);
+  minCursor = std::max(m_fixedCursor - m_cursorRange, 0);
+  maxCursor = std::min(m_fixedCursor + m_cursorRange, m_itemsPerPage);
 
   if (!m_items.size())
   {

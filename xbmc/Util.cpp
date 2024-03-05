@@ -55,7 +55,7 @@
 #ifdef HAS_VIDEO_PLAYBACK
 #include "cores/VideoRenderers/RenderManager.h"
 #endif
-#include "lib/libPython/XBPython.h"
+#include "libPython/XBPython.h"
 #include "profiles/ProfilesManager.h"
 #include "utils/RegExp.h"
 #include "utils/AlarmClock.h"
@@ -81,7 +81,7 @@
 #include "xbox/network.h"
 #include "GUIPassword.h"
 #ifdef HAS_FTP_SERVER
-#include "lib/libfilezilla/xbfilezilla.h"
+#include "libfilezilla/xbfilezilla.h"
 #endif
 #include "music/MusicInfoLoader.h"
 #include "XBVideoConfig.h"

@@ -22,8 +22,8 @@
 				AdditionalOptions="/EHa"
 				Optimization="0"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="..;../lib/freetype/include;&quot;$(XDK)\Samples\Xbox\Common\Include&quot;;../lib/boost;../guilib;..\utils"
-				PreprocessorDefinitions="_DEBUG;_XBOX;_LIB"
+				AdditionalIncludeDirectories="..;../../lib;../../lib/freetype/include;&quot;$(XDK)\Samples\Xbox\Common\Include&quot;;../../lib/boost;../guilib;..\utils"
+				PreprocessorDefinitions="_DEBUG;_XBOX;_LIB;NOMINMAX"
 				MinimalRebuild="FALSE"
 				ExceptionHandling="FALSE"
 				BasicRuntimeChecks="3"
@@ -66,8 +66,8 @@
 				FavorSizeOrSpeed="2"
 				OmitFramePointers="FALSE"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="..;../lib/freetype/include;&quot;$(XDK)\Samples\Xbox\Common\Include&quot;;../lib/boost;../guilib;..\utils"
-				PreprocessorDefinitions="NDEBUG;_XBOX;PROFILE;_LIB"
+				AdditionalIncludeDirectories="..;../../lib;../../lib/freetype/include;&quot;$(XDK)\Samples\Xbox\Common\Include&quot;;../../lib/boost;../guilib;..\utils"
+				PreprocessorDefinitions="NDEBUG;_XBOX;PROFILE;_LIB;NOMINMAX"
 				ExceptionHandling="FALSE"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="FALSE"
@@ -105,8 +105,8 @@
 				FavorSizeOrSpeed="2"
 				OmitFramePointers="FALSE"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="..;../lib/freetype/include;&quot;$(XDK)\Samples\Xbox\Common\Include&quot;;../lib/boost;../guilib;..\utils"
-				PreprocessorDefinitions="NDEBUG;_XBOX;PROFILE;FASTCAP;_LIB"
+				AdditionalIncludeDirectories="..;../../lib;../../lib/freetype/include;&quot;$(XDK)\Samples\Xbox\Common\Include&quot;;../../lib/boost;../guilib;..\utils"
+				PreprocessorDefinitions="NDEBUG;_XBOX;PROFILE;FASTCAP;_LIB;NOMINMAX"
 				ExceptionHandling="FALSE"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="FALSE"
@@ -145,8 +145,8 @@
 				FavorSizeOrSpeed="2"
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="..;../lib/freetype/include;&quot;$(XDK)\Samples\Xbox\Common\Include&quot;;../lib/boost;../guilib;..\utils"
-				PreprocessorDefinitions="NDEBUG;_XBOX;_LIB"
+				AdditionalIncludeDirectories="..;../../lib;../../lib/freetype/include;&quot;$(XDK)\Samples\Xbox\Common\Include&quot;;../../lib/boost;../guilib;..\utils"
+				PreprocessorDefinitions="NDEBUG;_XBOX;_LIB;NOMINMAX"
 				ExceptionHandling="FALSE"
 				RuntimeLibrary="0"
 				EnableEnhancedInstructionSet="1"
@@ -184,8 +184,8 @@
 				FavorSizeOrSpeed="2"
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="2"
-				AdditionalIncludeDirectories="..;../lib/freetype/include;&quot;$(XDK)\Samples\Xbox\Common\Include&quot;;../lib/boost;../guilib;..\utils"
-				PreprocessorDefinitions="NDEBUG;_XBOX;LTCG;_LIB"
+				AdditionalIncludeDirectories="..;../../lib;../../lib/freetype/include;&quot;$(XDK)\Samples\Xbox\Common\Include&quot;;../../lib/boost;../guilib;..\utils"
+				PreprocessorDefinitions="NDEBUG;_XBOX;LTCG;_LIB;NOMINMAX"
 				ExceptionHandling="FALSE"
 				RuntimeLibrary="0"
 				EnableEnhancedInstructionSet="1"
@@ -723,12 +723,6 @@
 		<Filter
 			Name="xdk Files"
 			Filter="">
-			<File
-				RelativePath="$(XDK)\Samples\Xbox\Common\Src\xbinput.cpp">
-			</File>
-			<File
-				RelativePath="$(XDK)\Samples\Xbox\Common\Include\xbinput.h">
-			</File>
 			<File
 				RelativePath="$(XDK)\Samples\Xbox\Common\Src\xbresource.cpp">
 			</File>

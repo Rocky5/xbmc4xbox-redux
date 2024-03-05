@@ -35,7 +35,7 @@
 #include "GUIListContainer.h"
 #include "dialogs/GUIDialogMediaSource.h"
 #include "GUIPassword.h"
-#include "lib/libPython/XBPython.h"
+#include "libPython/XBPython.h"
 #include "pictures/GUIWindowSlideShow.h"
 #include "playlists/PlayListFactory.h"
 #include "xbox/network.h"

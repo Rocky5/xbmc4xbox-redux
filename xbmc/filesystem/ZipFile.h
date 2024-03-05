@@ -22,7 +22,7 @@
 
 
 #include "IFile.h"
-#include "lib/zlib/zlib.h"
+#include "zlib/zlib.h"
 #include "utils/log.h"
 #include "GUIWindowManager.h"
 #include "dialogs/GUIDialogProgress.h"

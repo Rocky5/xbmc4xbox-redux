@@ -28,7 +28,7 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "lib/libXDAAP/client.h"
+#include "libXDAAP/client.h"
 #include "CurlFile.h"
 #include "URL.h"
 

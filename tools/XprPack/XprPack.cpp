@@ -2,9 +2,9 @@
 //
 
 #include "stdafx.h"
-#include "../../xbmc/lib/liblzo/lzo1x.h"
+#include "../../lib/liblzo/lzo1x.h"
 
-#pragma comment(lib, "../../xbmc/lib/liblzo/lzo.lib")
+#pragma comment(lib, "../../lib/liblzo/lzo.lib")
 
 int main(int argc, char* argv[])
 {

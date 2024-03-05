@@ -22,9 +22,9 @@
 #include "cdioSupport.h"
 #include "threads/SingleLock.h"
 #include "utils/log.h"
-#include "lib/libcdio/cdio.h"
-#include "lib/libcdio/logging.h"
-#include "lib/libcdio/util.h"
+#include "libcdio/cdio.h"
+#include "libcdio/logging.h"
+#include "libcdio/util.h"
 
 using namespace MEDIA_DETECT;
 

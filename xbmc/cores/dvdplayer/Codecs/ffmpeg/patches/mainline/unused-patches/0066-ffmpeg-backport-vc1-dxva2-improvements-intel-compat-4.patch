@@ -8,13 +8,13 @@ no invalid value is send to a hw accelerator, for example.
 
 Signed-off-by: Michael Niedermayer <michaelni@gmx.at>
 ---
- xbmc/lib/ffmpeg/libavcodec/vc1.c | 1 +
+ lib/ffmpeg/libavcodec/vc1.c | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/xbmc/lib/ffmpeg/libavcodec/vc1.c b/xbmc/lib/ffmpeg/libavcodec/vc1.c
+diff --git a/lib/ffmpeg/libavcodec/vc1.c b/lib/ffmpeg/libavcodec/vc1.c
 index fb33e6f..f8d3162 100644
---- a/xbmc/lib/ffmpeg/libavcodec/vc1.c
-+++ b/xbmc/lib/ffmpeg/libavcodec/vc1.c
+--- a/lib/ffmpeg/libavcodec/vc1.c
++++ b/lib/ffmpeg/libavcodec/vc1.c
 @@ -293,6 +293,7 @@ int ff_vc1_decode_sequence_header(AVCodecContext *avctx, VC1Context *v, GetBitCo
          v->zz_4x8 = ff_vc1_adv_progressive_4x8_zz;
          return decode_sequence_header_adv(v, gb);

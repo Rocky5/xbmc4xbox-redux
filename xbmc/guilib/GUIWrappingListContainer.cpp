@@ -185,7 +185,7 @@ bool CGUIWrappingListContainer::SelectItemFromPoint(const CPoint &point)
   { // scroll backward
     if (!InsideLayout(m_layout, point))
       return false;
-    float amount = min((start - pos) / sizeOfItem, mouse_max_amount);
+    float amount = std::min((start - pos) / sizeOfItem, mouse_max_amount);
     m_analogScrollCount += amount * amount * mouse_scroll_speed;
     if (m_analogScrollCount > 1)
     {
@@ -199,7 +199,7 @@ bool CGUIWrappingListContainer::SelectItemFromPoint(const CPoint &point)
     if (!InsideLayout(m_layout, point))
       return false;
 
-    float amount = min((pos - end) / sizeOfItem, mouse_max_amount);
+    float amount = std::min((pos - end) / sizeOfItem, mouse_max_amount);
     m_analogScrollCount += amount * amount * mouse_scroll_speed;
     if (m_analogScrollCount > 1)
     {

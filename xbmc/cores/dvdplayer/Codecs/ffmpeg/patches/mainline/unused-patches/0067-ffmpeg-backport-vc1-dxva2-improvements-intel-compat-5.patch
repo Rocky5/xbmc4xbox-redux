@@ -9,13 +9,13 @@ cause playback issues.
 
 Signed-off-by: Michael Niedermayer <michaelni@gmx.at>
 ---
- xbmc/lib/ffmpeg/libavcodec/dxva2_vc1.c | 29 ++++++++++++++++++++++++-----
+ lib/ffmpeg/libavcodec/dxva2_vc1.c | 29 ++++++++++++++++++++++++-----
  1 file changed, 24 insertions(+), 5 deletions(-)
 
-diff --git a/xbmc/lib/ffmpeg/libavcodec/dxva2_vc1.c b/xbmc/lib/ffmpeg/libavcodec/dxva2_vc1.c
+diff --git a/lib/ffmpeg/libavcodec/dxva2_vc1.c b/lib/ffmpeg/libavcodec/dxva2_vc1.c
 index bf4e8e0..995b3e3 100644
---- a/xbmc/lib/ffmpeg/libavcodec/dxva2_vc1.c
-+++ b/xbmc/lib/ffmpeg/libavcodec/dxva2_vc1.c
+--- a/lib/ffmpeg/libavcodec/dxva2_vc1.c
++++ b/lib/ffmpeg/libavcodec/dxva2_vc1.c
 @@ -38,6 +38,15 @@ static void fill_picture_parameters(AVCodecContext *avctx,
  {
      const MpegEncContext *s = &v->s;

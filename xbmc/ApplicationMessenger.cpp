@@ -32,9 +32,9 @@
 #include "PlayListPlayer.h"
 #include "Util.h"
 #include "utils/URIUtils.h"
-#include "lib/libPython/XBPython.h"
+#include "libPython/XBPython.h"
 #include "pictures/GUIWindowSlideShow.h"
-#include "lib/libGoAhead/XBMChttp.h"
+#include "libGoAhead/XBMChttp.h"
 #include "xbox/network.h"
 #include "utils/log.h"
 #include "GUIWindowManager.h"
@@ -45,8 +45,8 @@
 #include "guilib/Key.h"
 #include "SectionLoader.h"
 #include "threads/SingleLock.h"
-#include "lib/libPython/xbmcmodule/GUIPythonWindowDialog.h"
-#include "lib/libPython/xbmcmodule/GUIPythonWindowXMLDialog.h"
+#include "libPython/xbmcmodule/GUIPythonWindowDialog.h"
+#include "libPython/xbmcmodule/GUIPythonWindowXMLDialog.h"
 
 #include "playlists/PlayList.h"
 

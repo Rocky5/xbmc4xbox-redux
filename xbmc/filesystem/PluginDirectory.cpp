@@ -27,7 +27,7 @@
 #include "addons/AddonInstaller.h"
 #include "addons/IAddon.h"
 #ifdef HAS_PYTHON
-#include "lib/libPython/XBPython.h"
+#include "libPython/XBPython.h"
 #endif
 #include "threads/SingleLock.h"
 #include "GUIWindowManager.h"

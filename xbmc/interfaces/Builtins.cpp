@@ -69,7 +69,7 @@
 #include "utils/URIUtils.h"
 #include "xbox/xbeheader.h"
 #include "xbox/network.h"
-#include "lib/libGoAhead/XBMChttp.h"
+#include "libGoAhead/XBMChttp.h"
 #ifdef HAS_XBOX_HARDWARE
 #include "utils/FanController.h"
 #endif
@@ -79,12 +79,12 @@
 #include "system.h"
 
 #ifdef HAS_PYTHON
-#include "lib/libPython/XBPython.h"
+#include "libPython/XBPython.h"
 #endif
 
 #ifdef HAS_WEB_SERVER
-#include "lib/libGoAhead/XBMChttp.h"
-#include "lib/libGoAhead/WebServer.h"
+#include "libGoAhead/XBMChttp.h"
+#include "libGoAhead/WebServer.h"
 #endif
 
 #include <vector>

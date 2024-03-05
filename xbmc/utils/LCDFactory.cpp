@@ -1,8 +1,8 @@
 
 #include "LCDFactory.h"
-#include "lib/smartxx/smartxxlcd.h"
-#include "lib/libXenium/XeniumLCD.h"
-#include "lib/x3lcd/x3lcd.h"
+#include "smartxx/smartxxlcd.h"
+#include "libXenium/XeniumLCD.h"
+#include "x3lcd/x3lcd.h"
 #include "settings/Settings.h"
 
 ILCD* g_lcd = NULL;

@@ -22,9 +22,9 @@
 #define GUILIB_JPEGIO_H
 
 #ifdef _XBOX
-#pragma comment(lib, "xbmc/lib/libjpeg-turbo/lib/libturbojpeg.lib")
+#pragma comment(lib, "lib/libjpeg-turbo/lib/libturbojpeg.lib")
 #else
-#pragma comment(lib, "../../xbmc/lib/libjpeg-turbo/lib/libturbojpeg.lib")
+#pragma comment(lib, "../../lib/libjpeg-turbo/lib/libturbojpeg.lib")
 #endif
 
 #define XMD_H

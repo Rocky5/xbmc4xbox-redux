@@ -19,7 +19,7 @@
  *
  */
 
-#include "lib/tinyxml/tinyxml.h"
+#include "tinyxml/tinyxml.h"
 #include "StdString.h"
 
 class CXBMCTinyXML : public TiXmlDocument

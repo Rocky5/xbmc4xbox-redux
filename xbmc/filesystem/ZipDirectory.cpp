@@ -21,7 +21,7 @@
 #include "ZipDirectory.h"
 #include "utils/log.h"
 #include "Util.h"
-#include "lib/zlib/zlib.h"
+#include "zlib/zlib.h"
 #include "URL.h"
 #include "ZipManager.h"
 #include "FileItem.h"

@@ -28,8 +28,8 @@
 #include "threads/SingleLock.h"
 
 extern "C" {
-#include "lib/libhts/htsmsg.h"
-#include "lib/libhts/htsmsg_binary.h"
+#include "libhts/htsmsg.h"
+#include "libhts/htsmsg_binary.h"
 }
 
 using namespace XFILE;

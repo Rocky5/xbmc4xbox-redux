@@ -38,15 +38,15 @@
 // our free type library (debug)
 #ifdef _XBOX
 #if defined(_DEBUG) && !defined(USE_RELEASE_LIBS)
-  #pragma comment (lib,"xbmc/lib/freetype/libs/freetype2410_D.lib")
+  #pragma comment (lib,"lib/freetype/libs/freetype2410_D.lib")
 #else
-  #pragma comment (lib,"xbmc/lib/freetype/libs/freetype2410.lib")
+  #pragma comment (lib,"lib/freetype/libs/freetype2410.lib")
 #endif
 #else
 #if defined(_DEBUG) && !defined(USE_RELEASE_LIBS)
-  #pragma comment (lib,"../../xbmc/lib/freetype/libs/freetype2410_D.li")
+  #pragma comment (lib,"../../lib/freetype/libs/freetype2410_D.li")
 #elif !defined(__GNUC__)
-  #pragma comment (lib,"../../xbmc/lib/freetype/libs/freetype2410.lib")
+  #pragma comment (lib,"../../lib/freetype/libs/freetype2410.lib")
 #endif
 #endif
 

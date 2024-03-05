@@ -21,7 +21,7 @@
 #include "system.h"
 #include "music/tags/MusicInfoTagLoaderMod.h"
 #ifdef HAS_MIKMOD
-#include "lib/mikxbox/mikmod.h"
+#include "mikxbox/mikmod.h"
 #endif
 #include "utils/URIUtils.h"
 #include "music/tags/MusicInfoTag.h"

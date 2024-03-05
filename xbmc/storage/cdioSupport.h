@@ -30,11 +30,11 @@
 
 #pragma once
 
-#include "lib/libcdio/intTypes.h"
-#include "lib/libcdio/Types.h"
-#include "lib/libcdio/cdio.h"
-#include "lib/libcdio/cd_Types.h"
-#include "lib/libcdio/cdtext.h"
+#include "libcdio/intTypes.h"
+#include "libcdio/Types.h"
+#include "libcdio/cdio.h"
+#include "libcdio/cd_Types.h"
+#include "libcdio/cdtext.h"
 #include "threads/CriticalSection.h"
 #include "utils/StdString.h"
 #include "boost/shared_ptr.hpp"

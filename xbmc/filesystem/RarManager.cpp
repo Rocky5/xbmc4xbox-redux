@@ -20,7 +20,7 @@
 
 #include "utils/log.h"
 #include "RarManager.h"
-#include "lib/UnrarXLib/rar.hpp"
+#include "UnrarXLib/rar.hpp"
 #include "Util.h"
 #include "utils/URIUtils.h"
 #include "threads/SingleLock.h"

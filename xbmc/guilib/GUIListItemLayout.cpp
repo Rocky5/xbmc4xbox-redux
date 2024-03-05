@@ -18,7 +18,6 @@
  *
  */
 
-#define NOMINMAX
 #include "include.h"
 #include "GUIListItemLayout.h"
 #include "FileItem.h"

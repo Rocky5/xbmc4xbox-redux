@@ -24,7 +24,7 @@
 #include <sys/stat.h>
 #include "threads/SingleLock.h"
 
-#include "lib/libXDAAP/private.h"
+#include "libXDAAP/private.h"
 
 using namespace XFILE;
 

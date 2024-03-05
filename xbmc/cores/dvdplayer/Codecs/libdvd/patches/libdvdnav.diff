@@ -1,6 +1,6 @@
-diff -uwr libdvdnav-4.2.0/Makefile xbmc/lib/libdvd/libdvdnav/Makefile
+diff -uwr libdvdnav-4.2.0/Makefile lib/libdvd/libdvdnav/Makefile
 --- libdvdnav-4.2.0/Makefile	2008-12-30 15:48:46 +0100
-+++ xbmc/lib/libdvd/libdvdnav/Makefile	2013-02-07 14:42:34 +0100
++++ lib/libdvd/libdvdnav/Makefile	2013-02-07 14:42:34 +0100
 @@ -112,7 +112,7 @@
  # Clean targets
  
@@ -10,9 +10,9 @@ diff -uwr libdvdnav-4.2.0/Makefile xbmc/lib/libdvd/libdvdnav/Makefile
  
  pcedit = sed \
  	-e 's,@prefix@,$(PREFIX),' \
-diff -uwr libdvdnav-4.2.0/src/dvdnav/dvdnav.h xbmc/lib/libdvd/libdvdnav/src/dvdnav/dvdnav.h
+diff -uwr libdvdnav-4.2.0/src/dvdnav/dvdnav.h lib/libdvd/libdvdnav/src/dvdnav/dvdnav.h
 --- libdvdnav-4.2.0/src/dvdnav/dvdnav.h	2011-02-26 21:32:32 +0100
-+++ xbmc/lib/libdvd/libdvdnav/src/dvdnav/dvdnav.h	2013-02-07 14:42:34 +0100
++++ lib/libdvd/libdvdnav/src/dvdnav/dvdnav.h	2013-02-07 14:42:34 +0100
 @@ -695,6 +695,42 @@
   */
  int8_t dvdnav_is_domain_vts(dvdnav_t *self);
@@ -56,9 +56,9 @@ diff -uwr libdvdnav-4.2.0/src/dvdnav/dvdnav.h xbmc/lib/libdvd/libdvdnav/src/dvdn
  
  #ifdef __cplusplus
  }
-diff -uwr libdvdnav-4.2.0/src/dvdnav.c xbmc/lib/libdvd/libdvdnav/src/dvdnav.c
+diff -uwr libdvdnav-4.2.0/src/dvdnav.c lib/libdvd/libdvdnav/src/dvdnav.c
 --- libdvdnav-4.2.0/src/dvdnav.c	2010-07-31 01:34:12 +0200
-+++ xbmc/lib/libdvd/libdvdnav/src/dvdnav.c	2013-02-07 14:42:34 +0100
++++ lib/libdvd/libdvdnav/src/dvdnav.c	2013-02-07 14:42:34 +0100
 @@ -337,7 +337,9 @@
    }
  #endif
@@ -387,9 +387,9 @@ diff -uwr libdvdnav-4.2.0/src/dvdnav.c xbmc/lib/libdvd/libdvdnav/src/dvdnav.c
 +
 +#endif // _XBMC
 +
-diff -uwr libdvdnav-4.2.0/src/dvdnav_internal.h xbmc/lib/libdvd/libdvdnav/src/dvdnav_internal.h
+diff -uwr libdvdnav-4.2.0/src/dvdnav_internal.h lib/libdvd/libdvdnav/src/dvdnav_internal.h
 --- libdvdnav-4.2.0/src/dvdnav_internal.h	2010-06-01 12:02:38 +0200
-+++ xbmc/lib/libdvd/libdvdnav/src/dvdnav_internal.h	2013-02-07 14:42:34 +0100
++++ lib/libdvd/libdvdnav/src/dvdnav_internal.h	2013-02-07 14:42:34 +0100
 @@ -175,6 +175,18 @@
  /* converts a dvd_time_t to PTS ticks */
  int64_t dvdnav_convert_time(dvd_time_t *time);
@@ -409,9 +409,9 @@ diff -uwr libdvdnav-4.2.0/src/dvdnav_internal.h xbmc/lib/libdvd/libdvdnav/src/dv
  /** USEFUL MACROS **/
  
  #ifdef __GNUC__
-diff -uwr libdvdnav-4.2.0/src/read_cache.c xbmc/lib/libdvd/libdvdnav/src/read_cache.c
+diff -uwr libdvdnav-4.2.0/src/read_cache.c lib/libdvd/libdvdnav/src/read_cache.c
 --- libdvdnav-4.2.0/src/read_cache.c	2008-12-30 15:48:46 +0100
-+++ xbmc/lib/libdvd/libdvdnav/src/read_cache.c	2013-02-07 14:42:34 +0100
++++ lib/libdvd/libdvdnav/src/read_cache.c	2013-02-07 14:42:34 +0100
 @@ -338,7 +338,7 @@
    pthread_mutex_lock(&cache->lock);
    for (i = 0; i < READ_CACHE_CHUNKS; i++) {
@@ -421,9 +421,9 @@ diff -uwr libdvdnav-4.2.0/src/read_cache.c xbmc/lib/libdvd/libdvdnav/src/read_ca
        cache->chunk[i].usage_count--;
      }
    }
-diff -uwr libdvdnav-4.2.0/src/searching.c xbmc/lib/libdvd/libdvdnav/src/searching.c
+diff -uwr libdvdnav-4.2.0/src/searching.c lib/libdvd/libdvdnav/src/searching.c
 --- libdvdnav-4.2.0/src/searching.c	2011-10-07 19:06:24 +0200
-+++ xbmc/lib/libdvd/libdvdnav/src/searching.c	2013-02-07 14:42:34 +0100
++++ lib/libdvd/libdvdnav/src/searching.c	2013-02-07 14:42:34 +0100
 @@ -121,6 +121,12 @@
      return DVDNAV_STATUS_ERR;
    }
@@ -632,9 +632,9 @@ diff -uwr libdvdnav-4.2.0/src/searching.c xbmc/lib/libdvd/libdvdnav/src/searchin
 +  pthread_mutex_unlock(&this->vm_lock);
 +  return DVDNAV_STATUS_OK;
 +}
-diff -uwr libdvdnav-4.2.0/src/vm/vm.c xbmc/lib/libdvd/libdvdnav/src/vm/vm.c
+diff -uwr libdvdnav-4.2.0/src/vm/vm.c lib/libdvd/libdvdnav/src/vm/vm.c
 --- libdvdnav-4.2.0/src/vm/vm.c	2010-11-22 00:59:44 +0100
-+++ xbmc/lib/libdvd/libdvdnav/src/vm/vm.c	2013-02-07 14:42:34 +0100
++++ lib/libdvd/libdvdnav/src/vm/vm.c	2013-02-07 14:42:34 +0100
 @@ -255,6 +255,15 @@
      fprintf(MSG_OUT, "libdvdnav: ifoRead_TITLE_VOBU_ADMAP vtsi failed\n");
      return 0;
@@ -736,9 +736,9 @@ diff -uwr libdvdnav-4.2.0/src/vm/vm.c xbmc/lib/libdvd/libdvdnav/src/vm/vm.c
  /* Debug functions */
  
  #ifdef TRACE
-diff -uwr libdvdnav-4.2.0/src/vm/vm.h xbmc/lib/libdvd/libdvdnav/src/vm/vm.h
+diff -uwr libdvdnav-4.2.0/src/vm/vm.h lib/libdvd/libdvdnav/src/vm/vm.h
 --- libdvdnav-4.2.0/src/vm/vm.h	2010-07-31 01:34:16 +0200
-+++ xbmc/lib/libdvd/libdvdnav/src/vm/vm.h	2013-02-07 14:42:34 +0100
++++ lib/libdvd/libdvdnav/src/vm/vm.h	2013-02-07 14:42:34 +0100
 @@ -156,11 +156,11 @@
  int vm_get_audio_active_stream(vm_t *vm);
  int vm_get_subp_active_stream(vm_t *vm, int mode);
@@ -763,4 +763,4 @@ diff -uwr libdvdnav-4.2.0/src/vm/vm.h xbmc/lib/libdvd/libdvdnav/src/vm/vm.h
  /* Uncomment for VM command tracing */
  /* #define TRACE */
  #ifdef TRACE
-Only in xbmc/lib/libdvd/libdvdnav: version.h
+Only in lib/libdvd/libdvdnav: version.h

@@ -31,7 +31,7 @@
 #include <sys/stat.h>
 extern "C"
 {
-#include "lib/libRTV/interface.h"
+#include "libRTV/interface.h"
 }
 
 

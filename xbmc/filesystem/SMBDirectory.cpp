@@ -41,7 +41,7 @@
 #include "threads/SingleLock.h"
 #include "PasswordManager.h"
 
-#include "lib/libsmb/xbLibSmb.h"
+#include "libsmb/xbLibSmb.h"
 
 struct CachedDirEntry
 {

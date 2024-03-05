@@ -30,7 +30,7 @@
 typedef uint32_t iso723_t;
 typedef uint64_t iso733_t;
 #else
-#include "lib/libcdio/iso9660.h"
+#include "libcdio/iso9660.h"
 #endif
 
 #pragma pack(1)

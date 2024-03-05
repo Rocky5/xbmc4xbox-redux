@@ -18,7 +18,6 @@
  *
  */
 
-#define NOMINMAX
 #include "include.h"
 #include "GUISpinControlEx.h"
 
