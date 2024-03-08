@@ -554,7 +554,6 @@ bool CFileItem::IsAudio() const
   if (HasVideoInfoTag()) return false;
   if (HasPictureInfoTag()) return false;
   if (IsCDDA()) return true;
-  if (!m_bIsFolder && IsShoutCast()) return true;
 
   CStdString extension;
   if( m_mimetype.Left(12).Equals("application/") )
@@ -600,11 +599,6 @@ bool CFileItem::IsCUESheet() const
   return URIUtils::GetExtension(m_strPath).Equals(".cue", false);
 }
 
-bool CFileItem::IsShoutCast() const
-{
-  return URIUtils::IsShoutCast(m_strPath);
-}
-
 bool CFileItem::IsInternetStream() const
 {
   if (HasProperty("IsHTTPDirectory"))
@@ -624,8 +618,7 @@ bool CFileItem::IsFileFolder() const
     IsType(".ogg") ||
     IsType(".nsf") ||
     IsType(".sid") ||
-    IsType(".sap") ||
-    IsShoutCast()
+    IsType(".sap")
     );
 }
 

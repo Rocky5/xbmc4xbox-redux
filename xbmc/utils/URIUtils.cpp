@@ -954,11 +954,6 @@ bool URIUtils::IsVideoDb(const CStdString& strFile)
   return StringUtils2::StartsWithNoCase(strFile, "videodb:");
 }
 
-bool URIUtils::IsShoutCast(const CStdString& strFile)
-{
-  return StringUtils2::StartsWithNoCase(strFile, "shout:");
-}
-
 bool URIUtils::IsBluray(const CStdString& strFile)
 {
   return StringUtils2::StartsWithNoCase(strFile, "bluray:");

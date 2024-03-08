@@ -432,7 +432,7 @@ void CGUIWindowMusicNav::GetContextButtons(int itemNumber, CContextButtons &butt
     CMusicDatabaseDirectory dir;
     // enable music info button on an album or on a song.
     if (item->IsAudio() && !item->IsPlayList() && !item->IsSmartPlayList() &&
-       !item->IsShoutCast() && !item->m_bIsFolder)
+       !item->m_bIsFolder)
     {
       buttons.Add(CONTEXT_BUTTON_SONG_INFO, 658);
     }
@@ -450,7 +450,7 @@ void CGUIWindowMusicNav::GetContextButtons(int itemNumber, CContextButtons &butt
     else if (!inPlaylists && (dir.HasAlbumInfo(item->GetPath())||
                               dir.IsArtistDir(item->GetPath())   )      &&
              !dir.IsAllItem(item->GetPath()) && !item->IsParentFolder() &&
-             !item->IsPlugin() && !item->IsShoutCast()                  &&
+             !item->IsPlugin()                                          &&
              !item->GetPath().Left(14).Equals("musicsearch://"))
     {
       if (dir.IsArtistDir(item->GetPath()))
@@ -462,7 +462,7 @@ void CGUIWindowMusicNav::GetContextButtons(int itemNumber, CContextButtons &butt
     // enable query all albums button only in album view
     if (dir.HasAlbumInfo(item->GetPath()) && !dir.IsAllItem(item->GetPath()) &&
         item->m_bIsFolder && !item->IsVideoDb() && !item->IsParentFolder()   &&
-       !item->IsPlugin() &&  !item->IsShoutCast()                            &&
+       !item->IsPlugin()                                                     &&
        !item->GetPath().Left(14).Equals("musicsearch://"))
     {
       buttons.Add(CONTEXT_BUTTON_INFO_ALL, 20059);
@@ -521,7 +521,7 @@ void CGUIWindowMusicNav::GetContextButtons(int itemNumber, CContextButtons &butt
       if (database.GetMatchingMusicVideo(StringUtils::Join(item->GetMusicInfoTag()->GetArtist(), g_advancedSettings.m_musicItemSeparator),item->GetMusicInfoTag()->GetAlbum(),item->GetMusicInfoTag()->GetTitle()) > -1)
         buttons.Add(CONTEXT_BUTTON_PLAY_OTHER, 20401);
     }
-    if (item->HasVideoInfoTag() && !item->m_bIsFolder && !item->IsShoutCast())
+    if (item->HasVideoInfoTag() && !item->m_bIsFolder)
     {
       if (item->GetVideoInfoTag()->m_playCount > 0)
         buttons.Add(CONTEXT_BUTTON_MARK_UNWATCHED, 16104); //Mark as UnWatched

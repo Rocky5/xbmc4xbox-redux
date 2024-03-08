@@ -103,7 +103,6 @@ public:
   bool IsLyrics() const;
   bool IsAudio() const;
   bool IsCUESheet() const;
-  bool IsShoutCast() const;
   bool IsInternetStream() const;
   bool IsPlayList() const;
   bool IsSmartPlayList() const;
