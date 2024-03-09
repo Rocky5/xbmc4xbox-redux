@@ -812,8 +812,10 @@ void CGUIBaseContainer::UpdateScrollByLetter()
     CGUIListItemPtr item = m_items[i];
     // The letter offset jumping is only for ASCII characters at present, and
     // our checks are all done in uppercase
-    CStdString nextLetter = item->GetSortLabel().Left(1);
-    nextLetter.ToUpper();
+    CStdString nextLetter;
+    std::wstring character = item->GetSortLabel().substr(0, 1);
+    StringUtils2::ToUpper(character);
+    g_charsetConverter.wToUTF8(character, nextLetter);
     if (currentMatch != nextLetter)
     {
       currentMatch = nextLetter;
