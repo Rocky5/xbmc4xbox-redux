@@ -18,23 +18,22 @@
  *
  */
 
-#include "system.h"
 #include "dialog.h"
-#include "libPython/python/Include/Python.h"
-#include "../XBPythonDll.h"
+
+#include "libPython/XBPythonDll.h"
+#include "ApplicationMessenger.h"
+#include "settings/Settings.h"
 #include "pyutil.h"
 #include "pythreadstate.h"
 #include "dialogs/GUIDialogFileBrowser.h"
 #include "dialogs/GUIDialogNumeric.h"
-#include "dialogs/GUIDialogGamepad.h"
-#include "GUIWindowManager.h"
+#include "guilib/GUIWindowManager.h"
 #include "dialogs/GUIDialogOK.h"
 #include "dialogs/GUIDialogProgress.h"
 #include "dialogs/GUIDialogYesNo.h"
 #include "dialogs/GUIDialogSelect.h"
 #include "storage/MediaManager.h"
 #include "settings/MediaSourceSettings.h"
-#include "ApplicationMessenger.h"
 
 using namespace std;
 
@@ -53,6 +52,9 @@ namespace PYXBMC
 
     self = (WindowDialog*)type->tp_alloc(type, 0);
     if (!self) return NULL;
+    new(&self->sXMLFileName) string();
+    new(&self->sFallBackPath) string();
+    new(&self->vecControls) std::vector<Control*>();
 
     self->iWindowId = -1;
 
@@ -62,6 +64,10 @@ namespace PYXBMC
     if (!Window_CreateNewWindow((Window*)self, true))
     {
       // error is already set by Window_CreateNewWindow, just release the memory
+      self->vecControls.clear();
+      self->vecControls.~vector();
+      self->sFallBackPath.~string();
+      self->sXMLFileName.~string();
       self->ob_type->tp_free((PyObject*)self);
       return NULL;
     }
@@ -89,9 +95,6 @@ namespace PYXBMC
     PyObject* unicodeLine[4];
     for (int i = 0; i < 4; i++) unicodeLine[i] = NULL;
 
-    CGUIDialogOK* pDialog = (CGUIDialogOK*)g_windowManager.GetWindow(window);
-    if (PyXBMCWindowIsNull(pDialog)) return NULL;
-
     // get lines, last 2 lines are optional.
     string utf8Line[4];
     if (!PyArg_ParseTuple(args, (char*)"OO|OO", &unicodeLine[0], &unicodeLine[1], &unicodeLine[2], &unicodeLine[3]))  return NULL;
@@ -101,15 +104,24 @@ namespace PYXBMC
       if (unicodeLine[i] && !PyXBMCGetUnicodeString(utf8Line[i], unicodeLine[i], i+1))
         return NULL;
     }
+    PyXBMCGUILock();
+    CGUIDialogOK* pDialog = (CGUIDialogOK*)g_windowManager.GetWindow(window);
+    if (PyXBMCWindowIsNull(pDialog)) return NULL;
+
     pDialog->SetHeading(utf8Line[0]);
     pDialog->SetLine(0, utf8Line[1]);
     pDialog->SetLine(1, utf8Line[2]);
     pDialog->SetLine(2, utf8Line[3]);
 
+    PyXBMCGUIUnlock();
+
     //send message and wait for user input
     PyXBMCWaitForThreadMessage(TMSG_DIALOG_DOMODAL, window, ACTIVE_WINDOW);
+    PyXBMCGUILock();
+    bool result = pDialog->IsConfirmed();
+    PyXBMCGUIUnlock();
 
-    return Py_BuildValue((char*)"b", pDialog->IsConfirmed());
+    return Py_BuildValue((char*)"b", result);
   }
 
   PyDoc_STRVAR(browse__doc__,
@@ -155,8 +167,16 @@ namespace PYXBMC
     char *cDefault = NULL;
     PyObject *result;
 
-    for (int i = 0; i < 3; i++) unicodeLine[i] = NULL;
-    if (!PyArg_ParseTuple(args, (char*)"iOO|Obbsb", &browsetype , &unicodeLine[0], &unicodeLine[1], &unicodeLine[2], &useThumbs, &useFileDirectories, &cDefault, &enableMultiple))  return NULL;
+    for (int i = 0; i < 3; i++)
+      unicodeLine[i] = NULL;
+    if (!PyArg_ParseTuple(args, (char*)"iOO|Obbsb",
+                          &browsetype , &unicodeLine[0],
+                          &unicodeLine[1], &unicodeLine[2],
+                          &useThumbs, &useFileDirectories,
+                          &cDefault, &enableMultiple))
+    {
+      return NULL;
+    }
     for (int i = 0; i < 3; i++)
     {
       if (unicodeLine[i] && !PyXBMCGetUnicodeString(utf8Line[i], unicodeLine[i], i+1))
@@ -169,9 +189,9 @@ namespace PYXBMC
     localShares = *shares;
     g_mediaManager.GetLocalDrives(localShares);
 
-    if (useFileDirectories && !utf8Line[2].size() == 0) 
+    if (useFileDirectories && !utf8Line[2].size() == 0)
       utf8Line[2] += "|.rar|.zip";
-    
+
     value = cDefault;
 
     CPyThreadState pyState;
@@ -201,7 +221,7 @@ namespace PYXBMC
       if (!result)
         return NULL;
 
-      for (int i = 0; i < valuelist.size(); i++)
+      for (unsigned int i = 0; i < valuelist.size(); i++)
         PyTuple_SetItem(result, i, PyString_FromString(valuelist.at(i).c_str()));
 
       return result;
@@ -252,7 +272,11 @@ namespace PYXBMC
           timedate.wMonth = atoi(sDefault.Mid(3,4));
           timedate.wYear = atoi(sDefault.Right(4));
         }
-        if (CGUIDialogNumeric::ShowAndGetDate(timedate, utf8Heading))
+        bool gotDate;
+        Py_BEGIN_ALLOW_THREADS
+        gotDate = CGUIDialogNumeric::ShowAndGetDate(timedate, utf8Heading);
+        Py_END_ALLOW_THREADS
+        if (gotDate)
           value.Format("%2d/%2d/%4d", timedate.wDay, timedate.wMonth, timedate.wYear);
         else
         {
@@ -268,7 +292,11 @@ namespace PYXBMC
           timedate.wHour = atoi(sDefault.Left(2));
           timedate.wMinute = atoi(sDefault.Right(2));
         }
-        if (CGUIDialogNumeric::ShowAndGetTime(timedate, utf8Heading))
+        bool gotTime;
+        Py_BEGIN_ALLOW_THREADS
+        gotTime = CGUIDialogNumeric::ShowAndGetTime(timedate, utf8Heading);
+        Py_END_ALLOW_THREADS
+        if (gotTime)
           value.Format("%2d:%02d", timedate.wHour, timedate.wMinute);
         else
         {
@@ -279,7 +307,11 @@ namespace PYXBMC
       else if (inputtype == 3)
       {
         value = cDefault;
-        if (!CGUIDialogNumeric::ShowAndGetIPAddress(value, utf8Heading))
+        bool gotIPAddress;
+        Py_BEGIN_ALLOW_THREADS
+        gotIPAddress = CGUIDialogNumeric::ShowAndGetIPAddress(value, utf8Heading);
+        Py_END_ALLOW_THREADS
+        if (!gotIPAddress)
         {
           Py_INCREF(Py_None);
           return Py_None;
@@ -288,7 +320,11 @@ namespace PYXBMC
       else
       {
         value = cDefault;
-        if (!CGUIDialogNumeric::ShowAndGetNumber(value, utf8Heading))
+        bool gotNumber;
+        Py_BEGIN_ALLOW_THREADS
+        gotNumber = CGUIDialogNumeric::ShowAndGetNumber(value, utf8Heading);
+        Py_END_ALLOW_THREADS
+        if (!gotNumber)
         {
           Py_INCREF(Py_None);
           return Py_None;
@@ -319,8 +355,6 @@ namespace PYXBMC
     const int window = WINDOW_DIALOG_YES_NO;
     PyObject* unicodeLine[6];
     for (int i = 0; i < 6; i++) unicodeLine[i] = NULL;
-    CGUIDialogYesNo* pDialog = (CGUIDialogYesNo*)g_windowManager.GetWindow(window);
-    if (PyXBMCWindowIsNull(pDialog)) return NULL;
 
     // get lines, last 4 lines are optional.
     string utf8Line[6];
@@ -331,6 +365,9 @@ namespace PYXBMC
       if (unicodeLine[i] && !PyXBMCGetUnicodeString(utf8Line[i], unicodeLine[i], i+1))
         return NULL;
     }
+    PyXBMCGUILock();
+    CGUIDialogYesNo* pDialog = (CGUIDialogYesNo*)g_windowManager.GetWindow(window);
+    if (PyXBMCWindowIsNull(pDialog)) return NULL;
     pDialog->SetHeading(utf8Line[0]);
     pDialog->SetLine(0, utf8Line[1]);
     pDialog->SetLine(1, utf8Line[2]);
@@ -339,11 +376,15 @@ namespace PYXBMC
       pDialog->SetChoice(0,utf8Line[4]);
     if (utf8Line[5] != "")
       pDialog->SetChoice(1,utf8Line[5]);
+    PyXBMCGUIUnlock();
 
     //send message and wait for user input
     PyXBMCWaitForThreadMessage(TMSG_DIALOG_DOMODAL, window, ACTIVE_WINDOW);
+    PyXBMCGUILock();
+    bool result = pDialog->IsConfirmed();
+    PyXBMCGUIUnlock();
 
-    return Py_BuildValue((char*)"b", pDialog->IsConfirmed());
+    return Py_BuildValue((char*)"b", result);
   }
 
   PyDoc_STRVAR(select__doc__,
@@ -369,6 +410,7 @@ namespace PYXBMC
     if (!PyArg_ParseTuple(args, (char*)"OO|i", &heading, &list, &autoClose))  return NULL;
     if (!PyList_Check(list)) return NULL;
 
+    PyXBMCGUILock();
     CGUIDialogSelect* pDialog= (CGUIDialogSelect*)g_windowManager.GetWindow(window);
     if (PyXBMCWindowIsNull(pDialog)) return NULL;
 
@@ -388,10 +430,15 @@ namespace PYXBMC
     if (autoClose > 0)
       pDialog->SetAutoClose(autoClose);
 
+    PyXBMCGUIUnlock();
+
     //send message and wait for user input
     PyXBMCWaitForThreadMessage(TMSG_DIALOG_DOMODAL, window, ACTIVE_WINDOW);
 
-    return Py_BuildValue((char*)"i", pDialog->GetSelectedLabel());
+    PyXBMCGUILock();
+    int result = pDialog->GetSelectedLabel();
+    PyXBMCGUIUnlock();
+    return Py_BuildValue((char*)"i", result);
   }
 
 /*****************************************************************
@@ -427,15 +474,28 @@ namespace PYXBMC
         return NULL;
     }
 
-    CGUIDialogProgress* pDialog= (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
-    if (PyXBMCWindowIsNull(pDialog)) return NULL;
+    CGUIDialogProgress* pDialog;
+    {
+      CPyThreadState releaseGil;
+      CSingleLock glock(g_graphicsContext);
 
-    pDialog->SetHeading(utf8Line[0]);
+      pDialog= (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
+      if (!pDialog)
+      {
+        glock.Leave();
+        releaseGil.Restore();
+        PyErr_SetString(PyExc_SystemError, "Error: Window is NULL, this is not possible :-)");
+        return NULL;
+      }
+      ((DialogProgress*)self)->dlg = pDialog;
 
-    for (int i = 1; i < 4; i++)
-      pDialog->SetLine(i - 1,utf8Line[i]);
+      pDialog->SetHeading(utf8Line[0]);
 
-    pDialog->StartModal();
+      for (int i = 1; i < 4; i++)
+        pDialog->SetLine(i - 1,utf8Line[i]);
+
+      pDialog->StartModal();
+    }
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -468,7 +528,8 @@ namespace PYXBMC
         return NULL;
     }
 
-    CGUIDialogProgress* pDialog= (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
+    PyXBMCGUILock();
+    CGUIDialogProgress* pDialog= ((DialogProgress*)self)->dlg;
     if (PyXBMCWindowIsNull(pDialog)) return NULL;
 
     if (percentage >= 0 && percentage <= 100)
@@ -485,6 +546,7 @@ namespace PYXBMC
       if (unicodeLine[i])
         pDialog->SetLine(i,utf8Line[i]);
     }
+    PyXBMCGUIUnlock();
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -499,10 +561,12 @@ namespace PYXBMC
   PyObject* Dialog_ProgressIsCanceled(PyObject *self, PyObject *args)
   {
     bool canceled = false;
-    CGUIDialogProgress* pDialog= (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
+    CGUIDialogProgress* pDialog= ((DialogProgress*)self)->dlg;
     if (PyXBMCWindowIsNull(pDialog)) return NULL;
 
+    PyXBMCGUILock();
     canceled = pDialog->IsCanceled();
+    PyXBMCGUIUnlock();
 
     return Py_BuildValue((char*)"b", canceled);
   }
@@ -516,10 +580,13 @@ namespace PYXBMC
 
   PyObject* Dialog_ProgressClose(PyObject *self, PyObject *args)
   {
-    CGUIDialogProgress* pDialog= (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
+    CGUIDialogProgress* pDialog= ((DialogProgress*)self)->dlg;
     if (PyXBMCWindowIsNull(pDialog)) return NULL;
 
-    pDialog->Close();
+    {
+      CPyThreadState state;
+      pDialog->Close();
+    }
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -527,9 +594,13 @@ namespace PYXBMC
 
   static void Dialog_ProgressDealloc(PyObject *self)
   {
-    CGUIDialogProgress* pDialog= (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
-    if (PyXBMCWindowIsNull(pDialog)) return;
-    pDialog->Close();
+    CGUIDialogProgress* pDialog= ((DialogProgress*)self)->dlg;
+    if (pDialog)
+    {
+      CPyThreadState state;
+      pDialog->Close();
+    }
+
     self->ob_type->tp_free((PyObject*)self);
   }
 

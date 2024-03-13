@@ -20,26 +20,21 @@
  *
  */
 
-#include "GUIWindow.h"
+#include "guilib/GUIWindow.h"
 #include "threads/Event.h"
-#include "libPython/python/Include/Python.h"
 
 class PyXBMCAction
 {
 public:
   int param;
-  PyObject* pCallbackWindow;
-  PyObject* pObject;
+  void* pCallbackWindow;
+  void* pObject;
   int controlId; // for XML window
 #if defined(_LINUX) || defined(_WIN32)
   int type; // 0=Action, 1=Control;
 #endif
 
-  PyXBMCAction(PyObject* callback)
-    : param(0), pCallbackWindow(callback), pObject(NULL), controlId(0), type(0)
-  {
-    Py_INCREF(callback);
-  }
+  PyXBMCAction(void*& callback);
   virtual ~PyXBMCAction() ;
 };
 
@@ -54,11 +49,14 @@ public:
   virtual bool    OnMessage(CGUIMessage& message);
   virtual bool    OnAction(const CAction &action);
   virtual bool    OnBack(int actionID);
-  void             SetCallbackWindow(PyThreadState *state, PyObject *object);
+  void             SetCallbackWindow(void* state, void *object);
   void             WaitForActionEvent();
   void             PulseActionEvent();
+  void             SetDestroyAfterDeinit(bool destroy = true);
 protected:
-  PyObject*        pCallbackWindow;
-  PyThreadState*   m_threadState;
+  virtual void     OnDeinitWindow(int nextWindowID = 0);
+  void* pCallbackWindow;
+  void* m_threadState;
   CEvent           m_actionEvent;
+  bool             m_destroyAfterDeinit;
 };

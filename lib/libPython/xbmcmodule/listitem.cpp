@@ -18,18 +18,18 @@
  *
  */
 
-#include "system.h"
-#include "libPython/python/Include/Python.h"
-#include "../XBPythonDll.h"
+#include <Python.h>
+
+#include "libPython/XBPythonDll.h"
 #include "listitem.h"
 #include "pyutil.h"
 #include "video/VideoInfoTag.h"
 #include "pictures/PictureInfoTag.h"
 #include "music/tags/MusicInfoTag.h"
 #include "FileItem.h"
+#include "utils/Variant.h"
 #include "settings/AdvancedSettings.h"
 #include "utils/StringUtils.h"
-#include "utils/Variant.h"
 
 using namespace std;
 
@@ -48,8 +48,8 @@ namespace PYXBMC
 
     PyObject* label = NULL;
     PyObject* label2 = NULL;
-    PyObject* cIconImage = NULL;
-    PyObject* cThumbnailImage = NULL;
+    PyObject* iconImage = NULL;
+    PyObject* thumbnailImage = NULL;
     PyObject* path = NULL;
 
     // allocate new object
@@ -67,8 +67,8 @@ namespace PYXBMC
       (char**)keywords,
       &label,
       &label2,
-      &cIconImage,
-      &cThumbnailImage,
+      &iconImage,
+      &thumbnailImage,
       &path))
     {
       Py_DECREF( self );
@@ -91,11 +91,11 @@ namespace PYXBMC
     {
       self->item->SetLabel2( utf8String );
     }
-    if (cIconImage && PyXBMCGetUnicodeString(utf8String, cIconImage, 1))
+    if (iconImage && PyXBMCGetUnicodeString(utf8String, iconImage, 1))
     {
       self->item->SetIconImage( utf8String );
     }
-    if (cThumbnailImage && PyXBMCGetUnicodeString(utf8String, cThumbnailImage, 1))
+    if (thumbnailImage && PyXBMCGetUnicodeString(utf8String, thumbnailImage, 1))
     {
       self->item->SetThumbnailImage( utf8String );
     }
@@ -221,21 +221,25 @@ namespace PYXBMC
   PyDoc_STRVAR(setIconImage__doc__,
     "setIconImage(icon) -- Sets the listitem's icon image.\n"
     "\n"
-    "icon            : string - image filename.\n"
+    "icon            : string or unicode - image filename.\n"
     "\n"
     "example:\n"
     "  - self.list.getSelectedItem().setIconImage('emailread.png')\n");
 
   PyObject* ListItem_SetIconImage(ListItem *self, PyObject *args)
   {
-    char *cLine = NULL;
+    PyObject* unicodeLine = NULL;
     if (!self->item) return NULL;
 
-    if (!PyArg_ParseTuple(args, (char*)"s", &cLine)) return NULL;
+    if (!PyArg_ParseTuple(args, (char*)"O", &unicodeLine)) return NULL;
+
+    string utf8Line;
+    if (unicodeLine && !PyXBMCGetUnicodeString(utf8Line, unicodeLine, 1))
+      return NULL;
 
     // set label
     PyXBMCGUILock();
-    self->item->SetIconImage(cLine ? cLine : "");
+    self->item->SetIconImage(utf8Line);
     PyXBMCGUIUnlock();
 
     Py_INCREF(Py_None);
@@ -245,21 +249,25 @@ namespace PYXBMC
   PyDoc_STRVAR(setThumbnailImage__doc__,
     "setThumbnailImage(thumb) -- Sets the listitem's thumbnail image.\n"
     "\n"
-    "thumb           : string - image filename.\n"
+    "thumb           : string or unicode - image filename.\n"
     "\n"
     "example:\n"
     "  - self.list.getSelectedItem().setThumbnailImage('emailread.png')\n");
 
   PyObject* ListItem_SetThumbnailImage(ListItem *self, PyObject *args)
   {
-    char *cLine = NULL;
+    PyObject* unicodeLine = NULL;
     if (!self->item) return NULL;
 
-    if (!PyArg_ParseTuple(args, (char*)"s", &cLine)) return NULL;
+    if (!PyArg_ParseTuple(args, (char*)"O", &unicodeLine)) return NULL;
+
+    string utf8Line;
+    if (unicodeLine && !PyXBMCGetUnicodeString(utf8Line, unicodeLine, 1))
+      return NULL;
 
     // set label
     PyXBMCGUILock();
-    self->item->SetThumbnailImage(cLine ? cLine : "");
+    self->item->SetThumbnailImage(utf8Line);
     PyXBMCGUIUnlock();
 
     Py_INCREF(Py_None);
@@ -359,6 +367,7 @@ namespace PYXBMC
     "    artist        : list (['U2'])\n"
     "    votes         : string (12345 votes)\n"
     "    trailer       : string (/home/user/trailer.avi)\n"
+    "    dateadded     : string (%Y-%m-%d %h:%m:%s = 2009-04-05 23:16:04)\n"
     "\n"
     "Music Values:\n"
     "    tracknumber   : integer (8)\n"
@@ -408,12 +417,12 @@ namespace PYXBMC
     }
 
     PyObject *key, *value;
-    int pos = 0;
+    Py_ssize_t pos = 0;
 
     PyXBMCGUILock();
 
     CStdString tmp;
-    while (PyDict_Next(pInfoLabels, (Py_ssize_t*)&pos, &key, &value)) {
+    while (PyDict_Next(pInfoLabels, &pos, &key, &value)) {
       if (strcmpi(cType, "video") == 0)
       {
         if (strcmpi(PyString_AsString(key), "year") == 0)
@@ -531,6 +540,8 @@ namespace PYXBMC
             if (strlen(tmp) == 10)
               self->item->m_dateTime.SetDate(atoi(tmp.Right(4).c_str()), atoi(tmp.Mid(3,4).c_str()), atoi(tmp.Left(2).c_str()));
           }
+          else if (strcmpi(PyString_AsString(key), "dateadded") == 0)
+            self->item->GetVideoInfoTag()->m_dateAdded.SetFromDBDateTime(tmp);
         }
       }
       else if (strcmpi(cType, "music") == 0)
@@ -684,7 +695,7 @@ namespace PYXBMC
       {
         if (strcmpi(PyString_AsString(key), "codec") == 0)
         {
-          if (!PyXBMCGetUnicodeString(video->m_strCodec, value, 1)) 
+          if (!PyXBMCGetUnicodeString(video->m_strCodec, value, 1))
             continue;
         }
         else if (strcmpi(PyString_AsString(key), "aspect") == 0)
@@ -705,12 +716,12 @@ namespace PYXBMC
       {
         if (strcmpi(PyString_AsString(key), "codec") == 0)
         {
-          if (!PyXBMCGetUnicodeString(audio->m_strCodec, value, 1)) 
+          if (!PyXBMCGetUnicodeString(audio->m_strCodec, value, 1))
             continue;
         }
         else if (strcmpi(PyString_AsString(key), "language") == 0)
         {
-          if (!PyXBMCGetUnicodeString(audio->m_strLanguage, value, 1)) 
+          if (!PyXBMCGetUnicodeString(audio->m_strLanguage, value, 1))
             continue;
         }
         else if (strcmpi(PyString_AsString(key), "channels") == 0)
@@ -725,7 +736,7 @@ namespace PYXBMC
       {
         if (strcmpi(PyString_AsString(key), "language") == 0)
         {
-          if (!PyXBMCGetUnicodeString(subtitle->m_strLanguage, value, 1)) 
+          if (!PyXBMCGetUnicodeString(subtitle->m_strLanguage, value, 1))
             continue;
         }
       }
@@ -867,7 +878,7 @@ namespace PYXBMC
     "  - action          : string or unicode - any built-in function to perform.\n"
     "replaceItems        : [opt] bool - True=only your items will show/False=your items will be added to context menu(Default).\n"
     "\n"
-    "List of functions - http://xbmc.org/wiki/?title=List_of_Built_In_Functions \n"
+    "List of functions - http://wiki.xbmc.org/?title=List_of_Built_In_Functions \n"
     "\n"
     "*Note, You can use the above as keywords for arguments and skip certain optional arguments.\n"
     "       Once you use a keyword, all following arguments require the keyword.\n"

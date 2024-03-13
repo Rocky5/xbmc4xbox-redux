@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  *      Copyright (C) 2005-2013 Team XBMC
  *      http://xbmc.org
@@ -20,19 +18,19 @@
  *
  */
 
-#include "utils/StdString.h"
+#include <Python.h>
 
-#include "libPython/python/Include/Python.h"
-#include "../XBPythonDll.h"
+#include "libPython/XBPythonDll.h"
+#include "utils/StdString.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // credits and version information
-#define PY_XBMC_AUTHOR    "J. Mulder <darkie@xbmc.org>"
-#define PY_XBMC_CREDITS   "XBMC TEAM."
-#define PY_XBMC_PLATFORM  "XBOX"
+#define PY_XBMC_AUTHOR    "Team XBMC <www.xbmc.org>"
+#define PY_XBMC_CREDITS   "Team XBMC"
+#define PY_XBMC_PLATFORM  "ALL"
 
 namespace PYXBMC
 {

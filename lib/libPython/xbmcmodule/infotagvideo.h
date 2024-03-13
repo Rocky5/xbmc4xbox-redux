@@ -17,9 +17,11 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
- 
-#include "libPython/python/Include/Python.h"
+
+#include <Python.h>
+
 #include "video/VideoInfoTag.h"
+
 #pragma once
 
 #ifdef __cplusplus

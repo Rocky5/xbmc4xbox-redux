@@ -18,14 +18,14 @@
  *
  */
 
-#include "system.h"
+#include <Python.h>
+
+#include "libPython/XBPythonDll.h"
 #include "winxml.h"
-#include "libPython/Python/Include/Python.h"
-#include "../XBPythonDll.h"
 #include "pyutil.h"
 #include "GUIPythonWindowXML.h"
 #include "addons/Skin.h"
-#include "URIUtils.h"
+#include "utils/URIUtils.h"
 #include "filesystem/File.h"
 
 using namespace std;
@@ -56,13 +56,12 @@ namespace PYXBMC
     PyObject* pyOname = NULL;
     PyObject* pyDName = NULL;
     PyObject* pyRes = NULL;
-    char bForceDefaultSkin = false;
 
     string strXMLname, strFallbackPath;
     string strDefault = "Default";
     string resolution = "720p";
 
-    if (!PyArg_ParseTuple(args, (char*)"OO|OOb", &pyOXMLname, &pyOname, &pyDName, &pyRes, &bForceDefaultSkin )) return NULL;
+    if (!PyArg_ParseTuple(args, (char*)"OO|OO", &pyOXMLname, &pyOname, &pyDName, &pyRes)) return NULL;
 
     PyXBMCGetUnicodeString(strXMLname, pyOXMLname);
     PyXBMCGetUnicodeString(strFallbackPath, pyOname);
@@ -72,22 +71,30 @@ namespace PYXBMC
     // Check to see if the XML file exists in current skin. If not use fallback path to find a skin for the script
     RESOLUTION_INFO res;
     CStdString strSkinPath = g_SkinInfo->GetSkinPath(strXMLname, &res);
- 
+
     if (!XFILE::CFile::Exists(strSkinPath))
     {
-      // Check for the matching folder for the skin in the fallback skins folder
+      CStdString str("none");
+      AddonProps props(str, ADDON_SKIN, "", "");
+      CSkinInfo::TranslateResolution(resolution, res);
+
       CStdString fallbackPath = URIUtils::AddFileToFolder(strFallbackPath, "resources");
       fallbackPath = URIUtils::AddFileToFolder(fallbackPath, "skins");
       CStdString basePath = URIUtils::AddFileToFolder(fallbackPath, g_SkinInfo->ID());
-      strSkinPath = g_SkinInfo->GetSkinPath(strXMLname, &res, basePath);
+
+      // Check for the matching folder for the skin in the fallback skins folder (if it exists)
+      if (XFILE::CFile::Exists(basePath))
+      {
+        props.path = basePath;
+        CSkinInfo skinInfo(props, res);
+        skinInfo.Start();
+        strSkinPath = skinInfo.GetSkinPath(strXMLname, &res);
+      }
 
       if (!XFILE::CFile::Exists(strSkinPath))
       {
         // Finally fallback to the DefaultSkin as it didn't exist in either the XBMC Skin folder or the fallback skin folder
-        CStdString str("none");
-        AddonProps props(str, ADDON_SKIN, "", "");
         props.path = URIUtils::AddFileToFolder(fallbackPath, strDefault);
-        CSkinInfo::TranslateResolution(resolution, res);
         CSkinInfo skinInfo(props, res);
 
         skinInfo.Start();
@@ -264,7 +271,7 @@ namespace PYXBMC
     PyXBMCGUIUnlock();
 
     Py_INCREF(Py_None);
-    return Py_BuildValue((char*)"l", listPos);
+    return Py_BuildValue((char*)"i", listPos);
   }
 
   // getListItem() method
@@ -374,17 +381,17 @@ namespace PYXBMC
   PyDoc_STRVAR(windowXML__doc__,
     "WindowXML class.\n"
     "\n"
-    "WindowXML(self, xmlFilename, scriptPath[, defaultSkin, forceFallback) -- Create a new WindowXML script.\n"
+    "WindowXML(self, xmlFilename, scriptPath[, defaultSkin, defaultRes]) -- Create a new WindowXML script.\n"
     "\n"
     "xmlFilename     : string - the name of the xml file to look for.\n"
     "scriptPath      : string - path to script. used to fallback to if the xml doesn't exist in the current skin. (eg os.getcwd())\n"
     "defaultSkin     : [opt] string - name of the folder in the skins path to look in for the xml. (default='Default')\n"
-    "forceFallback   : [opt] boolean - if true then it will look only in the defaultSkin folder. (default=False)\n"
+    "defaultRes      : [opt] string - default skins resolution. (default='720p')\n"
     "\n"
-    "*Note, skin folder structure is eg(resources/skins/Default/PAL)\n"
+    "*Note, skin folder structure is eg(resources/skins/Default/720p)\n"
     "\n"
     "example:\n"
-    " - ui = GUI('script-AMT-main.xml', os.getcwd(), 'LCARS', True)\n"
+    " - ui = GUI('script-Lyrics-main.xml', os.getcwd(), 'LCARS', 'PAL')\n"
     "   ui.doModal()\n"
     "   del ui\n");
 

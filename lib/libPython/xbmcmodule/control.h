@@ -18,12 +18,15 @@
  *
  */
 
-#include "libPython/python/Include/Python.h"
-#include "../XBPythonDll.h"
-#include "GUIControl.h"
+#include <Python.h>
+
+#include "libPython/XBPythonDll.h"
 #include "listitem.h"
+#include "guilib/GUIColorManager.h"
 
 #pragma once
+
+class CGUIControl;
 
 // python type checking
 #define Control_Check(op) PyObject_TypeCheck(op, &Control_Type)
@@ -65,6 +68,8 @@
 #define ControlSlider_Check(op) PyObject_TypeCheck(op, &ControlSlider_Type)
 #define ControlSlider_CheckExact(op) ((op)->ob_type == &ControlSlider_Type)
 
+#define ControlEdit_Check(op) PyObject_TypeCheck(op, &ControlEdit_Type)
+#define ControlEdit_CheckExact(op) ((op)->ob_type == &ControlEdit_Type)
 // -----------------
 
 // hardcoded offsets for button controls (and controls that use button controls)
@@ -72,18 +77,18 @@
 #define CONTROL_TEXT_OFFSET_X 10
 #define CONTROL_TEXT_OFFSET_Y 2
 
-#define PyObject_HEAD_XBMC_CONTROL    \
-    PyObject_HEAD       \
-    int iControlId;     \
-    int iParentId;      \
-    int dwPosX;         \
-    int dwPosY;         \
-    int dwWidth;        \
-    int dwHeight;       \
-    int iControlUp;     \
-    int iControlDown;   \
-    int iControlLeft;   \
-    int iControlRight;  \
+#define PyObject_HEAD_XBMC_CONTROL  \
+    PyObject_HEAD                   \
+    int iControlId;                 \
+    int iParentId;                  \
+    int dwPosX;                     \
+    int dwPosY;                     \
+    int dwWidth;                    \
+    int dwHeight;                   \
+    int iControlUp;                 \
+    int iControlDown;               \
+    int iControlLeft;               \
+    int iControlRight;              \
     CGUIControl* pGUIControl;
 
 #ifdef __cplusplus
@@ -118,6 +123,17 @@ namespace PYXBMC
     int iAngle;
   } ControlLabel;
 
+  typedef struct {
+    PyObject_HEAD_XBMC_CONTROL
+    std::string strFont;
+    std::string strText;
+    std::string strTextureFocus;
+    std::string strTextureNoFocus;
+    color_t textColor;
+    color_t disabledColor;
+    uint32_t align;
+    bool bIsPassword;
+  } ControlEdit;
 
   typedef struct {
     PyObject_HEAD_XBMC_CONTROL
@@ -227,13 +243,13 @@ namespace PYXBMC
     color_t shadowColor;
     color_t focusedColor;
   } ControlRadioButton;
-	
+
   typedef struct {
     PyObject_HEAD_XBMC_CONTROL
     std::string strTextureBack;
     std::string strTexture;
-    std::string strTextureFoc;    
-  } ControlSlider;	
+    std::string strTextureFoc;
+  } ControlSlider;
 
   extern void Control_Dealloc(Control* self);
 
@@ -252,6 +268,7 @@ namespace PYXBMC
   extern PyTypeObject ControlProgress_Type;
   extern PyTypeObject ControlRadioButton_Type;
   extern PyTypeObject ControlSlider_Type;
+  extern PyTypeObject ControlEdit_Type;
 
   CGUIControl* ControlLabel_Create(ControlLabel* pControl);
   CGUIControl* ControlFadeLabel_Create(ControlFadeLabel* pControl);
@@ -264,6 +281,7 @@ namespace PYXBMC
   CGUIControl* ControlProgress_Create(ControlProgress* pControl);
   CGUIControl* ControlRadioButton_Create(ControlRadioButton* pControl);
   CGUIControl* ControlSlider_Create(ControlSlider* pControl);
+  CGUIControl* ControlEdit_Create(ControlEdit* pControl);
 
   void initControl_Type();
   void initControlSpin_Type();
@@ -278,6 +296,7 @@ namespace PYXBMC
   void initControlProgress_Type();
   void initControlRadioButton_Type();
   void initControlSlider_Type();
+  void initControlEdit_Type();
 }
 
 #ifdef __cplusplus

@@ -18,13 +18,12 @@
  *
  */
 
-#include "system.h"
+// include for constants
+#include "pyutil.h"
+
 #include "filesystem/PluginDirectory.h"
 #include "listitem.h"
 #include "FileItem.h"
-
-// include for constants
-#include "pyutil.h"
 
 using namespace std;
 using namespace XFILE;
@@ -68,7 +67,7 @@ namespace PYXBMC
     if (!PyArg_ParseTupleAndKeywords(
       args,
       kwds,
-      (char*)"iOO|bl",
+      (char*)"iOO|bi",
       (char**)keywords,
       &handle,
       &pURL,
@@ -120,7 +119,7 @@ namespace PYXBMC
     if (!PyArg_ParseTupleAndKeywords(
       args,
       kwds,
-      (char*)"iO|l",
+      (char*)"iO|i",
       (char**)keywords,
       &handle,
       &pItems,
@@ -587,8 +586,8 @@ namespace PYXBMC
 
     // constants
     PyModule_AddStringConstant(pXbmcPluginModule, (char*)"__author__", (char*)PY_XBMC_AUTHOR);
-    PyModule_AddStringConstant(pXbmcPluginModule, (char*)"__date__", (char*)"20 August 2007");
-    PyModule_AddStringConstant(pXbmcPluginModule, (char*)"__version__", (char*)"1.0");
+    PyModule_AddStringConstant(pXbmcPluginModule, (char*)"__date__", (char*)"4 March 2009");
+    PyModule_AddStringConstant(pXbmcPluginModule, (char*)"__version__", (char*)"1.5");
     PyModule_AddStringConstant(pXbmcPluginModule, (char*)"__credits__", (char*)PY_XBMC_CREDITS);
     PyModule_AddStringConstant(pXbmcPluginModule, (char*)"__platform__", (char*)PY_XBMC_PLATFORM);
 

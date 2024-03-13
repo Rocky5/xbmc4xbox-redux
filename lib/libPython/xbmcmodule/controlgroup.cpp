@@ -18,10 +18,10 @@
  *
  */
 
-#include "system.h"
-#include "libPython/python/Include/Python.h"
-#include "GUIControlGroup.h"
-#include "GUIFontManager.h"
+#include <Python.h>
+
+#include "guilib/GUIControlGroup.h"
+#include "guilib/GUIFontManager.h"
 #include "control.h"
 #include "pyutil.h"
 

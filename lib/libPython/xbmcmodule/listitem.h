@@ -19,8 +19,9 @@
  *  <http://www.gnu.org/licenses/>.
  *
  */
- 
-#include "libPython/python/Include/Python.h"
+
+#include <Python.h>
+
 #include "FileItem.h"
 
 #define ListItem_Check(op) PyObject_TypeCheck(op, &ListItem_Type)

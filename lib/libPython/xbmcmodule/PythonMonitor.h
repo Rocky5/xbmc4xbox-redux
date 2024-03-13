@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "../python/Include/Python.h"
+#include <Python.h>
 #include <string>
 
 int Py_XBMC_Event_OnSettingsChanged(void* arg);
@@ -38,6 +38,7 @@ public:
   void    OnScreensaverActivated();
   void    OnScreensaverDeactivated();
   void    OnDatabaseUpdated(const std::string &database);
+  void    OnAbortRequested();
 
   void    Acquire();
   void    Release();

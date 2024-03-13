@@ -41,11 +41,11 @@ namespace PYXBMC
     {
       PyErr_SetString((PyObject*)self, "Unable to identify addon");
       return NULL;
-    }    
+    }
     CPyThreadState pyState;
     self->pMonitor = new CPythonMonitor();
     pyState.Restore();
-    self->pMonitor->Id = addonId;    
+    self->pMonitor->Id = addonId;
     self->pMonitor->SetCallback(PyThreadState_Get(), (PyObject*)self);
 
     return (PyObject*)self;
@@ -78,7 +78,7 @@ namespace PYXBMC
 
   // Monitor_onScreensaverActivated
   PyDoc_STRVAR(onScreensaverActivated__doc__,
-               "onScreenSaverStarted() -- onScreensaverActivated method.\n"
+               "onScreensaverActivated() -- onScreensaverActivated method.\n"
                "\n"
                "Will be called when screensaver kicks in");
 
@@ -98,7 +98,7 @@ namespace PYXBMC
   {
     Py_INCREF(Py_None);
     return Py_None;
-  }  
+  }
 
   // Monitor_onDatabaseUpdated
   PyDoc_STRVAR(onDatabaseUpdated__doc__,
@@ -112,13 +112,26 @@ namespace PYXBMC
   {
    Py_INCREF(Py_None);
    return Py_None;
-  }  
+  }
+
+  // Monitor_onAbortRequested
+  PyDoc_STRVAR(onAbortRequested__doc__,
+               "onAbortRequested() -- onAbortRequested method.\n"
+               "\n"
+               "Will be called when XBMC requests Abort");
+
+  PyObject* Monitor_OnAbortRequested(PyObject *self, PyObject *args)
+  {
+    Py_INCREF(Py_None);
+    return Py_None;
+  }
 
   PyMethodDef Monitor_methods[] = {
     {(char*)"onSettingsChanged", (PyCFunction)Monitor_OnSettingsChanged, METH_VARARGS, onSettingsChanged__doc__},
     {(char*)"onScreensaverActivated", (PyCFunction)Monitor_OnScreensaverActivated, METH_VARARGS, onScreensaverActivated__doc__},
     {(char*)"onScreensaverDeactivated", (PyCFunction)Monitor_OnScreensaverDeactivated, METH_VARARGS, onScreensaverDeactivated__doc__},
     {(char*)"onDatabaseUpdated", (PyCFunction)Monitor_OnDatabaseUpdated, METH_VARARGS  , onDatabaseUpdated__doc__},
+    {(char*)"onAbortRequested", (PyCFunction)Monitor_OnAbortRequested, METH_VARARGS  , onAbortRequested__doc__},
     {NULL, NULL, 0, NULL}
   };
 

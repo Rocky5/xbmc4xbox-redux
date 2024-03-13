@@ -55,7 +55,11 @@ public:
   virtual void OnPlayBackPaused();
   virtual void OnPlayBackResumed();
   virtual void OnPlayBackStopped();
-  virtual void OnQueueNextItem() {};
+  virtual void OnPlayBackSpeedChanged(int iSpeed);
+  virtual void OnPlayBackSeek(int iTime, int seekOffset);
+  virtual void OnPlayBackSeekChapter(int iChapter);
+  virtual void OnQueueNextItem();
+
   virtual void Announce(ANNOUNCEMENT::AnnouncementFlag flag, const char *sender, const char *message, const CVariant &data);
   void RegisterPythonPlayerCallBack(IPlayerCallback* pCallback);
   void UnregisterPythonPlayerCallBack(IPlayerCallback* pCallback);
@@ -65,6 +69,7 @@ public:
   void OnScreensaverActivated();
   void OnScreensaverDeactivated();
   void OnDatabaseUpdated(const std::string &database);
+  void OnAbortRequested(const CStdString &ID="");
   void Initialize();
   void Finalize();
   void FinalizeScript();
@@ -110,7 +115,7 @@ public:
   // returns -1 if no scripts exist with specified filename
   int getScriptId(const CStdString &strFile);
 
-  PyThreadState *getMainThreadState();
+  void* getMainThreadState();
 
   bool m_bLogin;
   CCriticalSection    m_critSection;
@@ -118,11 +123,10 @@ private:
   bool              FileExist(const char* strFile);
 
   int               m_nextid;
-  PyThreadState*    m_mainThreadState;
+  void*             m_mainThreadState;
   ThreadIdentifier  m_ThreadId;
   bool              m_bInitialized;
   int               m_iDllScriptCounter; // to keep track of the total scripts running that need the dll
-  HMODULE           m_hModule;
   unsigned int      m_endtime;
 
   //Vector with list of threads used for running scripts

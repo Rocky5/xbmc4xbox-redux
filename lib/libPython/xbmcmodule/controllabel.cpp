@@ -18,11 +18,12 @@
  *
  */
 
-#include "system.h"
-#include "libPython/python/Include/Python.h"
-#include "../XBPythonDll.h"
-#include "GUILabelControl.h"
-#include "GUIFontManager.h"
+#include <Python.h>
+
+#include "libPython/XBPythonDll.h"
+#include "guilib/GUILabelControl.h"
+#include "guilib/GUIFontManager.h"
+#include "guilib/GUIWindowManager.h"
 #include "control.h"
 #include "pyutil.h"
 
@@ -139,16 +140,13 @@ namespace PYXBMC
   {
     PyObject *pObjectText;
 
-    if (!PyArg_ParseTuple(args, (char*)"O", &pObjectText))  return NULL;
+    if (!PyArg_ParseTuple(args, (char*)"O", &pObjectText)) return NULL;
     if (!PyXBMCGetUnicodeString(self->strText, pObjectText, 1)) return NULL;
 
     ControlLabel *pControl = (ControlLabel*)self;
     CGUIMessage msg(GUI_MSG_LABEL_SET, pControl->iParentId, pControl->iControlId);
     msg.SetLabel(self->strText);
-
-    PyXBMCGUILock();
-    if (pControl->pGUIControl) pControl->pGUIControl->OnMessage(msg);
-    PyXBMCGUIUnlock();
+    g_windowManager.SendThreadMessage(msg, pControl->iParentId);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -164,12 +162,7 @@ namespace PYXBMC
   PyObject* ControlLabel_GetLabel(ControlLabel *self, PyObject *args)
   {
     if (!self->pGUIControl) return NULL;
-    
-    PyXBMCGUILock();
-    const char *cLabel = self->strText.c_str();
-    PyXBMCGUIUnlock();
-
-    return Py_BuildValue((char*)"s", cLabel);
+    return Py_BuildValue((char*)"s", self->strText.c_str());
   }
 
   PyMethodDef ControlLabel_methods[] = {

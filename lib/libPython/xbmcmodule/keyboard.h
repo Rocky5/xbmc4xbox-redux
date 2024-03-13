@@ -18,10 +18,12 @@
  *
  */
 
-#include "libPython/python/Include/Python.h"
-#include "../XBPythonDll.h"
+#include <Python.h>
+
 #include <string>
 #pragma once
+
+class CGUIDialogKeyboardGeneric;
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,6 +36,7 @@ namespace PYXBMC
     std::string strDefault;
     std::string strHeading;
     bool bHidden;
+    CGUIDialogKeyboardGeneric* dlg;
   } Keyboard;
 
   extern PyTypeObject Keyboard_Type;

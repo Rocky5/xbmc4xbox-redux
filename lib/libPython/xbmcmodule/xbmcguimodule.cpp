@@ -18,18 +18,19 @@
  *
  */
 
-#include "system.h"
-#include "libPython/python/Include/Python.h"
-#include "libPython/python/Include/structmember.h"
-#include "../XBPythonDll.h"
+#include <Python.h>
+#include <structmember.h>
+
+#include "libPython/XBPythonDll.h"
 #include "control.h"
 #include "window.h"
 #include "dialog.h"
 #include "winxml.h"
 #include "pyutil.h"
 #include "action.h"
-#include "GUIWindowManager.h"
-#include "GUIListItem.h"
+#include "utils/log.h"
+#include "guilib/GUIWindowManager.h"
+#include "guilib/GUIListItem.h"
 
 
 #if defined(__GNUG__) && (__GNUC__>4) || (__GNUC__==4 && __GNUC_MINOR__>=2)
@@ -44,31 +45,26 @@ namespace PYXBMC
 {
   // lock() method
   PyDoc_STRVAR(lock__doc__,
-    "lock() -- Lock the gui until xbmcgui.unlock() is called.\n"
+    "'xbmcgui.lock()' is depreciated and serves no purpose anymore,\n"
     "\n"
-    "*Note, This will improve performance when doing a lot of gui manipulation at once.\n"
-    "       The main program (xbmc itself) will freeze until xbmcgui.unlock() is called.\n"
-    "\n"
-    "example:\n"
-    "  - xbmcgui.lock()\n");
+    "it will be removed in future releases\n");
 
   PyObject* XBMCGUI_Lock(PyObject *self, PyObject *args)
   {
-    PyXBMCGUILock();
+    CLog::Log(LOGWARNING,"'xbmcgui.lock()' is depreciated and serves no purpose anymore, it will be removed in future releases");
     Py_INCREF(Py_None);
     return Py_None;
   }
 
   // unlock() method
   PyDoc_STRVAR(unlock__doc__,
-    "unlock() -- Unlock the gui from a lock() call.\n"
+    "'xbmcgui.unlock()' is depreciated and serves no purpose anymore,\n"
     "\n"
-    "example:\n"
-    "  - xbmcgui.unlock()\n");
+    "it will be removed in future releases\n");
 
   PyObject* XBMCGUI_Unlock(PyObject *self, PyObject *args)
   {
-    PyXBMCGUIUnlock();
+    CLog::Log(LOGWARNING,"'xbmcgui.unlock()' is depreciated and serves no purpose anymore, it will be removed in future releases");
     Py_INCREF(Py_None);
     return Py_None;
   }
@@ -141,6 +137,7 @@ namespace PYXBMC
     initDialogProgress_Type();
     initAction_Type();
     initControlRadioButton_Type();
+    initControlEdit_Type();
 
     if (PyType_Ready(&Window_Type) < 0 ||
         PyType_Ready(&WindowDialog_Type) < 0 ||
@@ -162,6 +159,7 @@ namespace PYXBMC
         PyType_Ready(&DialogProgress_Type) < 0 ||
         PyType_Ready(&ControlSlider_Type) < 0 ||
         PyType_Ready(&ControlRadioButton_Type) < 0 ||
+        PyType_Ready(&ControlEdit_Type) < 0 ||
         PyType_Ready(&Action_Type) < 0)
       return;
 
@@ -194,13 +192,14 @@ namespace PYXBMC
     Py_INCREF(&ControlCheckMark_Type);
     Py_INCREF(&ControlList_Type);
     Py_INCREF(&ControlImage_Type);
-    Py_INCREF(&ControlProgress_Type);  
+    Py_INCREF(&ControlProgress_Type);
     Py_INCREF(&ControlSlider_Type);
     Py_INCREF(&ControlGroup_Type);
     Py_INCREF(&Dialog_Type);
     Py_INCREF(&DialogProgress_Type);
     Py_INCREF(&Action_Type);
     Py_INCREF(&ControlRadioButton_Type);
+    Py_INCREF(&ControlEdit_Type);
 
     pXbmcGuiModule = Py_InitModule3((char*)"xbmcgui", xbmcGuiMethods, xbmcgui_module_documentation);
 
@@ -221,16 +220,17 @@ namespace PYXBMC
     PyModule_AddObject(pXbmcGuiModule, (char*)"ControlList", (PyObject*)&ControlList_Type);
     PyModule_AddObject(pXbmcGuiModule, (char*)"ControlImage", (PyObject*)&  ControlImage_Type);
     PyModule_AddObject(pXbmcGuiModule, (char*)"ControlProgress", (PyObject*)& ControlProgress_Type);
-    PyModule_AddObject(pXbmcGuiModule, (char*)"ControlSlider", (PyObject*)& ControlSlider_Type);  
+    PyModule_AddObject(pXbmcGuiModule, (char*)"ControlSlider", (PyObject*)& ControlSlider_Type);
     PyModule_AddObject(pXbmcGuiModule, (char*)"ControlGroup", (PyObject*)& ControlGroup_Type);
     PyModule_AddObject(pXbmcGuiModule, (char*)"Dialog", (PyObject *)&Dialog_Type);
     PyModule_AddObject(pXbmcGuiModule, (char*)"DialogProgress", (PyObject *)&DialogProgress_Type);
     PyModule_AddObject(pXbmcGuiModule, (char*)"Action", (PyObject *)&Action_Type);
     PyModule_AddObject(pXbmcGuiModule, (char*)"ControlRadioButton", (PyObject*)&ControlRadioButton_Type);
+    PyModule_AddObject(pXbmcGuiModule, (char*)"ControlEdit", (PyObject*)&ControlEdit_Type);
 
     PyModule_AddStringConstant(pXbmcGuiModule, (char*)"__author__", (char*)PY_XBMC_AUTHOR);
-    PyModule_AddStringConstant(pXbmcGuiModule, (char*)"__date__", (char*)"14 July 2006");
-    PyModule_AddStringConstant(pXbmcGuiModule, (char*)"__version__", (char*)"1.2");
+    PyModule_AddStringConstant(pXbmcGuiModule, (char*)"__date__", (char*)"16 June 2011");
+    PyModule_AddStringConstant(pXbmcGuiModule, (char*)"__version__", (char*)"1.5");
     PyModule_AddStringConstant(pXbmcGuiModule, (char*)"__credits__", (char*)PY_XBMC_CREDITS);
     PyModule_AddStringConstant(pXbmcGuiModule, (char*)"__platform__", (char*)PY_XBMC_PLATFORM);
 

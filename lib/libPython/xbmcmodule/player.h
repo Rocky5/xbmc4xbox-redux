@@ -18,8 +18,9 @@
  *
  */
 
-#include "libPython/python/Include/Python.h"
-#include "../XBPythonDll.h"
+#include <Python.h>
+
+#include "libPython/XBPythonDll.h"
 #include "PythonPlayer.h"
 #include "cores/playercorefactory/PlayerCoreFactory.h"
 #pragma once

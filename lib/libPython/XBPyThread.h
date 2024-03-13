@@ -1,6 +1,3 @@
-#ifndef XBPYTHREAD_H_
-#define XBPYTHREAD_H_
-
 /*
  *      Copyright (C) 2005-2013 Team XBMC
  *      http://xbmc.org
@@ -21,10 +18,12 @@
  *
  */
 
-#include "python/Include/Python.h"
+#ifndef XBPYTHREAD_H_
+#define XBPYTHREAD_H_
+
 #include "threads/Thread.h"
+#include "threads/Event.h"
 #include "addons/IAddon.h"
-#include "utils/StringUtils.h"
 
 class XBPython;
 
@@ -42,8 +41,9 @@ public:
   void setAddon(ADDON::AddonPtr _addon) { addon = _addon; }
 
 protected:
-  XBPython      *m_pExecuter;
-  PyThreadState *m_threadState;
+  XBPython *m_pExecuter;
+  CEvent stoppedEvent;
+  void *m_threadState;
 
   char m_type;
   char *m_source;
@@ -52,6 +52,8 @@ protected:
   bool m_stopping;
   int  m_id;
   ADDON::AddonPtr addon;
+
+  void setSource(const CStdString &src);
 
   virtual void Process();
   virtual void OnExit();

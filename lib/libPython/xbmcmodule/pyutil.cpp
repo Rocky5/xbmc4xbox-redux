@@ -21,14 +21,17 @@
 #include "pyutil.h"
 #include "pythreadstate.h"
 #include <wchar.h>
+#include <vector>
 #include "addons/Skin.h"
+#include "utils/log.h"
 #include "utils/XBMCTinyXML.h"
+#include "utils/CharsetConverter.h"
+#include "threads/CriticalSection.h"
+#include "threads/SingleLock.h"
 #include "ApplicationMessenger.h"
-#include "CharsetConverter.h"
 
 using namespace std;
 
-static int iPyXBMCGUILockRef = 0;
 static CXBMCTinyXML pySkinReferences;
 
 
@@ -49,10 +52,18 @@ namespace PYXBMC
     //              for non-unicode data?
     if (PyUnicode_Check(pObject))
     {
-      CStdString utf8String;
-      g_charsetConverter.wToUTF8(PyUnicode_AsUnicode(pObject), utf8String);
-      buf = utf8String;
-      return 1;
+
+      // Python unicode objects are UCS2 or UCS4 depending on compilation
+      // options, wchar_t is 16-bit or 32-bit depending on platform.
+      // Avoid the complexity by just letting python convert the string.
+      PyObject *utf8_pyString = PyUnicode_AsUTF8String(pObject);
+
+      if (utf8_pyString)
+      {
+        buf = PyString_AsString(utf8_pyString);
+        Py_DECREF(utf8_pyString);
+        return 1;
+      }
     }
     if (PyString_Check(pObject))
     {
@@ -78,17 +89,13 @@ namespace PYXBMC
 
   void PyXBMCGUILock()
   {
-    if (iPyXBMCGUILockRef == 0) g_graphicsContext.Lock();
-    iPyXBMCGUILockRef++;
+    CPyThreadState tsg;
+    g_graphicsContext.Lock();
   }
 
   void PyXBMCGUIUnlock()
   {
-    if (iPyXBMCGUILockRef > 0)
-    {
-      iPyXBMCGUILockRef--;
-      if (iPyXBMCGUILockRef == 0) g_graphicsContext.Unlock();
-    }
+    g_graphicsContext.Unlock();
   }
 
   void PyXBMCWaitForThreadMessage(int message, int param1, int param2)
@@ -123,7 +130,8 @@ namespace PYXBMC
       TiXmlNode *pNode = pTexture->FirstChild();
       if (pNode && pNode->Value()[0] != '-')
       {
-        strncpy(defaultImage, pNode->Value(), 1024);
+        strncpy(defaultImage, pNode->Value(), sizeof(defaultImage));
+        defaultImage[sizeof(defaultImage) - 1] = '\0';
         return defaultImage;
       }
     }
@@ -210,7 +218,7 @@ void _PyXBMC_ClearPendingCalls(PyThreadState* state)
   CSingleLock lock(g_critSectionPyCall);
   for(CallQueue::iterator it = g_callQueue.begin(); it!= g_callQueue.end();)
   {
-    if(it->state = state)
+    if(it->state == state)
       it = g_callQueue.erase(it);
     else
       it++;
@@ -233,9 +241,25 @@ void _PyXBMC_MakePendingCalls()
     g_callQueue.erase(iter);
     lock.Leave();
     if (p.func)
+    {
       p.func(p.args);
+
+      // Since the callback is likely to make it into python, and since
+      // not all of the callback functions handle errors, the error state
+      // may remain set from the previous call. As a result subsequent calls
+      // to callback functions exhibit odd behavior difficult to debug.
+      if (PyErr_Occurred())
+      {
+        CLog::Log(LOGERROR,"Exception in python script callback execution");
+
+        // This clears the python error state and prints it to the log
+        PyErr_Print();
+      }
+
+    }
     //(*((*iter).first))((*iter).second);
     lock.Enter();
     iter = g_callQueue.begin();
   }
 }
+

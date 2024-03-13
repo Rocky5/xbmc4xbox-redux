@@ -18,39 +18,47 @@
  *
  */
 
-#include "xbox/Network.h"
-#include "system.h"
-#include "libPython/python/Include/Python.h"
-#include "../XBPythonDll.h"
+#include <Python.h>
+
+#include "libPython/XBPythonDll.h"
 #include "player.h"
 #include "pyplaylist.h"
 #include "keyboard.h"
 #include "xbox/IoSupport.h"
+#ifndef _LINUX
 #include <ConIo.h>
+#endif
 #include "infotagvideo.h"
 #include "infotagmusic.h"
-#include "libGoAhead/XBMChttp.h"
+#ifdef HAS_HTTPAPI
+#include "interfaces/http-api/XBMChttp.h"
+#include "interfaces/http-api/HttpApi.h"
+#endif
 #include "GUIInfoManager.h"
-#include "GUIWindowManager.h"
-#include "GUIAudioManager.h"
+#include "guilib/GUIWindowManager.h"
+#include "guilib/GUIAudioManager.h"
 #include "Application.h"
 #include "ApplicationMessenger.h"
 #include "utils/Crc32.h"
+#include "utils/URIUtils.h"
 #include "Util.h"
 #include "filesystem/File.h"
 #include "filesystem/SpecialProtocol.h"
 #include "settings/AdvancedSettings.h"
 #include "settings/Settings.h"
-#include "TextureManager.h"
+#include "guilib/TextureManager.h"
 #include "LangInfo.h"
 #include "SectionLoader.h"
-#include "utils/URIUtils.h"
-#include "CharsetConverter.h"
-#include "LocalizeStrings.h"
-#include "utils/log.h"
+#include "guilib/LocalizeStrings.h"
 #include "utils/FileUtils.h"
 #include "pythreadstate.h"
+#include "utils/log.h"
+#include "utils/Weather.h"
+#include "guilib/GUIFontManager.h"
+#include "filesystem/Directory.h"
 #include "monitor.h"
+#include "URL.h"
+#include "storage/MediaManager.h"
 
 // include for constants
 #include "pyutil.h"
@@ -126,16 +134,16 @@ namespace PYXBMC
   PyDoc_STRVAR(output__doc__,
     "'xbmc.output()' is depreciated and will be removed in future releases,\n"
     "please use 'xbmc.log()' instead");
-  
+
   PyObject* XBMC_Output(PyObject *self, PyObject *args, PyObject *kwds)
   {
     CLog::Log(LOGWARNING,"'xbmc.output()' is depreciated and will be removed in future releases, please use 'xbmc.log()' instead");
     return XBMC_Log(self, args, kwds);
   }
-  
+
   // shutdown() method
   PyDoc_STRVAR(shutdown__doc__,
-    "shutdown() -- Shutdown the xbox.\n"
+    "shutdown() -- Shutdown the system.\n"
     "\n"
     "example:\n"
     "  - xbmc.shutdown()\n");
@@ -167,7 +175,7 @@ namespace PYXBMC
 
   // restart() method
   PyDoc_STRVAR(restart__doc__,
-    "restart() -- Restart the xbox.\n"
+    "restart() -- Restart the system.\n"
     "\n"
     "example:\n"
     "  - xbmc.restart()\n");
@@ -208,8 +216,11 @@ namespace PYXBMC
     "executebuiltin(function) -- Execute a built in XBMC function.\n"
     "\n"
     "function       : string - builtin function to execute.\n"
+    "wait           : [opt] bool - True=Wait for end of execution, False=don't wait (Default)\n"
     "\n"
     "List of functions - http://wiki.xbmc.org/?title=List_of_Built_In_Functions \n"
+    "\n"
+    "NOTE: This function is executed asynchronously, so do not rely on it being done immediately\n"
     "\n"
     "example:\n"
     "  - xbmc.executebuiltin('XBMC.RunXBE(c:\\\\avalaunch.xbe)')\n");
@@ -217,9 +228,10 @@ namespace PYXBMC
   PyObject* XBMC_ExecuteBuiltIn(PyObject *self, PyObject *args)
   {
     char *cLine = NULL;
-    if (!PyArg_ParseTuple(args, (char*)"s", &cLine)) return NULL;
+    bool bWait = false;
+    if (!PyArg_ParseTuple(args, (char*)"s|b", &cLine, &bWait)) return NULL;
 
-    CApplicationMessenger::Get().ExecBuiltIn(cLine);
+    CApplicationMessenger::Get().ExecBuiltIn(cLine, bWait);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -241,6 +253,9 @@ namespace PYXBMC
   {
     char *cLine = NULL;
     if (!PyArg_ParseTuple(args, (char*)"s", &cLine)) return NULL;
+
+    CPyThreadState pyLock;
+
     if (!m_pXbmcHttp)
       m_pXbmcHttp = new CXbmcHttp();
     CStdString method = cLine;
@@ -260,14 +275,19 @@ namespace PYXBMC
         execute = cmd.Left(open);
       }
       else //open bracket but no close
+      {
+        pyLock.Restore();
         return PyString_FromString("");
+      }
     }
     else //no parameters
       execute = cmd;
 
-    CUtil::URLDecode(parameter);
+    CURL::Decode(parameter);
+
+    pyLock.Restore();
     return PyString_FromString(CHttpApi::MethodCall(execute, parameter).c_str());
-	}
+  }
 #endif
 
 #ifdef HAS_JSONRPC
@@ -294,7 +314,7 @@ namespace PYXBMC
     CPythonTransport::CPythonClient client;
 
     return PyString_FromString(JSONRPC::CJSONRPC::MethodCall(method, &transport, &client).c_str());
-	}
+  }
 #endif
 
   // sleep() method
@@ -353,15 +373,15 @@ namespace PYXBMC
     int iString;
     if (!PyArg_ParseTuple(args, (char*)"i", &iString)) return NULL;
 
-    CStdStringW unicodeLabel;
+    CStdString label;
     if (iString >= 30000 && iString <= 30999)
-      g_charsetConverter.utf8ToW(g_localizeStringsTemp.Get(iString), unicodeLabel);
+      label = g_localizeStringsTemp.Get(iString);
     else if (iString >= 32000 && iString <= 32999)
-      g_charsetConverter.utf8ToW(g_localizeStringsTemp.Get(iString), unicodeLabel);
+      label = g_localizeStringsTemp.Get(iString);
     else
-      g_charsetConverter.utf8ToW(g_localizeStrings.Get(iString), unicodeLabel);
+      label = g_localizeStrings.Get(iString);
 
-    return Py_BuildValue((char*)"u", unicodeLabel.c_str());
+    return PyUnicode_DecodeUTF8(label.c_str(), label.size(), "replace");
   }
 
   // getSkinDir() method
@@ -391,7 +411,6 @@ namespace PYXBMC
   }
 
   // getIPAddress() method
-  // getIPAddress() method
   PyDoc_STRVAR(getIPAddress__doc__,
     "getIPAddress() -- Returns the current ip address as a string.\n"
     "\n"
@@ -407,6 +426,9 @@ namespace PYXBMC
     XNetInAddrToString(xna.ina, cTitleIP, 32);
 #else
     sprintf(cTitleIP, "127.0.0.1");
+    CNetworkInterface* iface = g_application.getNetwork().GetFirstConnectedInterface();
+    if (iface)
+      return PyString_FromString(iface->GetCurrentIPAddress().c_str());
 #endif
     return PyString_FromString(cTitleIP);
   }
@@ -426,7 +448,11 @@ namespace PYXBMC
 
   PyObject* XBMC_GetDVDState(PyObject *self, PyObject *args)
   {
+#ifdef _XBOX
     return PyInt_FromLong(CIoSupport::GetTrayState());
+#else
+    return PyInt_FromLong(g_mediaManager.GetDriveStatus());
+#endif
   }
 
   // getFreeMem() method
@@ -438,9 +464,16 @@ namespace PYXBMC
 
   PyObject* XBMC_GetFreeMem(PyObject *self, PyObject *args)
   {
+#ifdef _XBOX
     MEMORYSTATUS stat;
     GlobalMemoryStatus(&stat);
     return PyInt_FromLong( stat.dwAvailPhys  / ( 1024 * 1024 ) );
+#else
+    MEMORYSTATUSEX stat;
+    stat.dwLength = sizeof(MEMORYSTATUSEX);
+    GlobalMemoryStatusEx(&stat);
+    return PyInt_FromLong( (long)(stat.ullAvailPhys  / ( 1024 * 1024 )) );
+#endif
   }
 
   // getCpuTemp() method
@@ -481,6 +514,8 @@ namespace PYXBMC
     "getInfoLabel(infotag) -- Returns an InfoLabel as a string.\n"
     "\n"
     "infotag        : string - infoTag for value you want returned.\n"
+    "                 Also multiple InfoLabels are possible e.x.:\n"
+    "                 label = xbmc.getInfoLabel('$INFO[Weather.Conditions] - thats the weather')\n"
     "\n"
     "List of InfoTags - http://wiki.xbmc.org/?title=InfoLabels \n"
     "\n"
@@ -489,11 +524,28 @@ namespace PYXBMC
 
   PyObject* XBMC_GetInfoLabel(PyObject *self, PyObject *args)
   {
+    std::string cret;
+
     char *cLine = NULL;
     if (!PyArg_ParseTuple(args, (char*)"s", &cLine)) return NULL;
 
-    int ret = g_infoManager.TranslateString(cLine);
-    return Py_BuildValue((char*)"s", g_infoManager.GetLabel(ret).c_str());
+    {
+      CPyThreadState gilRelease;
+
+      int ret = g_infoManager.TranslateString(cLine);
+      //doesn't seem to be a single InfoTag?
+      //try full blown GuiInfoLabel then
+      if (ret == 0)
+      {
+        CGUIInfoLabel label(cLine);
+        cret = label.GetLabel(0);
+      }
+      else
+      {
+        cret = g_infoManager.GetLabel(ret);
+      }
+    }
+    return Py_BuildValue((char*)"s", cret.c_str());
   }
 
   // getInfoImage() method
@@ -510,11 +562,19 @@ namespace PYXBMC
 
   PyObject* XBMC_GetInfoImage(PyObject *self, PyObject *args)
   {
+    std::string cret;
+
     char *cLine = NULL;
     if (!PyArg_ParseTuple(args, (char*)"s", &cLine)) return NULL;
 
-    int ret = g_infoManager.TranslateString(cLine);
-    return Py_BuildValue((char*)"s", g_infoManager.GetImage(ret, WINDOW_INVALID).c_str());
+    {
+      CPyThreadState gilRelease;
+
+      int ret = g_infoManager.TranslateString(cLine);
+      cret = g_infoManager.GetImage(ret, WINDOW_INVALID);
+    }
+
+    return Py_BuildValue((char*)"s", cret.c_str());
   }
 
   // playSFX() method
@@ -532,9 +592,13 @@ namespace PYXBMC
 
     if (!PyArg_ParseTuple(args, (char*)"s", &cFile)) return NULL;
 
-    if (CFile::Exists(cFile))
     {
-      g_audioManager.PlayPythonSound(cFile);
+      CPyThreadState gilRelease;
+
+      if (CFile::Exists(cFile))
+      {
+        g_audioManager.PlayPythonSound(cFile);
+      }
     }
 
     Py_INCREF(Py_None);
@@ -908,36 +972,6 @@ namespace PYXBMC
     return Py_BuildValue((char*)"b", exists);
   }
 
-  PyDoc_STRVAR(subHashAndFileSize__doc__,
-    "subHashAndFileSize(file)\n"
-    "\n"
-    "file        : file to calculate subtitle hash and size for"
-    "\n"
-    "example:\n"
-    " size,hash = xbmcvfs.subHashAndFileSize(file)\n"); 
-  PyObject* XBMC_subHashAndFileSize(PyObject *self, PyObject *args, PyObject *kwds)
-  {
-    PyObject *f_line;
-    if (!PyArg_ParseTuple(
-      args,
-      (char*)"O",
-      &f_line))
-    {
-      return NULL;
-    }
-    CStdString strSource;
-    if (!PyXBMCGetUnicodeString(strSource, f_line, 1)) return NULL;
-
-    CStdString strSize;
-    CStdString strHash;
-
-    CPyThreadState pyState;
-    CFileUtils::SubtitleFileSizeAndHash(strSource, strSize, strHash);
-    pyState.Restore();
-
-    return Py_BuildValue((char*)"ss",strSize.c_str(), strHash.c_str());
-  } 
-
   // define c functions to be used in python here
   PyMethodDef xbmcMethods[] = {
     {(char*)"output", (PyCFunction)XBMC_Output, METH_VARARGS|METH_KEYWORDS, output__doc__},
@@ -984,7 +1018,6 @@ namespace PYXBMC
     {(char*)"getCleanMovieTitle", (PyCFunction)XBMC_GetCleanMovieTitle, METH_VARARGS|METH_KEYWORDS, getCleanMovieTitle__doc__},
 
     {(char*)"skinHasImage", (PyCFunction)XBMC_SkinHasImage, METH_VARARGS|METH_KEYWORDS, skinHasImage__doc__},
-    {(char*)"subHashAndFileSize", (PyCFunction)XBMC_subHashAndFileSize, METH_VARARGS, subHashAndFileSize__doc__},
 
     {NULL, NULL, 0, NULL}
   };
@@ -994,7 +1027,7 @@ namespace PYXBMC
  * initxbmc(void);
  *****************************************************************/
   PyMODINIT_FUNC
-  InitXBMCTypes(bool bInitTypes)
+  InitXBMCTypes()
   {
     initKeyboard_Type();
     initPlayer_Type();
@@ -1047,8 +1080,8 @@ namespace PYXBMC
 
     // constants
     PyModule_AddStringConstant(pXbmcModule, (char*)"__author__", (char*)PY_XBMC_AUTHOR);
-    PyModule_AddStringConstant(pXbmcModule, (char*)"__date__", (char*)"15 November 2005");
-    PyModule_AddStringConstant(pXbmcModule, (char*)"__version__", (char*)"1.3");
+    PyModule_AddStringConstant(pXbmcModule, (char*)"__date__", (char*)"16 February 2011");
+    PyModule_AddStringConstant(pXbmcModule, (char*)"__version__", (char*)"1.4");
     PyModule_AddStringConstant(pXbmcModule, (char*)"__credits__", (char*)PY_XBMC_CREDITS);
     PyModule_AddStringConstant(pXbmcModule, (char*)"__platform__", (char*)PY_XBMC_PLATFORM);
 
@@ -1079,7 +1112,7 @@ namespace PYXBMC
     PyModule_AddIntConstant(pXbmcModule, (char*)"LOGSEVERE", LOGSEVERE);
     PyModule_AddIntConstant(pXbmcModule, (char*)"LOGFATAL", LOGFATAL);
     PyModule_AddIntConstant(pXbmcModule, (char*)"LOGNONE", LOGNONE);
-    PyModule_AddObject(pXbmcModule, "abortRequested", PyBool_FromLong(0));
+    PyModule_AddObject(pXbmcModule, (char*)"abortRequested", PyBool_FromLong(0));
   }
 }
 

@@ -184,6 +184,7 @@ extern "C"
   FUNCTION4(PyString_AsString)
   FUNCTION8(Py_AddPendingCall)
   FUNCTION8(PyList_GetItem)
+  FUNCTION12(PyList_SetItem)
   FUNCTION4(PyList_Size)
   FUNCTION4(PyList_New)
   FUNCTION8(PyList_Append)
@@ -201,7 +202,8 @@ extern "C"
     va_end(va);
     return ret;
   }*/
-  FUNCTION4(PyUnicodeUCS2_AsUnicode)
+  FUNCTION4(PyUnicodeUCS2_AsUTF8String)
+  FUNCTION4(PyUnicodeUCS2_DecodeUTF8)
   FUNCTION(Py_MakePendingCalls)
   FUNCTION(PyEval_SaveThread)
   FUNCTION4(PyEval_RestoreThread)
@@ -277,6 +279,8 @@ extern "C"
   FUNCTION8(PyRun_SimpleStringFlags)
   FUNCTION20(PyRun_StringFlags)
   FUNCTION28(PyRun_FileExFlags)
+  FUNCTION4(PyFile_AsFile)
+  FUNCTION8(PyFile_FromString)
 
   // PyFloat_FromDouble(double)
   void* (__cdecl* p_PyFloat_FromDouble)(double a); \
@@ -340,6 +344,7 @@ extern "C"
       dll.ResolveExport(DLL_FUNCTION(Py_AddPendingCall)) &&
       dll.ResolveExport(DLL_VA_FUNCTION(PyObject_CallMethod)) &&
       dll.ResolveExport(DLL_FUNCTION(PyList_GetItem)) &&
+      dll.ResolveExport(DLL_FUNCTION(PyList_SetItem)) &&
       dll.ResolveExport(DLL_FUNCTION(PyList_Size)) &&
       dll.ResolveExport(DLL_FUNCTION(PyList_New)) &&
       dll.ResolveExport(DLL_FUNCTION(PyList_Append)) &&
@@ -347,7 +352,8 @@ extern "C"
       dll.ResolveExport(DLL_FUNCTION(PyLong_AsLong)) &&
       dll.ResolveExport(DLL_FUNCTION(PyLong_AsLongLong)) &&
       dll.ResolveExport(DLL_VA_FUNCTION(PyErr_Format)) &&
-      dll.ResolveExport(DLL_FUNCTION(PyUnicodeUCS2_AsUnicode)) &&
+      dll.ResolveExport(DLL_FUNCTION(PyUnicodeUCS2_AsUTF8String)) &&
+      dll.ResolveExport(DLL_FUNCTION(PyUnicodeUCS2_DecodeUTF8)) &&
       dll.ResolveExport(DLL_FUNCTION(Py_MakePendingCalls)) &&
       dll.ResolveExport(DLL_FUNCTION(PyEval_SaveThread)) &&
       dll.ResolveExport(DLL_FUNCTION(PyEval_RestoreThread)) &&
@@ -421,6 +427,8 @@ extern "C"
       dll.ResolveExport(DLL_FUNCTION(PyRun_SimpleStringFlags)) &&
       dll.ResolveExport(DLL_FUNCTION(PyRun_StringFlags)) &&
       dll.ResolveExport(DLL_FUNCTION(PyRun_FileExFlags)) &&
+      dll.ResolveExport(DLL_FUNCTION(PyFile_AsFile)) &&
+      dll.ResolveExport(DLL_FUNCTION(PyFile_FromString)) &&
       dll.ResolveExport(DLL_FUNCTION(PyRun_String)));
 
     return bResult;
