@@ -432,7 +432,7 @@ bool CNetwork::WaitForSetup(unsigned int iTimeout)
       return true;
     
     Sleep(100);
-  } while (timeout.IsTimePast());
+  } while (!timeout.IsTimePast());
 
   CLog::Log(LOGDEBUG, "%s - Waiting for network setup failed!", __FUNCTION__);
   return false;
