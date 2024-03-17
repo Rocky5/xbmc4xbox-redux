@@ -679,6 +679,10 @@ bool CGUIMediaWindow::GetDirectory(const CStdString &strDirectory, CFileItemList
       m_history.RemoveParentPath();
   }
 
+  // update the view state to the currently fetched items
+  // TODO we should remove the second call m_guiState.reset() in Update() and pass the right file item ref here
+  m_guiState.reset(CGUIViewState::GetViewState(GetID(), items));
+
   if (m_guiState.get() && !m_guiState->HideParentDirItems() && !items.GetPath().IsEmpty())
   {
     CFileItemPtr pItem(new CFileItem(".."));
