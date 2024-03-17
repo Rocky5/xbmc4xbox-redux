@@ -288,20 +288,21 @@ namespace INFO
 #define CONTAINER_SORT_METHOD       364
 #define CONTAINER_CURRENT_ITEM      365
 
-#define CONTAINER_HAS_FOCUS         367
-#define CONTAINER_ROW               368
-#define CONTAINER_COLUMN            369
-#define CONTAINER_POSITION          370
-#define CONTAINER_VIEWMODE          371
-#define CONTAINER_HAS_NEXT          372
-#define CONTAINER_HAS_PREVIOUS      373
-#define CONTAINER_SUBITEM           374
-#define CONTAINER_TVSHOWTHUMB       375
-#define CONTAINER_NUM_PAGES         376
-#define CONTAINER_CURRENT_PAGE      377
-#define CONTAINER_SEASONTHUMB       378
-#define CONTAINER_SHOWPLOT          379
-#define CONTAINER_TOTALTIME         380
+#define CONTAINER_HAS_FOCUS         366
+#define CONTAINER_ROW               367
+#define CONTAINER_COLUMN            368
+#define CONTAINER_POSITION          369
+#define CONTAINER_VIEWMODE          370
+#define CONTAINER_HAS_NEXT          371
+#define CONTAINER_HAS_PREVIOUS      372
+#define CONTAINER_SUBITEM           373
+#define CONTAINER_TVSHOWTHUMB       374
+#define CONTAINER_NUM_PAGES         375
+#define CONTAINER_CURRENT_PAGE      376
+#define CONTAINER_SEASONTHUMB       377
+#define CONTAINER_SHOWPLOT          378
+#define CONTAINER_TOTALTIME         379
+#define CONTAINER_SORT_ORDER        380
 
 #define CONTAINER_VIEWCOUNT         381
 #define MUSICPM_ENABLED             382

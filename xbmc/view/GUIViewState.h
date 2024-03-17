@@ -42,6 +42,7 @@ public:
   void SetCurrentSortMethod(int method);
   SortDescription GetSortMethod() const;
   int GetSortMethodLabel() const;
+  int GetSortOrderLabel() const;
   void GetSortMethodLabelMasks(LABEL_MASKS& masks) const;
 
   SortOrder SetNextSortOrder();
