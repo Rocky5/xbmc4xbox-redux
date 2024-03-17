@@ -23,6 +23,7 @@
 #include "utils/ISortable.h"
 #include "utils/Archive.h"
 #include "pictures/DllLibExif.h"
+#include "XBDateTime.h"
 
 #define SLIDE_FILE_NAME             900         // Note that not all image tags will be present for each image
 #define SLIDE_FILE_PATH             901
@@ -34,6 +35,8 @@
 #define SLIDE_COLOUR                907
 #define SLIDE_PROCESS               908
 
+#define SLIDE_EXIF_DATE             919 /* Implementation only to just get
+                                           localized date */
 #define SLIDE_EXIF_DATE_TIME        920
 #define SLIDE_EXIF_DESCRIPTION      921
 #define SLIDE_EXIF_CAMERA_MAKE      922
@@ -88,7 +91,7 @@ public:
   void Reset();
   virtual void Archive(CArchive& ar);
   virtual void Serialize(CVariant& value);
-  virtual void ToSortable(SortItem& sortable);
+  virtual void ToSortable(SortItem& sortable, Field field) const;
   const CPictureInfoTag& operator=(const CPictureInfoTag& item);
   const CStdString GetInfo(int info) const;
 
@@ -100,10 +103,19 @@ public:
   void SetInfo(int info, const CStdString& value);
   void SetLoaded(bool loaded = true);
 
+  /**
+   * GetDateTimeTaken() -- Returns the EXIF DateTimeOriginal for current picture
+   * 
+   * The exif library returns DateTimeOriginal if available else the other
+   * DateTime tags. See libexif CExifParse::ProcessDir for details.
+   */
+  const CDateTime& GetDateTimeTaken() const;
 private:
   void GetStringFromArchive(CArchive &ar, char *string, size_t length);
   ExifInfo_t m_exifInfo;
   IPTCInfo_t m_iptcInfo;
   bool       m_isLoaded;
+  CDateTime  m_dateTimeTaken;
+  void ConvertDateTime();
 };
 

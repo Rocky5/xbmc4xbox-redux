@@ -278,7 +278,7 @@ string ByEpisodeNumber(SortAttribute attributes, const SortItem &values)
   const CVariant &episodeSpecial = values.find(FieldEpisodeNumberSpecialSort)->first;
   const CVariant &seasonSpecial = values.find(FieldSeasonSpecialSort)->first;
   if (!episodeSpecial.isNull() && !seasonSpecial.isNull() &&
-      episodeSpecial.asInteger() > 0)
+     (episodeSpecial.asInteger() > 0 || seasonSpecial.asInteger() > 0))
     num = ((uint64_t)seasonSpecial.asInteger() << 32) + (episodeSpecial.asInteger() << 16) - ((2 << 15) - values.find(FieldEpisodeNumber)->second.asInteger());
   else
     num = ((uint64_t)values.find(FieldSeason)->second.asInteger() << 32) + (values.find(FieldEpisodeNumber)->second.asInteger() << 16);
@@ -405,6 +405,11 @@ string ByRandom(SortAttribute attributes, const SortItem &values)
   return label;
 }
 
+string ByDateTaken(SortAttribute attributes, const SortItem &values)
+{
+  return values.find(FieldDateTaken)->second.asString();
+}
+
 bool preliminarySort(const SortItem &left, const SortItem &right, bool handleFolder, bool &result, std::wstring &labelLeft, std::wstring &labelRight)
 {
   // make sure both items have the necessary data to do the sorting
@@ -511,6 +516,26 @@ bool SorterIgnoreFoldersDescending(const SortItem &left, const SortItem &right)
   return StringUtils::AlphaNumericCompare(labelLeft.c_str(), labelRight.c_str()) > 0;
 }
 
+bool SorterIndirectAscending(const SortItemPtr &left, const SortItemPtr &right)
+{
+  return SorterAscending(*left, *right);
+}
+
+bool SorterIndirectDescending(const SortItemPtr &left, const SortItemPtr &right)
+{
+  return SorterDescending(*left, *right);
+}
+
+bool SorterIndirectIgnoreFoldersAscending(const SortItemPtr &left, const SortItemPtr &right)
+{
+  return SorterIgnoreFoldersAscending(*left, *right);
+}
+
+bool SorterIndirectIgnoreFoldersDescending(const SortItemPtr &left, const SortItemPtr &right)
+{
+  return SorterIgnoreFoldersDescending(*left, *right);
+}
+
 map<SortBy, SortUtils::SortPreparator> fillPreparators()
 {
   map<SortBy, SortUtils::SortPreparator> preparators;
@@ -559,6 +584,7 @@ map<SortBy, SortUtils::SortPreparator> fillPreparators()
   preparators[SortByListeners]                = ByListeners;
   preparators[SortByBitrate]                  = ByBitrate;
   preparators[SortByRandom]                   = ByRandom;
+  preparators[SortByDateTaken]                = ByDateTaken;
 
   return preparators;
 }
@@ -626,6 +652,7 @@ map<SortBy, Fields> fillSortingFields()
   sortingFields[SortByPlaycount].insert(FieldPlaycount);
   sortingFields[SortByListeners].insert(FieldListeners);
   sortingFields[SortByBitrate].insert(FieldBitrate);
+  sortingFields[SortByDateTaken].insert(FieldDateTaken);
   sortingFields.insert(pair<SortBy, Fields>(SortByRandom, Fields()));
 
   return sortingFields;
@@ -634,7 +661,7 @@ map<SortBy, Fields> fillSortingFields()
 map<SortBy, SortUtils::SortPreparator> SortUtils::m_preparators = fillPreparators();
 map<SortBy, Fields> SortUtils::m_sortingFields = fillSortingFields();
 
-void SortUtils::Sort(SortBy sortBy, SortOrder sortOrder, SortAttribute attributes, SortItems& items, int limitEnd /* = -1 */, int limitStart /* = 0 */)
+void SortUtils::Sort(SortBy sortBy, SortOrder sortOrder, SortAttribute attributes, DatabaseResults& items, int limitEnd /* = -1 */, int limitStart /* = 0 */)
 {
   if (sortBy != SortByNone)
   {
@@ -645,7 +672,7 @@ void SortUtils::Sort(SortBy sortBy, SortOrder sortOrder, SortAttribute attribute
       Fields sortingFields = GetFieldsForSorting(sortBy);
 
       // Prepare the string used for sorting and store it under FieldSort
-      for (SortItems::iterator item = items.begin(); item != items.end(); item++)
+      for (DatabaseResults::iterator item = items.begin(); item != items.end(); item++)
       {
         // add all fields to the item that are required for sorting if they are currently missing
         for (Fields::const_iterator field = sortingFields.begin(); field != sortingFields.end(); field++)
@@ -664,19 +691,57 @@ void SortUtils::Sort(SortBy sortBy, SortOrder sortOrder, SortAttribute attribute
     }
   }
 
-  if (limitEnd > 0 || limitStart > 0)
+  if (limitStart > 0 && (size_t)limitStart < items.size())
   {
-    SortItems::iterator start = items.begin();
-    SortItems::iterator end = items.end();
-    
-    if (limitStart > 0 && (size_t)limitStart < items.size())
-      start += limitStart;
-    if (limitEnd > 0 && (size_t)limitEnd < items.size())
-      end = items.begin() + limitEnd;
-
-    items.erase(items.begin(), start);
-    items.erase(end, items.end());
+    items.erase(items.begin(), items.begin() + limitStart);
+    limitEnd -= limitStart;
   }
+  if (limitEnd > 0 && (size_t)limitEnd < items.size())
+    items.erase(items.begin() + limitEnd, items.end());
+}
+
+void SortUtils::Sort(SortBy sortBy, SortOrder sortOrder, SortAttribute attributes, SortItems& items, int limitEnd /* = -1 */, int limitStart /* = 0 */)
+{
+  if (sortBy != SortByNone)
+  {
+    // get the matching SortPreparator
+    SortPreparator preparator = getPreparator(sortBy);
+    if (preparator != NULL)
+    {
+      Fields sortingFields = GetFieldsForSorting(sortBy);
+
+      // Prepare the string used for sorting and store it under FieldSort
+      for (SortItems::iterator item = items.begin(); item != items.end(); item++)
+      {
+        // add all fields to the item that are required for sorting if they are currently missing
+        for (Fields::const_iterator field = sortingFields.begin(); field != sortingFields.end(); field++)
+        {
+          if ((*item)->find(*field) == (*item)->end())
+            (*item)->insert(pair<Field, CVariant>(*field, CVariant::ConstNullVariant));
+        }
+
+        CStdStringW sortLabel;
+        g_charsetConverter.utf8ToW(preparator(attributes, **item), sortLabel, false);
+        (*item)->insert(pair<Field, CVariant>(FieldSort, CVariant(sortLabel)));
+      }
+
+      // Do the sorting
+      std::stable_sort(items.begin(), items.end(), getSorterIndirect(sortOrder, attributes));
+    }
+  }
+
+  if (limitStart > 0 && (size_t)limitStart < items.size())
+  {
+    items.erase(items.begin(), items.begin() + limitStart);
+    limitEnd -= limitStart;
+  }
+  if (limitEnd > 0 && (size_t)limitEnd < items.size())
+    items.erase(items.begin() + limitEnd, items.end());
+}
+
+void SortUtils::Sort(const SortDescription &sortDescription, DatabaseResults& items)
+{
+  Sort(sortDescription.sortBy, sortDescription.sortOrder, sortDescription.sortAttributes, items, sortDescription.limitEnd, sortDescription.limitStart);
 }
 
 void SortUtils::Sort(const SortDescription &sortDescription, SortItems& items)
@@ -713,6 +778,14 @@ SortUtils::Sorter SortUtils::getSorter(SortOrder sortOrder, SortAttribute attrib
     return sortOrder == SortOrderDescending ? SorterIgnoreFoldersDescending : SorterIgnoreFoldersAscending;
 
   return sortOrder == SortOrderDescending ? SorterDescending : SorterAscending;
+}
+
+SortUtils::SorterIndirect SortUtils::getSorterIndirect(SortOrder sortOrder, SortAttribute attributes)
+{
+  if (attributes & SortAttributeIgnoreFolders)
+    return sortOrder == SortOrderDescending ? SorterIndirectIgnoreFoldersDescending : SorterIndirectIgnoreFoldersAscending;
+
+  return sortOrder == SortOrderDescending ? SorterIndirectDescending : SorterIndirectAscending;
 }
 
 const Fields& SortUtils::GetFieldsForSorting(SortBy sortBy)
@@ -782,6 +855,7 @@ const sort_map table[] = {
   { SortByLastPlayed,               SORT_METHOD_LASTPLAYED,                   SortAttributeIgnoreFolders, 568 },
   { SortByPlaycount,                SORT_METHOD_PLAYCOUNT,                    SortAttributeIgnoreFolders, 567 },
   { SortByListeners,                SORT_METHOD_LISTENERS,                    SortAttributeNone,          20455 },
+  { SortByDateTaken,                SORT_METHOD_DATE_TAKEN,                   SortAttributeIgnoreFolders, 577 },
   { SortByNone,                     SORT_METHOD_NONE,                         SortAttributeNone,          16018 },
   // the following have no corresponding SORT_METHOD_*
   { SortByAlbumType,                SORT_METHOD_NONE,                         SortAttributeNone,          564 },
