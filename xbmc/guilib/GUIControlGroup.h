@@ -82,10 +82,6 @@ public:
 
   virtual bool IsGroup() const { return true; };
 
-  virtual CStdString GetLabel(int info) const;
-  int GetNumItems() const;
-  int GetSelectedItem() const;
-
 #ifdef _DEBUG
   virtual void DumpTextureUse();
 #endif
