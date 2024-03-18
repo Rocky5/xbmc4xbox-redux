@@ -30,6 +30,7 @@
 
 #include <vector>
 #include <stack>
+#include <map>
 #include "threads/CriticalSection.h"  // base class
 #include "TransformMatrix.h"        // for the members m_guiTransform etc.
 #include "Geometry.h"               // for CRect/CPoint
