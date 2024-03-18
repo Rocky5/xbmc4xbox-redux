@@ -162,11 +162,8 @@
 				<onup>1000</onup>
 				<ondown>1000</ondown>
 				<onclick>Close</onclick>
-				<onclick>XBMC.RunScript($INFO[Skin.String(SubtitleScript_Path)])</onclick>
-				<altclick>Skin.SetFile(SubtitleScript_Path,.py)</altclick>
-				<altclick>Close</altclick>
-				<altclick>XBMC.RunScript($INFO[Skin.String(SubtitleScript_Path)])</altclick>
-				<usealttexture>IsEmpty(Skin.String(SubtitleScript_Path))</usealttexture>
+        <onclick>Dialog.Close(VideoOSD)</onclick>
+				<onclick>ActivateWindow(SubtitleSearch)</onclick>
 			</control>
 			<control type="button" id="702">
 				<posx>45</posx>

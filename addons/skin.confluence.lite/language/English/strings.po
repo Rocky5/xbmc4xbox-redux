@@ -312,9 +312,7 @@ msgctxt "#31132"
 msgid "Lyrics Script"
 msgstr ""
 
-msgctxt "#31133"
-msgid "Subtitles Script"
-msgstr ""
+#empty string with id 31133
 
 msgctxt "#31134"
 msgid "Home Page Videos Submenu [COLOR=grey2](enter 'plugin folder' e.g. YouTube)[/COLOR]"
@@ -639,7 +637,13 @@ msgctxt "#31410"
 msgid "[B]CONFIGURE SERVICE SETTINGS[/B][CR][CR]Setup control of XBMC via UPnP and HTTP · Configure file sharing[CR]Enable Zeroconf · Configure AirPlay"
 msgstr ""
 
-#empty strings from id 31411 to 31420
+#empty strings from id 31411 to 31412
+
+msgctxt "#31413"
+msgid "Local subtitle available"
+msgstr ""
+
+#empty strings from id 31414 to 31420
 
 msgctxt "#31421"
 msgid "Select your XBMC user Profile[CR]to login and continue"

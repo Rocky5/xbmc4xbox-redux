@@ -1506,6 +1506,12 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					RelativePath=".\xbmc\dialogs\GUIDialogSubMenu.cpp">
 				</File>
 				<File
+					RelativePath=".\xbmc\video\dialogs\GUIDialogSubtitles.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\video\dialogs\GUIDialogSubtitles.h">
+				</File>
+				<File
 					RelativePath=".\xbmc\dialogs\GUIDialogTextViewer.cpp">
 				</File>
 				<File
