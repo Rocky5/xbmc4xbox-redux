@@ -408,11 +408,22 @@ bool CScraper::IsInUse() const
   return false;
 }
 
+bool CScraper::IsNoop()
+{
+    if (!Load())
+      throw CScraperError();
+
+    return m_parser.IsNoop();
+}
+
 // pass in contents of .nfo file; returns URL (possibly empty if none found)
 // and may populate strId, or throws CScraperError on error
 CScraperUrl CScraper::NfoUrl(const CStdString &sNfoContent)
 {
   CScraperUrl scurlRet;
+
+  if (IsNoop())
+    return scurlRet;
 
   // scraper function takes contents of .nfo file, returns XML (see below)
   vector<CStdString> vcsIn;
@@ -486,13 +497,17 @@ std::vector<CScraperUrl> CScraper::FindMovie(XFILE::CCurlFile &fcurl, const CStd
   CStdString sTitle, sTitleYear, sYear;
   CUtil::CleanString(sMovie, sTitle, sTitleYear, sYear, true/*fRemoveExt*/, fFirst);
 
-  if (!fFirst || Content() == CONTENT_MUSICVIDEOS)
-    sTitle.Replace("-"," ");
-
   CLog::Log(LOGDEBUG, "%s: Searching for '%s' using %s scraper "
     "(path: '%s', content: '%s', version: '%s')", __FUNCTION__, sTitle.c_str(),
     Name().c_str(), Path().c_str(),
     ADDON::TranslateContent(Content()).c_str(), Version().c_str());
+
+  std::vector<CScraperUrl> vcscurl;
+  if (IsNoop())
+    return vcscurl;
+
+  if (!fFirst || Content() == CONTENT_MUSICVIDEOS)
+    sTitle.Replace("-"," ");
 
   sTitle.ToLower();
 
@@ -505,7 +520,6 @@ std::vector<CScraperUrl> CScraper::FindMovie(XFILE::CCurlFile &fcurl, const CStd
   // request a search URL from the title/filename/etc.
   CScraperUrl scurl;
   vector<CStdString> vcsOut = Run("CreateSearchUrl", scurl, fcurl, &vcsIn);
-  std::vector<CScraperUrl> vcscurl;
   if (vcsOut.empty())
   {
     CLog::Log(LOGDEBUG, "%s: CreateSearchUrl failed", __FUNCTION__);
@@ -612,6 +626,10 @@ std::vector<CMusicAlbumInfo> CScraper::FindAlbum(CCurlFile &fcurl, const CStdStr
     sAlbum.c_str(), Name().c_str(), Path().c_str(),
     ADDON::TranslateContent(Content()).c_str(), Version().c_str());
 
+  std::vector<CMusicAlbumInfo> vcali;
+  if (IsNoop())
+    return vcali;
+
   // scraper function is given the album and artist as parameters and
   // returns an XML <url> element parseable by CScraperUrl
   std::vector<CStdString> extras(2);
@@ -624,7 +642,6 @@ std::vector<CMusicAlbumInfo> CScraper::FindAlbum(CCurlFile &fcurl, const CStdStr
   if (vcsOut.size() > 1)
     CLog::Log(LOGWARNING, "%s: scraper returned multiple results; using first", __FUNCTION__);
 
-  std::vector<CMusicAlbumInfo> vcali;
   if (vcsOut.empty() || vcsOut[0].empty())
     return vcali;
   scurl.ParseString(vcsOut[0]);
@@ -706,6 +723,10 @@ std::vector<CMusicArtistInfo> CScraper::FindArtist(CCurlFile &fcurl,
     Name().c_str(), Path().c_str(),
     ADDON::TranslateContent(Content()).c_str(), Version().c_str());
 
+  std::vector<CMusicArtistInfo> vcari;
+  if (IsNoop())
+    return vcari;
+
   // scraper function is given the artist as parameter and
   // returns an XML <url> element parseable by CScraperUrl
   std::vector<CStdString> extras(1);
@@ -714,7 +735,6 @@ std::vector<CMusicArtistInfo> CScraper::FindArtist(CCurlFile &fcurl,
   CScraperUrl scurl;
   vector<CStdString> vcsOut = RunNoThrow("CreateArtistSearchUrl", scurl, fcurl, &extras);
 
-  std::vector<CMusicArtistInfo> vcari;
   if (vcsOut.empty() || vcsOut[0].empty())
     return vcari;
   scurl.ParseString(vcsOut[0]);

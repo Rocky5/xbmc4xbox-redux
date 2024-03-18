@@ -43,12 +43,15 @@ CScraperParser::CScraperParser()
   m_document = NULL;
   m_SearchStringEncoding = "UTF-8";
   m_scraper = NULL;
+  m_isNoop = true;
 }
 
 CScraperParser::CScraperParser(const CScraperParser& parser)
 {
   m_document = NULL;
   m_SearchStringEncoding = "UTF-8";
+  m_scraper = NULL;
+  m_isNoop = true;
   *this = parser;
 }
 
@@ -114,6 +117,7 @@ bool CScraperParser::LoadFromXML()
     TiXmlElement* pChildElement = m_pRootElement->FirstChildElement("CreateSearchUrl");
     if (pChildElement)
     {
+      m_isNoop = false;
       if (!(m_SearchStringEncoding = pChildElement->Attribute("SearchStringEncoding")))
         m_SearchStringEncoding = "UTF-8";
     }
@@ -121,12 +125,14 @@ bool CScraperParser::LoadFromXML()
     pChildElement = m_pRootElement->FirstChildElement("CreateArtistSearchUrl");
     if (pChildElement)
     {
+      m_isNoop = false;
       if (!(m_SearchStringEncoding = pChildElement->Attribute("SearchStringEncoding")))
         m_SearchStringEncoding = "UTF-8";
     }
     pChildElement = m_pRootElement->FirstChildElement("CreateAlbumSearchUrl");
     if (pChildElement)
     {
+      m_isNoop = false;
       if (!(m_SearchStringEncoding = pChildElement->Attribute("SearchStringEncoding")))
         m_SearchStringEncoding = "UTF-8";
     }
