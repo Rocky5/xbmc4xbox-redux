@@ -27,9 +27,7 @@
 #include "settings/Settings.h"
 #include "GUIControlFactory.h"
 #include "GUIControlGroup.h"
-#ifdef PRE_SKIN_VERSION_9_10_COMPATIBILITY
-#include "GUIEditControl.h"
-#endif
+#include "GUITexture.h" // FRECT
 
 #include "addons/Skin.h"
 #include "GUIInfoManager.h"
@@ -904,26 +902,6 @@ void CGUIWindow::DumpTextureUse()
   CGUIControlGroup::DumpTextureUse();
 }
 #endif
-
-void CGUIWindow::ChangeButtonToEdit(int id, bool singleLabel /* = false*/)
-{
-#ifdef PRE_SKIN_VERSION_9_10_COMPATIBILITY
-  CGUIControl *name = (CGUIControl *)GetControl(id);
-  if (name && name->GetControlType() == CGUIControl::GUICONTROL_BUTTON)
-  { // change it to an edit control
-    CGUIEditControl *edit = new CGUIEditControl(*(const CGUIButtonControl *)name);
-    if (edit)
-    {
-      if (singleLabel)
-        edit->SetLabel("");
-      InsertControl(edit, name);
-      RemoveControl(name);
-      name->FreeResources();
-      delete name;
-    }
-  }
-#endif
-}
 
 void CGUIWindow::SetProperty(const CStdString &strKey, const CVariant &value)
 {

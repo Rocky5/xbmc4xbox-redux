@@ -4213,7 +4213,7 @@ CStdString CGUIInfoManager::GetItemLabel(const CFileItem *item, int info)
       if(strThumb.IsEmpty() && !item->GetIconImage().IsEmpty())
       {
         strThumb = item->GetIconImage();
-        if (g_SkinInfo->GetVersion() <= 2.10)
+        if (g_SkinInfo && g_SkinInfo->APIVersion() < ADDON::AddonVersion("2.11"))
           strThumb.Insert(strThumb.Find("."), "Big");
       }
       return strThumb;

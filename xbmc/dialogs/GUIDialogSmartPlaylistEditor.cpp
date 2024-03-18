@@ -362,7 +362,6 @@ void CGUIDialogSmartPlaylistEditor::UpdateButtons()
 void CGUIDialogSmartPlaylistEditor::OnWindowLoaded()
 {
   CGUIDialog::OnWindowLoaded();
-  ChangeButtonToEdit(CONTROL_NAME, true); // true for single label
   SendMessage(GUI_MSG_SET_TYPE, CONTROL_NAME, 0, 16012);
   // setup the match spinner
   {

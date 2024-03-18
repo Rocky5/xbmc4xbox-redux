@@ -594,6 +594,15 @@ const CStdString CAddon::LibPath() const
   return URIUtils::AddFileToFolder(m_props.path, m_strLibName);
 }
 
+AddonVersion CAddon::GetDependencyVersion(const std::string &dependencyID) const
+{
+  const ADDON::ADDONDEPS &deps = GetDeps();
+  ADDONDEPS::const_iterator it = deps.find(dependencyID);
+  if (it != deps.end())
+    return it->second.first;
+  return AddonVersion("0.0.0");
+}
+
 /**
  * CAddonLibrary
  *

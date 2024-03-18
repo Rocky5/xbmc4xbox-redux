@@ -55,6 +55,7 @@
 #include "GUIListGroup.h"
 #include "GUIInfoManager.h"
 #include "Key.h"
+#include "addons/Skin.h"
 #include "utils/CharsetConverter.h"
 #include "input/ButtonTranslator.h"
 #include "utils/XMLUtils.h"
@@ -752,10 +753,11 @@ CGUIControl* CGUIControlFactory::Create(int parentID, const FRECT &rect, TiXmlEl
   float buttonGap = 5;
   int iMovementRange = 0;
   CAspectRatio aspect;
-#ifdef PRE_SKIN_VERSION_9_10_COMPATIBILITY
-  if (insideContainer)  // default for inside containers is keep
-    aspect.ratio = CAspectRatio::AR_KEEP;
-#endif
+  if (g_SkinInfo && g_SkinInfo->APIVersion() < ADDON::AddonVersion("2.12"))
+  {
+    if (insideContainer)  // default for inside containers is keep
+      aspect.ratio = CAspectRatio::AR_KEEP;
+  }
 
   CStdString allowHiddenFocus;
   CStdString enableCondition;
@@ -987,10 +989,11 @@ CGUIControl* CGUIControlFactory::Create(int parentID, const FRECT &rect, TiXmlEl
 
   // the <texture> tag can be overridden by the <info> tag
   GetInfoTexture(pControlNode, "texture", texture, textureFile, parentID);
-#ifdef PRE_SKIN_VERSION_9_10_COMPATIBILITY
-  if (type == CGUIControl::GUICONTROL_IMAGE && insideContainer && textureFile.IsConstant())
-    aspect.ratio = CAspectRatio::AR_STRETCH;
-#endif
+  if (g_SkinInfo && g_SkinInfo->APIVersion() < ADDON::AddonVersion("2.12"))
+  {
+    if (type == CGUIControl::GUICONTROL_IMAGE && insideContainer && textureFile.IsConstant())
+      aspect.ratio = CAspectRatio::AR_STRETCH;
+  }
 
   GetTexture(pControlNode, "bordertexture", borderTexture);
 
