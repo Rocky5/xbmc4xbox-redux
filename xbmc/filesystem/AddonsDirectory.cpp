@@ -57,6 +57,7 @@ bool CAddonsDirectory::GetDirectory(const CURL& url, CFileItemList &items)
 
   VECADDONS addons;
   // get info from repository
+  bool groupAddons = true;
   bool reposAsFolders = true;
   if (path.GetHostName().Equals("enabled"))
   {
@@ -67,12 +68,14 @@ bool CAddonsDirectory::GetDirectory(const CURL& url, CFileItemList &items)
   else if (path.GetHostName().Equals("disabled"))
   { // grab all disabled addons, including disabled repositories
     reposAsFolders = false;
+    groupAddons = false;
     CAddonMgr::Get().GetAllAddons(addons, false, true);
     items.SetProperty("reponame",g_localizeStrings.Get(24039));
     items.SetLabel(g_localizeStrings.Get(24039));
   }
   else if (path.GetHostName().Equals("outdated"))
   {
+    groupAddons = false;
     reposAsFolders = false;
     CAddonMgr::Get().GetAllOutdatedAddons(addons);
     items.SetProperty("reponame",g_localizeStrings.Get(24043));
@@ -80,6 +83,7 @@ bool CAddonsDirectory::GetDirectory(const CURL& url, CFileItemList &items)
   }
   else if (path.GetHostName().Equals("repos"))
   {
+    groupAddons = false;
     CAddonMgr::Get().GetAddons(ADDON_REPOSITORY,addons,true);
     items.SetLabel(g_localizeStrings.Get(24033)); // Get Add-ons
   }
@@ -128,7 +132,7 @@ bool CAddonsDirectory::GetDirectory(const CURL& url, CFileItemList &items)
 
   if (path.GetFileName().IsEmpty())
   {
-    if (!path.GetHostName().Equals("repos"))
+    if (groupAddons)
     {
       for (int i=ADDON_UNKNOWN+1;i<ADDON_VIZ_LIBRARY;++i)
       {
@@ -183,10 +187,17 @@ bool CAddonsDirectory::GetDirectory(const CURL& url, CFileItemList &items)
       }
     }
   }
-  if (path.GetHostName().Equals("repos"))
+  if (path.GetHostName().Equals("repos") && items.Size() > 1)
   {
     CFileItemPtr item(new CFileItem("addons://all/",true));
     item->SetLabel(g_localizeStrings.Get(24087));
+    items.Add(item);
+  }
+  else if (path.GetHostName().Equals("outdated") && items.Size() > 1)
+  {
+    CFileItemPtr item(new CFileItem("addons://update_all/", true));
+    item->SetLabel(g_localizeStrings.Get(24122));
+    item->SetSpecialSort(SortSpecialOnTop);
     items.Add(item);
   }
 

@@ -239,6 +239,7 @@ bool CRepositoryUpdateJob::DoWork()
   // check for updates
   CAddonDatabase database;
   database.Open();
+  VECADDONS notifications;
   for (map<string, AddonPtr>::const_iterator i = addons.begin(); i != addons.end(); ++i)
   {
     // manager told us to feck off
@@ -264,12 +265,8 @@ bool CRepositoryUpdateJob::DoWork()
 
         CAddonInstaller::Get().Install(addon->ID(), true, referer);
       }
-      else if (CSettings::Get().GetBool("general.addonnotifications"))
-      {
-        CGUIDialogKaiToast::QueueNotification(addon->Icon(),
-                                              g_localizeStrings.Get(24061),
-                                              addon->Name(),TOAST_DISPLAY_TIME,false,TOAST_DISPLAY_TIME);
-      }
+      else
+        notifications.push_back(addon);
     }
 
     // Check if we should mark the add-on as broken.  We may have a newer version
@@ -298,6 +295,17 @@ bool CRepositoryUpdateJob::DoWork()
       }
       database.BreakAddon(newAddon->ID(), newAddon->Props().broken);
     }
+  }
+  if (!notifications.empty() && CSettings::Get().GetBool("general.addonnotifications"))
+  {
+    if (notifications.size() == 1)
+      CGUIDialogKaiToast::QueueNotification(notifications[0]->Icon(),
+                                            g_localizeStrings.Get(24061),
+                                            notifications[0]->Name(),TOAST_DISPLAY_TIME,false,TOAST_DISPLAY_TIME);
+    else
+      CGUIDialogKaiToast::QueueNotification("",
+                                            g_localizeStrings.Get(24001),
+                                            g_localizeStrings.Get(24061),TOAST_DISPLAY_TIME,false,TOAST_DISPLAY_TIME);
   }
 
   return true;
