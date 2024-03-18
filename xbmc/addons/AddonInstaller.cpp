@@ -20,6 +20,7 @@
  */
 
 #include "AddonInstaller.h"
+#include "Service.h"
 #include "utils/log.h"
 #include "utils/URIUtils.h"
 #include "Util.h"
@@ -463,6 +464,14 @@ bool CAddonInstallJob::OnPreInstall()
     CApplicationMessenger::Get().ExecBuiltIn("UnloadSkin", true);
     return true;
   }
+
+  if (m_addon->Type() == ADDON_SERVICE)
+  {
+    boost::shared_ptr<CService> service = boost::dynamic_pointer_cast<CService>(m_addon);
+    if (service)
+      service->Stop();
+    return true;
+  }
   return false;
 }
 
@@ -542,6 +551,13 @@ void CAddonInstallJob::OnPostInstall(bool reloadAddon)
       }
       CSettings::Get().SetString("lookandfeel.skin",m_addon->ID().c_str());
     }
+  }
+
+  if (m_addon->Type() == ADDON_SERVICE)
+  {
+    boost::shared_ptr<CService> service = boost::dynamic_pointer_cast<CService>(m_addon);
+    if (service)
+      service->Start();
   }
 }
 
