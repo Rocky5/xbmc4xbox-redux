@@ -33,7 +33,7 @@
 #define POPUP_ICON_ERROR          405
 
 CGUIDialogKaiToast::CGUIDialogKaiToast(void)
-: CGUIDialog(WINDOW_DIALOG_KAI_TOAST, "DialogKaiToast.xml")
+: CGUIDialog(WINDOW_DIALOG_KAI_TOAST, "DialogNotification.xml")
 {
   m_defaultIcon = "";
   m_loadType = LOAD_ON_GUI_INIT;

@@ -228,7 +228,8 @@ static const ActionMapping windows[] =
         {"volumebar"                , WINDOW_DIALOG_VOLUME_BAR},
         {"submenu"                  , WINDOW_DIALOG_SUB_MENU},
         {"contextmenu"              , WINDOW_DIALOG_CONTEXT_MENU},
-        {"infodialog"               , WINDOW_DIALOG_KAI_TOAST},
+        {"notification"             , WINDOW_DIALOG_KAI_TOAST },
+        {"infodialog"               , WINDOW_DIALOG_KAI_TOAST },          // backward compat
         {"numericinput"             , WINDOW_DIALOG_NUMERIC},
         {"gamepadinput"             , WINDOW_DIALOG_GAMEPAD},
         {"shutdownmenu"             , WINDOW_DIALOG_BUTTON_MENU},
