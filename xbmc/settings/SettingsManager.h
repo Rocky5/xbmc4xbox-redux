@@ -104,12 +104,25 @@ public:
   int GetInt(const std::string &id) const;
   double GetNumber(const std::string &id) const;
   std::string GetString(const std::string &id) const;
+  /*!
+   \brief Gets the values of the list setting with the given identifier.
+   \param id Setting identifier
+   \return List of values of the setting with the given identifier
+   */
+  std::vector< boost::shared_ptr<CSetting> > GetList(const std::string &id) const;
 
   bool SetBool(const std::string &id, bool value);
   bool ToggleBool(const std::string &id);
   bool SetInt(const std::string &id, int value);
   bool SetNumber(const std::string &id, double value);
   bool SetString(const std::string &id, const std::string &value);
+  /*!
+   \brief Sets the values of the list setting with the given identifier.
+   \param id Setting identifier
+   \param value Values to set
+   \return True if setting the values was successful, false otherwise
+   */
+  bool SetList(const std::string &id, const std::vector< boost::shared_ptr<CSetting> > &value);
 
   const CSettingConditionsManager& GetConditions() const { return m_conditions; }
   void AddCondition(const std::string &condition);
