@@ -111,7 +111,6 @@ const BUILT_IN commands[] = {
   { "Hibernate",                  false,  "Hibernates the system" },
   { "Suspend",                    false,  "Suspends the system" },
   { "RestartApp",                 false,  "Restart XBMC" },
-  { "Credits",                    false,  "Run XBMCs Credits" },
   { "Reset",                      false,  "Reset the xbox (warm reboot)" },
   { "Mastermode",                 false,  "Control master mode" },
   { "ActivateWindow",             true,   "Activate the specified window" },
@@ -290,12 +289,6 @@ int CBuiltins::Execute(const CStdString& execString)
   else if (execute.Equals("takescreenshot"))
   {
     CUtil::TakeScreenshot();
-  }
-  else if (execute.Equals("credits"))
-  {
-#ifdef HAS_CREDITS
-    RunCredits();
-#endif
   }
   else if (execute.Equals("reset")) //Will reset the xbox, aka soft reset
   {

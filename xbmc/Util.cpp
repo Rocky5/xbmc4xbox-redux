@@ -46,9 +46,6 @@
 #ifdef HAS_UPNP
 #include "filesystem/UPnPDirectory.h"
 #endif
-#ifdef HAS_CREDITS
-#include "Credits.h"
-#endif
 #include "Shortcut.h"
 #include "PlayListPlayer.h"
 #include "PartyModeManager.h"
