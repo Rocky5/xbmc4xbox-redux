@@ -56,17 +56,6 @@ bool CSettingAddon::Deserialize(const TiXmlNode *node, bool update /* = false */
     CLog::Log(LOGERROR, "CSettingAddon: invalid <control> of \"%s\"", m_id.c_str());
     return false;
   }
-    
-  // get the default value by abusing the FromString
-  // implementation to parse the default value
-  CStdString value;
-  if (XMLUtils::GetString(node, XML_ELM_DEFAULT, value))
-    m_value = m_default = value;
-  else if (!update)
-  {
-    CLog::Log(LOGERROR, "CSettingAddon: error reading the default value of \"%s\"", m_id.c_str());
-    return false;
-  }
 
   bool ok = false;
   CStdString strAddonType;
