@@ -923,6 +923,7 @@ void CSettings::InitializeISettingsHandlers()
   m_settingsManager->RegisterSettingsHandler(&g_videoConfig);
   m_settingsManager->RegisterSettingsHandler(&g_timezone);
 #endif
+  m_settingsManager->RegisterSettingsHandler(&CMediaSettings::Get());
 }
 
 void CSettings::InitializeISubSettings()
