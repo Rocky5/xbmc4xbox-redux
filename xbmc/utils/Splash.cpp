@@ -20,7 +20,9 @@
 
 #include "system.h"
 #include "Splash.h"
-#include "guiImage.h"
+#include "guilib/GUIImage.h"
+#include "guilib/GUILabelControl.h"
+#include "guilib/GUIFontManager.h"
 #include "filesystem/File.h"
 #include "log.h"
 
@@ -29,12 +31,17 @@ using namespace XFILE;
 CSplash::CSplash(const CStdString& imageName) : CThread("CSplash")
 {
   m_ImageName = imageName;
+  m_messageLayout = NULL;
+  m_image = NULL;
+  m_layoutWasLoading = false;
 }
 
 
 CSplash::~CSplash()
 {
   Stop();
+  delete m_image;
+  delete m_messageLayout;
 }
 
 void CSplash::OnStartup()
@@ -43,88 +50,77 @@ void CSplash::OnStartup()
 void CSplash::OnExit()
 {}
 
-void CSplash::Process()
+void CSplash::Show()
 {
-  D3DGAMMARAMP newRamp;
-  D3DGAMMARAMP oldRamp;
+  Show("");
+}
 
+void CSplash::Show(const CStdString& message)
+{
   g_graphicsContext.Lock();
+#ifdef HAS_XBOX_D3D
   g_graphicsContext.Get3DDevice()->Clear(0, NULL, D3DCLEAR_TARGET, 0, 0, 0);
-  
-  g_graphicsContext.SetCameraPosition(CPoint(0, 0));
-  float w = g_graphicsContext.GetWidth() * 0.5f;
-  float h = g_graphicsContext.GetHeight() * 0.5f;
-  CGUIImage* image = new CGUIImage(0, 0, w*0.5f, h*0.5f, w, h, m_ImageName);
-  image->SetAspectRatio(CAspectRatio::AR_KEEP);
-  image->AllocResources();
+#else
+  g_graphicsContext.Clear();
+#endif
 
-  // Store the old gamma ramp
-  g_graphicsContext.Get3DDevice()->GetGammaRamp(&oldRamp);
-  float fade = 0.5f;
-  for (int i = 0; i < 256; i++)
+  RESOLUTION_INFO res(1280,720,0);
+  g_graphicsContext.SetRenderingResolution(res, true);
+  if (!m_image)
   {
-    newRamp.red[i] = (int)((float)oldRamp.red[i] * fade);
-    newRamp.green[i] = (int)((float)oldRamp.red[i] * fade);
-    newRamp.blue[i] = (int)((float)oldRamp.red[i] * fade);
+    m_image = new CGUIImage(0, 0, 0, 0, 1280, 720, m_ImageName);
+    m_image->SetAspectRatio(CAspectRatio::AR_CENTER);
   }
-  g_graphicsContext.Get3DDevice()->SetGammaRamp(GAMMA_RAMP_FLAG, &newRamp);
+
   //render splash image
 #ifndef HAS_XBOX_D3D
   g_graphicsContext.Get3DDevice()->BeginScene();
 #endif
-  image->Render();
-  image->FreeResources();
-  delete image;
+
+  m_image->AllocResources();
+  m_image->Render();
+  m_image->FreeResources();
+
+  // render message
+  if (!message.IsEmpty())
+  {
+    if (!m_layoutWasLoading)
+    {
+      // load arial font, white body, no shadow, size: 20, no additional styling
+      CGUIFont *messageFont = g_fontManager.LoadTTF("__splash__", "arial.ttf", 0xFFFFFFFF, 0, 20, FONT_STYLE_NORMAL, false, 1.0f, 1.0f, &res);
+      if (messageFont)
+        m_messageLayout = new CGUITextLayout(messageFont, true, 0);
+      m_layoutWasLoading = true;
+    }
+    if (m_messageLayout)
+    {
+      m_messageLayout->Update(message, 1150, false, true);
+
+      float textWidth, textHeight;
+      m_messageLayout->GetTextExtent(textWidth, textHeight);
+      // ideally place text in center of empty area below splash image
+      float y = 540 + m_image->GetTextureHeight() / 4 - textHeight / 2;
+      if (y + textHeight > 720) // make sure entire text is visible
+        y = 720 - textHeight;
+
+      m_messageLayout->RenderOutline(640, y, 0, 0xFF000000, XBFONT_CENTER_X, 1280);
+    }
+  }
+
   //show it on screen
 #ifdef HAS_XBOX_D3D
   g_graphicsContext.Get3DDevice()->BlockUntilVerticalBlank();
+  g_graphicsContext.Get3DDevice()->Present( NULL, NULL, NULL, NULL );
 #else
   g_graphicsContext.Get3DDevice()->EndScene();
+  g_graphicsContext.Flip();
 #endif
-  g_graphicsContext.Get3DDevice()->Present( NULL, NULL, NULL, NULL );
   g_graphicsContext.Unlock();
+}
 
-  //fade in and wait untill the thread is stopped
-  while (!m_bStop)
-  {
-    if (fade <= 1.f)
-    {
-      Sleep(1);
-      for (int i = 0; i < 256; i++)
-      {
-        newRamp.red[i] = (int)((float)oldRamp.red[i] * fade);
-        newRamp.green[i] = (int)((float)oldRamp.green[i] * fade);
-        newRamp.blue[i] = (int)((float)oldRamp.blue[i] * fade);
-      }
-      g_graphicsContext.Lock();
-      g_graphicsContext.Get3DDevice()->SetGammaRamp(GAMMA_RAMP_FLAG, &newRamp);
-      g_graphicsContext.Unlock();
-      fade += 0.01f;
-    }
-    else
-    {
-      Sleep(10);
-    }
-  }
-
-  g_graphicsContext.Lock();
-  // fade out
-  for (float fadeout = fade - 0.01f; fadeout >= 0.f; fadeout -= 0.01f)
-  {
-    for (int i = 0; i < 256; i++)
-    {
-      newRamp.red[i] = (int)((float)oldRamp.red[i] * fadeout);
-      newRamp.green[i] = (int)((float)oldRamp.green[i] * fadeout);
-      newRamp.blue[i] = (int)((float)oldRamp.blue[i] * fadeout);
-    }
-    Sleep(1);
-    g_graphicsContext.Get3DDevice()->SetGammaRamp(GAMMA_RAMP_FLAG, &newRamp);
-  }
-  //restore original gamma ramp
-  g_graphicsContext.Get3DDevice()->Clear(0, NULL, D3DCLEAR_TARGET, 0, 0, 0);
-  g_graphicsContext.Get3DDevice()->SetGammaRamp(0, &oldRamp);
-  g_graphicsContext.Get3DDevice()->Present( NULL, NULL, NULL, NULL );
-  g_graphicsContext.Unlock();
+void CSplash::Process()
+{
+  Show();
 }
 
 bool CSplash::Start()

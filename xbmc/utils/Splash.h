@@ -23,6 +23,9 @@
 #include "utils/StdString.h"
 #include "threads/Thread.h"
 
+class CGUITextLayout;
+class CGUIImage;
+
 class CSplash : public CThread
 {
 public:
@@ -31,10 +34,19 @@ public:
 
   bool Start();
   void Stop();
+
+  // In case you don't want to use another thread
+  void Show();
+  void Show(const CStdString& message);
+
 private:
+  virtual void Process();
   virtual void OnStartup();
   virtual void OnExit();
-  virtual void Process();
 
   CStdString m_ImageName;
+
+  CGUITextLayout* m_messageLayout;
+  CGUIImage* m_image;
+  bool m_layoutWasLoading;
 };
