@@ -44,6 +44,7 @@ class CBaseTexture
 public:
   CBaseTexture(unsigned int width = 0, unsigned int height = 0, unsigned int format = XB_FMT_A8R8G8B8,
                IDirect3DTexture8* texture = NULL, IDirect3DPalette8* palette = NULL, bool packed = false);
+  CBaseTexture(const CBaseTexture &copy);
   virtual ~CBaseTexture();
 
   bool LoadFromFile(const CStdString& texturePath, unsigned int maxHeight = 0, unsigned int maxWidth = 0,
@@ -65,6 +66,7 @@ public:
   unsigned int GetHeight() const { return m_imageHeight; }
   bool GetTexCoordsArePixels() const { return m_texCoordsArePixels; }
   int GetOrientation() const { return m_orientation; }
+  void SetOrientation(int orientation) { m_orientation = orientation; }
 
   void Allocate(unsigned int width, unsigned int height, unsigned int format);
   // populates some general info about loaded texture (width, height, pitch etc.)

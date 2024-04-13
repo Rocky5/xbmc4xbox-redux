@@ -30,7 +30,6 @@ public:
   virtual bool LoadItem(CFileItem* pItem);
   void SetRegenerateThumbs(bool regenerate) { m_regenerateThumbs = regenerate; };
   static void ProcessFoldersAndArchives(CFileItem *pItem);
-  static CStdString GetCachedThumb(const CFileItem &item);
 
   /*!
    \brief Callback from CThumbExtractor on completion of a generated image

@@ -31,6 +31,7 @@
 #include "guilib/GraphicContext.h"
 #include "utils/log.h"
 #include "TextureCache.h"
+#include "TextureCacheJob.h"
 
 using namespace std;
 
@@ -49,59 +50,64 @@ CImageLoader::~CImageLoader()
 
 bool CImageLoader::DoWork()
 {
+  bool needsChecking = false;
+
   CStdString texturePath = g_TextureManager.GetTexturePath(m_path);
-  CStdString loadPath = CTextureCache::Get().CheckCachedImage(texturePath); 
-  
-  // If empty, then go on to validate and cache image as appropriate
-  // If hit, continue down and load image
+  CStdString loadPath = CTextureCache::Get().CheckCachedImage(texturePath, true, needsChecking); 
+
   if (loadPath.IsEmpty())
   {
-    CFileItem file(m_path, false);
+    // not in our texture cache, so try and load directly and then cache the result
+    bool flipped;
+    unsigned int width, height;
+    CStdString image = CTextureCacheJob::DecodeImageURL(texturePath, width, height, flipped);
 
-    // Validate file URL to see if it is an image
-    if ((file.IsPicture() && !(file.IsZIP() || file.IsRAR() || file.IsCBR() || file.IsCBZ() )) 
-       || file.GetMimeType().Left(6).Equals("image/")) // ignore non-pictures
-    { 
-      // Cache the image if necessary
-      loadPath = CTextureCache::Get().CacheImageFile(texturePath);
-      if (loadPath.IsEmpty())
-        return false;
-    }
-    else
-      return true;
+    if (image.IsEmpty())
+      return false; // nothing to load
+
+    m_texture = CTextureCacheJob::LoadImage(image, width, height, flipped);
+
+    if (m_texture)
+      CTextureCache::Get().BackgroundCacheTexture(texturePath, m_texture, width, height);
   }
- 
-#ifdef HAS_XBOX_D3D
-  int width = min(g_graphicsContext.GetWidth(), 1024);
-  int height = min(g_graphicsContext.GetHeight(), 720);
-  // if loading a .tbn that is not a fanart, try and load at requested thumbnail size as actual on disk
-  // tbn might be larger due to libjpeg 1/8 - 8/8 scaling.
-  CStdString directoryPath;
-  URIUtils::GetDirectory(loadPath, directoryPath);
-  URIUtils::RemoveSlashAtEnd(directoryPath);
-  if (directoryPath != CProfilesManager::Get().GetVideoFanartFolder() &&
-      directoryPath != CProfilesManager::Get().GetMusicFanartFolder() &&
-      URIUtils::GetExtension(loadPath).Equals(".tbn"))
+  else
   {
-    width = g_advancedSettings.m_thumbSize;
-    height = g_advancedSettings.m_thumbSize;
-  }
+#ifdef HAS_XBOX_D3D
+    int width = min(g_graphicsContext.GetWidth(), 1024);
+    int height = min(g_graphicsContext.GetHeight(), 720);
+    // if loading a .tbn that is not a fanart, try and load at requested thumbnail size as actual on disk
+    // tbn might be larger due to libjpeg 1/8 - 8/8 scaling.
+    CStdString directoryPath;
+    URIUtils::GetDirectory(loadPath, directoryPath);
+    URIUtils::RemoveSlashAtEnd(directoryPath);
+    if (directoryPath != CProfilesManager::Get().GetVideoFanartFolder() &&
+        directoryPath != CProfilesManager::Get().GetMusicFanartFolder() &&
+        URIUtils::GetExtension(loadPath).Equals(".tbn"))
+    {
+      width = g_advancedSettings.m_thumbSize;
+      height = g_advancedSettings.m_thumbSize;
+    }
 #endif
 
-  m_texture = new CTexture();
-  unsigned int start = XbmcThreads::SystemClockMillis();
+    // direct route - load the image
+    m_texture = new CTexture();
+    unsigned int start = XbmcThreads::SystemClockMillis();
 #ifdef HAS_XBOX_D3D
   if (!m_texture->LoadFromFile(loadPath, width, height, CSettings::Get().GetBool("pictures.useexifrotation")))
 #else
-  if (!m_texture->LoadFromFile(loadPath, min(g_graphicsContext.GetWidth(), 2048), min(g_graphicsContext.GetHeight(), 1080), CSettings::Get().GetBool("pictures.useexifrotation")))
+    if (!m_texture->LoadFromFile(loadPath, g_graphicsContext.GetWidth(), g_graphicsContext.GetHeight(), CSettings::Get().GetBool("pictures.useexifrotation")))
 #endif
-  {
-    delete m_texture;
-    m_texture = NULL;
-  }
-  else if (XbmcThreads::SystemClockMillis() - start > 100)
-    CLog::Log(LOGDEBUG, "%s - took %u ms to load %s", __FUNCTION__, XbmcThreads::SystemClockMillis() - start, loadPath.c_str());
+    {
+      delete m_texture;
+      m_texture = NULL;
+      return false;
+    }
+    if (XbmcThreads::SystemClockMillis() - start > 100)
+      CLog::Log(LOGDEBUG, "%s - took %u ms to load %s", __FUNCTION__, XbmcThreads::SystemClockMillis() - start, loadPath.c_str());
 
+    if (needsChecking)
+      CTextureCache::Get().BackgroundCacheImage(texturePath);
+  }
   return true;
 }
 

@@ -224,6 +224,9 @@
 				RelativePath=".\AudioContext.cpp">
 			</File>
 			<File
+				RelativePath=".\DDSImage.cpp">
+			</File>
+			<File
 				RelativePath=".\GraphicContext.cpp">
 			</File>
 			<File
@@ -431,6 +434,9 @@
 			</File>
 			<File
 				RelativePath=".\AudioContext.h">
+			</File>
+			<File
+				RelativePath=".\DDSImage.h">
 			</File>
 			<File
 				RelativePath=".\Geometry.h">

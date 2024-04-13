@@ -1564,12 +1564,6 @@
 					RelativePath="..\..\xbmc\utils\CriticalSection.cpp">
 				</File>
 				<File
-					RelativePath="..\..\xbmc\DDSImage.cpp">
-				</File>
-				<File
-					RelativePath="..\..\xbmc\DDSImage.h">
-				</File>
-				<File
 					RelativePath="..\..\xbmc\utils\DelayController.cpp">
 				</File>
 				<File

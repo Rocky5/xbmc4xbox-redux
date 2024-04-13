@@ -159,6 +159,7 @@ void CURL::Parse(const CStdString& strURL1)
   if(IsProtocol("rss") ||
      IsProtocol("rar") ||
      IsProtocol("addons") ||
+     IsProtocol("image") ||
      IsProtocol("videodb") ||
      IsProtocol("musicdb"))
     sep = "?";
