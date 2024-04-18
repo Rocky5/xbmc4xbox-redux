@@ -139,19 +139,23 @@ bool CThumbExtractor::DoWork()
 CVideoThumbLoader::CVideoThumbLoader() :
   CThumbLoader(1), CJobQueue(true), m_pStreamDetailsObs(NULL)
 {
+  m_database = new CVideoDatabase();
 }
 
 CVideoThumbLoader::~CVideoThumbLoader()
 {
   StopThread();
+  delete m_database;
 }
 
 void CVideoThumbLoader::OnLoaderStart()
 {
+  m_database->Open();
 }
 
 void CVideoThumbLoader::OnLoaderFinish()
 {
+  m_database->Close();
 }
 
 static void SetupRarOptions(CFileItem& item, const CStdString& path)
@@ -187,24 +191,107 @@ bool CVideoThumbLoader::LoadItem(CFileItem* pItem)
   ||  pItem->IsParentFolder())
     return false;
 
+  m_database->Open();
+
   // resume point
   if (pItem->HasVideoInfoTag() && pItem->GetVideoInfoTag()->m_resumePoint.totalTimeInSeconds == 0)
   {
-    CVideoDatabase db;
-    db.Open();
-    if (db.GetResumePoint(*pItem->GetVideoInfoTag()))
+    if (m_database->GetResumePoint(*pItem->GetVideoInfoTag()))
       pItem->SetInvalid();
-    db.Close();
   }
 
   // video db items normally have info in the database
-  if (pItem->HasVideoInfoTag() && pItem->GetVideoInfoTag()->m_iDbId > -1 &&
-     !pItem->GetVideoInfoTag()->m_type.IsEmpty() && pItem->GetArt().empty())
+
+  if (pItem->HasVideoInfoTag() && pItem->GetArt().empty())
   {
-    CVideoDatabase db;
-    db.Open();
+    FillLibraryArt(pItem);
+
+    if (pItem->GetVideoInfoTag()->m_type != "movie" &&
+        pItem->GetVideoInfoTag()->m_type != "episode" &&
+        pItem->GetVideoInfoTag()->m_type != "tvshow" &&
+        pItem->GetVideoInfoTag()->m_type != "musicvideo")
+    {
+      m_database->Close();
+      return true; // nothing else to be done
+    }
+  }
+
+  // fanart
+  if (!pItem->HasProperty("fanart_image"))
+  {
+    CStdString fanart = GetCachedImage(*pItem, "fanart");
+    if (fanart.IsEmpty())
+    {
+      fanart = pItem->GetLocalFanart();
+      if (!fanart.IsEmpty()) // cache it
+        SetCachedImage(*pItem, "fanart", fanart);
+    }
+    if (!fanart.IsEmpty())
+    {
+      CTextureCache::Get().BackgroundCacheImage(fanart);
+      pItem->SetProperty("fanart_image", fanart);
+    }
+  }
+
+  // thumbnailsf
+  if (!pItem->HasThumbnail())
+  {
+    FillThumb(*pItem);
+    if (!pItem->HasThumbnail() && !pItem->m_bIsFolder && pItem->IsVideo())
+    {
+      // create unique thumb for auto generated thumbs
+      CStdString thumbURL = GetEmbeddedThumbURL(*pItem);
+      if (CTextureCache::Get().HasCachedImage(thumbURL))
+      {
+        CTextureCache::Get().BackgroundCacheImage(thumbURL);
+        pItem->SetProperty("HasAutoThumb", true);
+        pItem->SetProperty("AutoThumbImage", thumbURL);
+        pItem->SetThumbnailImage(thumbURL);
+      }
+      else if (CSettings::Get().GetBool("myvideos.extractthumb") &&
+               CSettings::Get().GetBool("myvideos.extractflags"))
+      {
+        CFileItem item(*pItem);
+        CStdString path(item.GetPath());
+        if (URIUtils::IsInRAR(item.GetPath()))
+          SetupRarOptions(item,path);
+
+        CThumbExtractor* extract = new CThumbExtractor(item, path, true, thumbURL);
+        AddJob(extract);
+
+        m_database->Close();
+        return true;
+      }
+    }
+  }
+
+  // flag extraction
+  if (!pItem->m_bIsFolder &&
+       pItem->HasVideoInfoTag() &&
+       CSettings::Get().GetBool("myvideos.extractflags") &&
+       (!pItem->GetVideoInfoTag()->HasStreamDetails() ||
+         pItem->GetVideoInfoTag()->m_streamDetails.GetVideoDuration() <= 0))
+  {
+    CFileItem item(*pItem);
+    CStdString path(item.GetPath());
+    if (URIUtils::IsInRAR(item.GetPath()))
+      SetupRarOptions(item,path);
+    CThumbExtractor* extract = new CThumbExtractor(item,path,false);
+    AddJob(extract);
+  }
+
+  m_database->Close();
+  return true;
+}
+
+bool CVideoThumbLoader::FillLibraryArt(CFileItem *pItem)
+{
+  if (pItem->GetVideoInfoTag()->m_iDbId > -1 &&
+     !pItem->GetVideoInfoTag()->m_type.IsEmpty())
+  {
     map<string, string> artwork;
-    if (db.GetArtForItem(pItem->GetVideoInfoTag()->m_iDbId, pItem->GetVideoInfoTag()->m_type, artwork))
+    m_database->Open();
+    if (m_database->GetArtForItem(pItem->GetVideoInfoTag()->m_iDbId, pItem->GetVideoInfoTag()->m_type, artwork))
       pItem->SetArt(artwork);
     else
     {
@@ -214,7 +301,7 @@ bool CVideoThumbLoader::LoadItem(CFileItem* pItem)
           pItem->GetVideoInfoTag()->m_type == "musicvideo")
       { // no art in the library, so find it locally and add
         SScanSettings settings;
-        ADDON::ScraperPtr info = db.GetScraperForPath(pItem->GetVideoInfoTag()->m_strPath, settings);
+        ADDON::ScraperPtr info = m_database->GetScraperForPath(pItem->GetVideoInfoTag()->m_strPath, settings);
         if (info)
         {
           CFileItem item(*pItem);
@@ -227,10 +314,11 @@ bool CVideoThumbLoader::LoadItem(CFileItem* pItem)
       else if (pItem->GetVideoInfoTag()->m_type == "set")
       { // no art for a set -> use the first movie for this set for art
         CFileItemList items;
-        if (db.GetMoviesNav("", items, -1, -1, -1, -1, -1, -1, pItem->GetVideoInfoTag()->m_iDbId) && items.Size() > 0)
+        if (m_database->GetMoviesNav("", items, -1, -1, -1, -1, -1, -1, pItem->GetVideoInfoTag()->m_iDbId) && items.Size() > 0)
         {
-          if (db.GetArtForItem(items[0]->GetVideoInfoTag()->m_iDbId, items[0]->GetVideoInfoTag()->m_type, artwork))
-            pItem->SetArt(artwork);
+          LoadItem(items[0].get());
+          if (!items[0]->GetArt().empty())
+            pItem->SetArt(items[0]->GetArt());
         }
       }
       else if (pItem->GetVideoInfoTag()->m_type == "actor" ||
@@ -253,7 +341,7 @@ bool CVideoThumbLoader::LoadItem(CFileItem* pItem)
         // season art is fetched on scan from the tvshow root path (m_strPath in the season info tag)
         // or from the show m_strPictureURL member of the tvshow, so grab the tvshow to get this.
         CVideoInfoTag tag;
-        db.GetTvShowInfo(pItem->GetVideoInfoTag()->m_strPath, tag, pItem->GetVideoInfoTag()->m_iIdShow);
+        m_database->GetTvShowInfo(pItem->GetVideoInfoTag()->m_strPath, tag, pItem->GetVideoInfoTag()->m_iIdShow);
         map<int, string> seasons;
         CVideoInfoScanner::GetSeasonThumbs(tag, seasons, true);
         map<int, string>::iterator season = seasons.find(pItem->GetVideoInfoTag()->m_iSeason);
@@ -264,92 +352,23 @@ bool CVideoThumbLoader::LoadItem(CFileItem* pItem)
       map<string, string> artwork = pItem->GetArt();
       if (!artwork.empty())
       {
-        db.SetArtForItem(pItem->GetVideoInfoTag()->m_iDbId, pItem->GetVideoInfoTag()->m_type, artwork);
+        m_database->SetArtForItem(pItem->GetVideoInfoTag()->m_iDbId, pItem->GetVideoInfoTag()->m_type, artwork);
         for (map<string, string>::iterator i = artwork.begin(); i != artwork.end(); ++i)
           CTextureCache::Get().BackgroundCacheImage(i->second);
       }
       else // nothing found - set an empty thumb so that next time around we don't hit here again
-        db.SetArtForItem(pItem->GetVideoInfoTag()->m_iDbId, pItem->GetVideoInfoTag()->m_type, "thumb", "");
+        m_database->SetArtForItem(pItem->GetVideoInfoTag()->m_iDbId, pItem->GetVideoInfoTag()->m_type, "thumb", "");
     }
     // For episodes and seasons, we want to set fanart for that of the show
     if (!pItem->HasProperty("fanart_image") && pItem->GetVideoInfoTag()->m_iIdShow >= 0)
     {
-      string fanart = db.GetArtForItem(pItem->GetVideoInfoTag()->m_iIdShow, "tvshow", "fanart");
+      string fanart = m_database->GetArtForItem(pItem->GetVideoInfoTag()->m_iIdShow, "tvshow", "fanart");
       if (!fanart.empty())
         pItem->SetProperty("fanart_image", fanart);
     }
-    db.Close();
+    m_database->Close();
   }
-
-  if (pItem->GetVideoInfoTag()->m_type != "movie" &&
-      pItem->GetVideoInfoTag()->m_type != "episode" &&
-      pItem->GetVideoInfoTag()->m_type != "tvshow" &&
-      pItem->GetVideoInfoTag()->m_type != "musicvideo")
-    return true; // nothing else to be done
-
-  // fanart
-  if (!pItem->HasProperty("fanart_image"))
-  {
-    CStdString fanart = GetCachedImage(*pItem, "fanart");
-    if (fanart.IsEmpty())
-    {
-      fanart = pItem->GetLocalFanart();
-      if (!fanart.IsEmpty()) // cache it
-        SetCachedImage(*pItem, "fanart", fanart);
-    }
-    if (!fanart.IsEmpty())
-    {
-      CTextureCache::Get().BackgroundCacheImage(fanart);
-      pItem->SetProperty("fanart_image", fanart);
-    }
-  }
-
-  // thumbnails
-  if (!pItem->HasThumbnail())
-  {
-    FillThumb(*pItem);
-    if (!pItem->HasThumbnail() && !pItem->m_bIsFolder && pItem->IsVideo())
-    {
-      // create unique thumb for auto generated thumbs
-      CStdString thumbURL = GetEmbeddedThumbURL(*pItem);
-      if (!CTextureCache::Get().GetCachedImage(thumbURL).IsEmpty())
-      {
-        CTextureCache::Get().BackgroundCacheImage(thumbURL);
-        pItem->SetProperty("HasAutoThumb", true);
-        pItem->SetProperty("AutoThumbImage", thumbURL);
-        pItem->SetThumbnailImage(thumbURL);
-      }
-      else if (CSettings::Get().GetBool("myvideos.extractthumb") &&
-               CSettings::Get().GetBool("myvideos.extractflags"))
-      {
-        CFileItem item(*pItem);
-        CStdString path(item.GetPath());
-        if (URIUtils::IsInRAR(item.GetPath()))
-          SetupRarOptions(item,path);
-
-        CThumbExtractor* extract = new CThumbExtractor(item, path, true, thumbURL);
-        AddJob(extract);
-        return true;
-      }
-    }
-  }
-
-  // flag extraction
-  if (!pItem->m_bIsFolder &&
-       pItem->HasVideoInfoTag() &&
-       CSettings::Get().GetBool("myvideos.extractflags") &&
-       (!pItem->GetVideoInfoTag()->HasStreamDetails() ||
-         pItem->GetVideoInfoTag()->m_streamDetails.GetVideoDuration() <= 0))
-  {
-    CFileItem item(*pItem);
-    CStdString path(item.GetPath());
-    if (URIUtils::IsInRAR(item.GetPath()))
-      SetupRarOptions(item,path);
-    CThumbExtractor* extract = new CThumbExtractor(item,path,false);
-    AddJob(extract);
-  }
-
-  return true;
+  return !pItem->GetArt().empty();
 }
 
 bool CVideoThumbLoader::FillThumb(CFileItem &item)
