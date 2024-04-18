@@ -38,6 +38,7 @@ struct SActorInfo
   CStdString strName;
   CStdString strRole;
   CScraperUrl thumbUrl;
+  CStdString thumb;
 };
 
 class CVideoInfoTag : public IArchivable, public ISerializable, public ISortable
@@ -45,8 +46,8 @@ class CVideoInfoTag : public IArchivable, public ISerializable, public ISortable
 public:
   CVideoInfoTag() { Reset(); };
   void Reset();
-  bool Load(const TiXmlElement *movie, bool chained = false);
-  bool Save(TiXmlNode *node, const CStdString &tag, bool savePathInfo = true);
+  bool Load(const TiXmlElement *movie, bool chained = false, bool prefix=false);
+  bool Save(TiXmlNode *node, const CStdString &tag, bool savePathInfo = true, const TiXmlElement *additionalNode = NULL);
   virtual void Archive(CArchive& ar);
   virtual void Serialize(CVariant& value);
   virtual void ToSortable(SortItem& sortable, Field field) const;
@@ -132,7 +133,7 @@ public:
   int m_duration; ///< duration in seconds
 
 private:
-  void ParseNative(const TiXmlElement* movie);
+  void ParseNative(const TiXmlElement* movie, bool prefix);
 };
 
 typedef std::vector<CVideoInfoTag> VECMOVIES;

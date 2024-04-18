@@ -442,23 +442,23 @@ public:
 
   void GetEpisodesByFile(const CStdString& strFilenameAndPath, std::vector<CVideoInfoTag>& episodes);
 
-  int SetDetailsForMovie(const CStdString& strFilenameAndPath, const CVideoInfoTag& details, int idMovie = -1);
-  int SetDetailsForTvShow(const CStdString& strPath, const CVideoInfoTag& details, int idTvShow = -1);
-  int SetDetailsForEpisode(const CStdString& strFilenameAndPath, const CVideoInfoTag& details, int idShow, int idEpisode=-1);
-  int SetDetailsForMusicVideo(const CStdString& strFilenameAndPath, const CVideoInfoTag& details, int idMVideo = -1);
+  int SetDetailsForMovie(const CStdString& strFilenameAndPath, const CVideoInfoTag& details, const std::map<std::string, std::string> &artwork, int idMovie = -1);
+  int SetDetailsForTvShow(const CStdString& strPath, const CVideoInfoTag& details, const std::map<std::string, std::string> &artwork, const std::map<int, std::string> &seasonArt, int idTvShow = -1);
+  int SetDetailsForEpisode(const CStdString& strFilenameAndPath, const CVideoInfoTag& details, const std::map<std::string, std::string> &artwork, int idShow, int idEpisode=-1);
+  int SetDetailsForMusicVideo(const CStdString& strFilenameAndPath, const CVideoInfoTag& details, const std::map<std::string, std::string> &artwork, int idMVideo = -1);
   void SetStreamDetailsForFile(const CStreamDetails& details, const CStdString &strFileNameAndPath);
   void SetStreamDetailsForFileId(const CStreamDetails& details, int idFile);
   void SetDetail(const CStdString& strDetail, int id, int field, VIDEODB_CONTENT_TYPE type);
 
-  void DeleteMovie(int idMovie, bool bKeepId = false, bool bKeepThumb = false);
-  void DeleteMovie(const CStdString& strFilenameAndPath, bool bKeepId = false, bool bKeepThumb = false, int idMovie = -1);
-  void DeleteTvShow(int idTvShow, bool bKeepId = false, bool bKeepThumb = false);
-  void DeleteTvShow(const CStdString& strPath, bool bKeepId = false, bool bKeepThumb = false, int idTvShow = -1);
-  void DeleteEpisode(int idEpisode, bool bKeepId = false, bool bKeepThumb = false);
-  void DeleteEpisode(const CStdString& strFilenameAndPath, int idEpisode = -1, bool bKeepId = false, bool bKeepThumb = false);
-  void DeleteMusicVideo(int idMusicVideo, bool bKeepId = false, bool bKeepThumb = false);
-  void DeleteMusicVideo(const CStdString& strFilenameAndPath, bool bKeepId = false, bool bKeepThumb = false, int idMVideo = -1);
-  void DeleteDetailsForTvShow(const CStdString& strPath);
+  void DeleteMovie(int idMovie, bool bKeepId = false);
+  void DeleteMovie(const CStdString& strFilenameAndPath, bool bKeepId = false, int idMovie = -1);
+  void DeleteTvShow(int idTvShow, bool bKeepId = false);
+  void DeleteTvShow(const CStdString& strPath, bool bKeepId = false, int idTvShow = -1);
+  void DeleteEpisode(int idEpisode, bool bKeepId = false);
+  void DeleteEpisode(const CStdString& strFilenameAndPath, int idEpisode = -1, bool bKeepId = false);
+  void DeleteMusicVideo(int idMusicVideo, bool bKeepId = false);
+  void DeleteMusicVideo(const CStdString& strFilenameAndPath, bool bKeepId = false, int idMVideo = -1);
+  void DeleteDetailsForTvShow(const CStdString& strPath, int idTvShow = -1);
   void RemoveContentForPath(const CStdString& strPath,CGUIDialogProgress *progress = NULL);
   void UpdateFanart(const CFileItem &item, VIDEODB_CONTENT_TYPE type);
   void DeleteSet(int idSet);
@@ -542,7 +542,7 @@ public:
    \param subpaths the returned subpaths
    \return true if we successfully retrieve subpaths (may be zero), false on error
    */
-  bool GetSubPaths(const CStdString& basepath, std::vector<int>& subpaths);
+  bool GetSubPaths(const CStdString& basepath, std::vector< std::pair<int, std::string> >& subpaths);
 
   // for music + musicvideo linkups - if no album and title given it will return the artist id, else the id of the matching video
   int GetMatchingMusicVideo(const CStdString& strArtist, const CStdString& strAlbum = "", const CStdString& strTitle = "");
@@ -641,7 +641,7 @@ public:
   void ExportActorThumbs(const CStdString &path, const CVideoInfoTag& tag, bool singleFiles, bool overwrite=false);
   void ImportFromXML(const CStdString &path);
   void DumpToDummyFiles(const CStdString &path);
-  CStdString GetCachedThumb(const CFileItem& item) const;
+  bool ImportArtFromXML(const TiXmlNode *node, std::map<std::string, std::string> &artwork);
 
   // smart playlists and main retrieval work in these functions
   bool GetMoviesByWhere(const CStdString& strBaseDir, const Filter &filter, CFileItemList& items, const SortDescription &sortDescription = SortDescription());
@@ -685,6 +685,12 @@ public:
     }
   }
 
+  void SetArtForItem(int mediaId, const std::string &mediaType, const std::string &artType, const std::string &url);
+  void SetArtForItem(int mediaId, const std::string &mediaType, const std::map<std::string, std::string> &art);
+  bool GetArtForItem(int mediaId, const std::string &mediaType, std::map<std::string, std::string> &art);
+  std::string GetArtForItem(int mediaId, const std::string &mediaType, const std::string &artType);
+  bool GetTvShowSeasonArt(int mediaId, std::map<int, std::string> &seasonArt);
+
   int AddTag(const std::string &tag);
   void AddTagToItem(int idItem, int idTag, const std::string &type);
   void RemoveTagFromItem(int idItem, int idTag, const std::string &type);
@@ -721,7 +727,7 @@ protected:
   
   int AddToTable(const CStdString& table, const CStdString& firstField, const CStdString& secondField, const CStdString& value);
   int AddGenre(const CStdString& strGenre1);
-  int AddActor(const CStdString& strActor, const CStdString& strThumb);
+  int AddActor(const CStdString& strActor, const CStdString& thumbURL, const CStdString &thumb = "");
   int AddCountry(const CStdString& strCountry);
   int AddStudio(const CStdString& strStudio1);
   int AddTvShow(const CStdString& strPath);
@@ -817,12 +823,12 @@ private:
   bool LookupByFolders(const CStdString &path, bool shows = false);
   
   virtual int GetMinVersion() const { return 70; };
+  virtual int GetExportVersion() const { return 1; };
   const char *GetBaseDBName() const { return "MyVideos"; };
 
   void ConstructPath(CStdString& strDest, const CStdString& strPath, const CStdString& strFileName);
   void SplitPath(const CStdString& strFileNameAndPath, CStdString& strPath, CStdString& strFileName);
   void InvalidatePathHash(const CStdString& strPath);
-  void DeleteThumbForItem(const CStdString& strPath, bool bFolder, int idEpisode = -1);
 
   bool GetStackedTvShowList(int idShow, CStdString& strIn) const;
   void Stack(CFileItemList& items, VIDEODB_CONTENT_TYPE type, bool maintainSortOrder = false);

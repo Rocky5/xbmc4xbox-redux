@@ -27,7 +27,8 @@
 #include "utils/Variant.h"
 #include "utils/Archive.h"
 #include "utils/CharsetConverter.h"
-#include "pictures/Picture.h"
+#include "TextureCache.h"
+#include "filesystem/File.h"
 
 #include <sstream>
 
@@ -92,7 +93,7 @@ void CVideoInfoTag::Reset()
   m_type.clear();
 }
 
-bool CVideoInfoTag::Save(TiXmlNode *node, const CStdString &tag, bool savePathInfo)
+bool CVideoInfoTag::Save(TiXmlNode *node, const CStdString &tag, bool savePathInfo, const TiXmlElement *additionalNode)
 {
   if (!node) return false;
 
@@ -234,17 +235,21 @@ bool CVideoInfoTag::Save(TiXmlNode *node, const CStdString &tag, bool savePathIn
 
   XMLUtils::SetString(movie, "dateadded", m_dateAdded.GetAsDBDateTime());
 
+  if (additionalNode)
+    movie->InsertEndChild(*additionalNode);
+
   return true;
 }
 
-bool CVideoInfoTag::Load(const TiXmlElement *movie, bool chained /* = false */)
+bool CVideoInfoTag::Load(const TiXmlElement *movie, bool chained /* = false */,
+                         bool prefix /* = false */)
 {
   if (!movie) return false;
 
   // reset our details if we aren't chained.
   if (!chained) Reset();
 
-  ParseNative(movie);
+  ParseNative(movie,prefix);
 
   return true;
 }
@@ -273,6 +278,7 @@ void CVideoInfoTag::Archive(CArchive& ar)
     {
       ar << m_cast[i].strName;
       ar << m_cast[i].strRole;
+      ar << m_cast[i].thumb;
       ar << m_cast[i].thumbUrl.m_xml;
     }
     
@@ -346,6 +352,7 @@ void CVideoInfoTag::Archive(CArchive& ar)
       SActorInfo info;
       ar >> info.strName;
       ar >> info.strRole;
+      ar >> info.thumb;
       CStdString strXml;
       ar >> strXml;
       info.thumbUrl.ParseString(strXml);
@@ -414,10 +421,15 @@ void CVideoInfoTag::Serialize(CVariant& value)
   value["votes"] = m_strVotes;
   value["studio"] = m_studio;
   value["trailer"] = m_strTrailer;
+  value["cast"] = CVariant(CVariant::VariantTypeArray);
   for (unsigned int i = 0; i < m_cast.size(); ++i)
   {
-    value["cast"][i]["name"] = m_cast[i].strName;
-    value["cast"][i]["role"] = m_cast[i].strRole;
+    CVariant actor;
+    actor["name"] = m_cast[i].strName;
+    actor["role"] = m_cast[i].strRole;
+    if (!m_cast[i].thumb.IsEmpty()) // TODO: json-rpc should use real URLs just like everywhere else
+      actor["thumbnail"] = CTextureCache::Get().CheckAndCacheImage(m_cast[i].thumb);
+    value["cast"].push_back(actor);
   }
   value["set"] = m_strSet;
   value["setid"] = m_iSetId;
@@ -531,7 +543,7 @@ const CStdString CVideoInfoTag::GetCast(bool bIncludeRole /*= false*/) const
   return strLabel.TrimRight("\n");
 }
 
-void CVideoInfoTag::ParseNative(const TiXmlElement* movie)
+void CVideoInfoTag::ParseNative(const TiXmlElement* movie, bool prefix)
 {
   XMLUtils::GetString(movie, "title", m_strTitle);
   XMLUtils::GetString(movie, "originaltitle", m_strOriginalTitle);
@@ -580,11 +592,29 @@ void CVideoInfoTag::ParseNative(const TiXmlElement* movie)
   XMLUtils::GetString(movie, "trailer", m_strTrailer);
   XMLUtils::GetString(movie, "basepath", m_basePath);
 
+  size_t iThumbCount = m_strPictureURL.m_url.size();
+  CStdString xmlAdd = m_strPictureURL.m_xml;
+
   const TiXmlElement* thumb = movie->FirstChildElement("thumb");
   while (thumb)
   {
     m_strPictureURL.ParseElement(thumb);
+    if (prefix)
+    {
+      CStdString temp;
+      temp << *thumb;
+      xmlAdd = temp+xmlAdd;
+    }
     thumb = thumb->NextSiblingElement("thumb");
+  }
+
+  // prefix thumbs from nfos
+  if (prefix && iThumbCount && iThumbCount != m_strPictureURL.m_url.size())
+  {
+    rotate(m_strPictureURL.m_url.begin(),
+           m_strPictureURL.m_url.begin()+iThumbCount, 
+           m_strPictureURL.m_url.end());
+    m_strPictureURL.m_xml = xmlAdd;
   }
 
   XMLUtils::GetStringArray(movie, "genre", m_genre);
@@ -704,7 +734,15 @@ void CVideoInfoTag::ParseNative(const TiXmlElement* movie)
   const TiXmlElement *fanart = movie->FirstChildElement("fanart");
   if (fanart)
   {
-    m_fanart.m_xml << *fanart;
+    // we prefix to handle mixed-mode nfo's with fanart set
+    if (prefix)
+    {
+      CStdString temp;
+      temp << *fanart;
+      m_fanart.m_xml = temp+m_fanart.m_xml;
+    }
+    else
+      m_fanart.m_xml << *fanart;
     m_fanart.Unpack();
   }
 

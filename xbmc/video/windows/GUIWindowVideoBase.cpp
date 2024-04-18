@@ -621,6 +621,9 @@ bool CGUIWindowVideoBase::ShowIMDB(CFileItem *item, const ScraperPtr &info2)
       pDlgProgress->Progress();
       if (bHasInfo)
       {
+        // clear artwork
+        item->SetThumbnailImage("");
+        item->ClearProperty("fanart_image");
         if (info->Content() == CONTENT_MOVIES)
           m_database.DeleteMovie(item->GetPath());
         if (info->Content() == CONTENT_TVSHOWS && !item->m_bIsFolder)
@@ -1325,7 +1328,7 @@ bool CGUIWindowVideoBase::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
       if (item->m_bIsFolder)
       {
         m_database.SetPathHash(strPath,""); // to force scan
-        OnScan(strPath);
+        OnScan(strPath, true);
       }
       else
         OnInfo(item.get(),info);
@@ -1671,9 +1674,6 @@ bool CGUIWindowVideoBase::StackingAvailable(const CFileItemList &items) const
 
 void CGUIWindowVideoBase::GetGroupedItems(CFileItemList &items)
 {
-  if (!items.GetPath().Equals("plugin://video/"))
-    items.SetCachedVideoThumbs();
-
   CGUIMediaWindow::GetGroupedItems(items);
 
   std::string group;
@@ -1805,7 +1805,7 @@ void CGUIWindowVideoBase::AddToDatabase(int iItem)
   m_database.Open();
   int idMovie = m_database.AddMovie(pItem->GetPath());
   movie.m_strIMDBNumber.Format("xx%08i", idMovie);
-  m_database.SetDetailsForMovie(pItem->GetPath(), movie);
+  m_database.SetDetailsForMovie(pItem->GetPath(), movie, pItem->GetArt());
   m_database.Close();
 
   // done...

@@ -50,6 +50,7 @@
 #include "storage/DetectDVDType.h"
 #include "video/windows/GUIWindowVideoBase.h"
 #include "TextureCache.h"
+#include "ThumbnailCache.h"
 
 using namespace std;
 
@@ -455,11 +456,9 @@ bool CGUIDialogContextMenu::OnContextButton(const CStdString &type, const CFileI
         {
           cachedThumb = item->GetPath();
           URIUtils::RemoveSlashAtEnd(cachedThumb);
-          cachedThumb = CUtil::GetCachedMusicThumb(cachedThumb);
+          cachedThumb = CThumbnailCache::GetMusicThumb(cachedThumb);
         }
-        else if (type == "video")
-          cachedThumb = item->GetCachedVideoThumb();
-        else  // assume "programs"
+        else  // programs, video, pictures
         { // store the thumb for this share
           CTextureDatabase db;
           if (db.Open())

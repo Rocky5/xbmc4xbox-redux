@@ -88,6 +88,7 @@
 #include "addons/AddonManager.h"
 #include "interfaces/info/InfoBool.h"
 #include "video/VideoDatabase.h"
+#include "TextureCache.h"
 
 using namespace std;
 using namespace XFILE;
@@ -3789,16 +3790,14 @@ void CGUIInfoManager::SetCurrentMovie(CFileItem &item)
   }
 
   // Find a thumb for this file.
-  item.SetVideoThumb();
   if (!item.HasThumbnail())
   {
-    CStdString strPath, strFileName;
-    URIUtils::Split(item.GetCachedVideoThumb(), strPath, strFileName);
-
-    // create unique thumb for auto generated thumbs
-    CStdString cachedThumb = strPath + "auto-" + strFileName;
-    if (CFile::Exists(cachedThumb))
-      item.SetThumbnailImage(cachedThumb);
+    if (!CVideoThumbLoader::FillThumb(item))
+    {
+      CStdString thumb = CVideoThumbLoader::GetEmbeddedThumbURL(item);
+      if (!CTextureCache::Get().GetCachedImage(thumb).IsEmpty())
+        item.SetThumbnailImage(thumb);
+    }
   }
 
   // find a thumb for this stream
@@ -3816,8 +3815,7 @@ void CGUIInfoManager::SetCurrentMovie(CFileItem &item)
     {
       CLog::Log(LOGDEBUG,"Streaming media detected... using %s to find a thumb", g_application.m_strPlayListFile.c_str());
       CFileItem thumbItem(g_application.m_strPlayListFile,false);
-      thumbItem.SetVideoThumb();
-      if (thumbItem.HasThumbnail())
+      if (CVideoThumbLoader::FillThumb(thumbItem))
         item.SetThumbnailImage(thumbItem.GetThumbnailImage());
     }
   }

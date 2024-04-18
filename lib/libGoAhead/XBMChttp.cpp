@@ -57,7 +57,9 @@
 #include "utils/URIUtils.h"
 #include "utils/log.h"
 #include "TextureCache.h"
+#include "ThumbnailCache.h"
 #include "utils/SystemInfo.h"
+#include "ThumbLoader.h"
 
 #ifdef _WIN32PC
 extern "C" FILE *fopen_utf8(const char *_Filename, const char *_Mode);
@@ -1342,11 +1344,10 @@ int CXbmcHttp::xbmcGetMovieDetails(int numParas, CStdString paras[])
           cast += character;
         }*/
         output += closeTag+openTag+"Cast:" + cast;
-        item->SetVideoThumb();
-        if (!item->HasThumbnail())
+        if (!CVideoThumbLoader::FillThumb(*item))
           thumb = "[None]";
         else
-          thumb = item->GetCachedVideoThumb();
+          thumb = CTextureCache::Get().CheckAndCacheImage(item->GetThumbnailImage());
         output += closeTag+openTag+"Thumb:" + thumb;
         m_database.Close();
         delete item;
@@ -1889,7 +1890,7 @@ int CXbmcHttp::xbmcGetThumbFilename(int numParas, CStdString paras[])
 
   if (numParas>1)
   {
-    thumbFilename = CUtil::GetCachedAlbumThumb(paras[0], paras[1]);
+    thumbFilename = CThumbnailCache::GetAlbumThumb(paras[0], paras[1]);
     return SetResponse(openTag+thumbFilename ) ;
   }
   else
