@@ -123,7 +123,7 @@ public:
   bool IsAudio() const;
 
   bool IsCUESheet() const;
-  bool IsInternetStream() const;
+  bool IsInternetStream(const bool bStrictCheck = false) const;
   bool IsPlayList() const;
   bool IsSmartPlayList() const;
   bool IsLibraryFolder() const;
