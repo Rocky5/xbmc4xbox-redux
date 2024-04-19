@@ -47,13 +47,11 @@ CThumbExtractor::CThumbExtractor(const CFileItem& item, const CStdString& listpa
   m_thumb = thumb;
   m_item = item;
 
-  m_path = item.GetPath();
-
   if (item.IsVideoDb() && item.HasVideoInfoTag())
-    m_path = item.GetVideoInfoTag()->m_strFileNameAndPath;
+    m_item.SetPath(item.GetVideoInfoTag()->m_strFileNameAndPath);
 
-  if (URIUtils::IsStack(m_path))
-    m_path = CStackDirectory::GetFirstStackedFile(m_path);
+  if (m_item.IsStack())
+    m_item.SetPath(CStackDirectory::GetFirstStackedFile(m_item.GetPath()));
 }
 
 CThumbExtractor::~CThumbExtractor()
@@ -73,9 +71,9 @@ bool CThumbExtractor::operator==(const CJob* job) const
 
 bool CThumbExtractor::DoWork()
 {
-  if (URIUtils::IsLiveTV(m_path)
-  ||  URIUtils::IsUPnP(m_path)
-  ||  URIUtils::IsDAAP(m_path)
+  if (m_item.IsLiveTV()
+  ||  URIUtils::IsUPnP(m_item.GetPath())
+  ||  m_item.IsDAAP()
   ||  m_item.IsDVD()
   ||  m_item.IsDVDImage()
   ||  m_item.IsDVDFile(false, true)
@@ -94,11 +92,11 @@ bool CThumbExtractor::DoWork()
   bool result=false;
   if (m_thumb)
   {
-    CLog::Log(LOGDEBUG,"%s - trying to extract thumb from video file %s", __FUNCTION__, m_path.c_str());
+    CLog::Log(LOGDEBUG,"%s - trying to extract thumb from video file %s", __FUNCTION__, m_item.GetPath().c_str());
     // construct the thumb cache file
     CTextureDetails details;
     details.file = CTextureCache::GetCacheFile(m_target) + ".jpg";
-    result = CDVDFileInfo::ExtractThumb(m_path, details, &m_item.GetVideoInfoTag()->m_streamDetails);
+    result = CDVDFileInfo::ExtractThumb(m_item.GetPath(), details, &m_item.GetVideoInfoTag()->m_streamDetails);
     if(result)
     {
       CTextureCache::Get().AddCachedTexture(m_target, details);
@@ -110,7 +108,7 @@ bool CThumbExtractor::DoWork()
   else if (!m_item.HasVideoInfoTag() || !m_item.GetVideoInfoTag()->HasStreamDetails())
   {
     // No tag or no details set, so extract them
-    CLog::Log(LOGDEBUG,"%s - trying to extract filestream details from video file %s", __FUNCTION__, m_path.c_str());
+    CLog::Log(LOGDEBUG,"%s - trying to extract filestream details from video file %s", __FUNCTION__, m_item.GetPath().c_str());
     result = CDVDFileInfo::GetFileStreamDetails(&m_item);
   }
 
