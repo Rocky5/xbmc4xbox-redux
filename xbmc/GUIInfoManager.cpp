@@ -87,9 +87,9 @@
 
 #include "addons/AddonManager.h"
 #include "interfaces/info/InfoBool.h"
+#include "video/VideoThumbLoader.h"
+#include "music/MusicThumbLoader.h"
 #include "video/VideoDatabase.h"
-#include "TextureCache.h"
-#include "ThumbLoader.h"
 
 using namespace std;
 using namespace XFILE;

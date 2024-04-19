@@ -22,9 +22,6 @@
 
 #include "guilib/GUIDialog.h"
 #include "FileItem.h"
-#include "video/VideoDatabase.h"
-
-class CFileItem;
 
 class CGUIDialogVideoInfo :
       public CGUIDialog

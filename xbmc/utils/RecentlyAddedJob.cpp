@@ -32,6 +32,8 @@
 #include "utils/Variant.h"
 #include "utils/StringUtils.h"
 #include "settings/AdvancedSettings.h"
+#include "music/MusicThumbLoader.h"
+#include "video/VideoThumbLoader.h"
 
 #define NUM_ITEMS 10
 
@@ -52,7 +54,9 @@ bool CRecentlyAddedJob::UpdateVideo()
   int            i = 0;
   CFileItemList  items;
   CVideoDatabase videodatabase;
-  
+  CVideoThumbLoader loader;
+  loader.Initialize();
+
   videodatabase.Open();
 
   if (videodatabase.GetRecentlyAddedMoviesNav("videodb://recentlyaddedmovies/", items, NUM_ITEMS))
@@ -74,7 +78,7 @@ bool CRecentlyAddedJob::UpdateVideo()
       home->SetProperty("LatestMovie." + value + ".Trailer"     , item->GetVideoInfoTag()->m_strTrailer);
 
       if (!item->HasArt("thumb"))
-        m_thumbLoader.LoadItem(item.get());
+        loader.LoadItem(item.get());
 
       home->SetProperty("LatestMovie." + value + ".Thumb"       , item->GetArt("thumb"));
       home->SetProperty("LatestMovie." + value + ".Fanart"      , item->GetArt("fanart"));
@@ -125,7 +129,7 @@ bool CRecentlyAddedJob::UpdateVideo()
       home->SetProperty("LatestEpisode." + value + ".Path"          , item->GetVideoInfoTag()->m_strFileNameAndPath);
 
       if (!item->HasArt("thumb"))
-        m_thumbLoader.LoadItem(item.get());
+        loader.LoadItem(item.get());
 
       int seasonID = videodatabase.GetSeasonId(item->GetVideoInfoTag()->m_iIdShow, EpisodeSeason);
       std::string seasonThumb = videodatabase.GetArtForItem(seasonID, "season", "thumb");
@@ -174,7 +178,7 @@ bool CRecentlyAddedJob::UpdateVideo()
       home->SetProperty("LatestMusicVideo." + value + ".Artist"      , StringUtils::Join(item->GetVideoInfoTag()->m_artist, g_advancedSettings.m_videoItemSeparator));
 
       if (!item->HasArt("thumb"))
-        m_thumbLoader.LoadItem(item.get());
+        loader.LoadItem(item.get());
 
       home->SetProperty("LatestMusicVideo." + value + ".Thumb"       , item->GetArt("thumb"));
       home->SetProperty("LatestMusicVideo." + value + ".Fanart"      , item->GetArt("fanart"));
@@ -210,8 +214,9 @@ bool CRecentlyAddedJob::UpdateMusic()
   int            i = 0;
   CFileItemList  musicItems;
   CMusicDatabase musicdatabase;
-  CThumbLoader loader;
-  
+  CMusicThumbLoader loader;
+  loader.Initialize();
+
   musicdatabase.Open();
   
   if (musicdatabase.GetRecentlyAddedAlbumSongs("musicdb://songs/", musicItems, NUM_ITEMS))
