@@ -5521,14 +5521,23 @@ void CApplication::StartVideoScan(const CStdString &strDirectory, bool scanAll)
   m_videoInfoScanner->Start(strDirectory,scanAll);
 }
 
-void CApplication::StartMusicScan(const CStdString &strDirectory)
+void CApplication::StartMusicScan(const CStdString &strDirectory, int flags)
 {
   if (m_musicInfoScanner->IsScanning())
     return;
 
-  m_musicInfoScanner->ShowDialog(true);
+  if (!flags)
+  { // setup default flags
+    if (CSettings::Get().GetBool("musiclibrary.downloadinfo"))
+      flags |= CMusicInfoScanner::SCAN_ONLINE;
+    if (CSettings::Get().GetBool("musiclibrary.backgroundupdate"))
+      flags |= CMusicInfoScanner::SCAN_BACKGROUND;
+  }
 
-  m_musicInfoScanner->Start(strDirectory);
+  if (!(flags & CMusicInfoScanner::SCAN_BACKGROUND))
+    m_musicInfoScanner->ShowDialog(true);
+
+  m_musicInfoScanner->Start(strDirectory, flags);
 }
 
 void CApplication::StartMusicAlbumScan(const CStdString& strDirectory)

@@ -46,14 +46,16 @@
 #include "GUIWindowManager.h"
 #include "GUIUserMessages.h"
 #include "dialogs/GUIDialogOK.h"
+#include "dialogs/GUIDialogYesNo.h"
 #include "guilib/GUIKeyboardFactory.h"
 #include "dialogs/GUIDialogProgress.h"
 #include "FileItem.h"
 #include "filesystem/File.h"
 #include "profiles/ProfilesManager.h"
-#include "settings/Settings.h"
 #include "settings/AdvancedSettings.h"
-#include "LocalizeStrings.h"
+#include "settings/MediaSettings.h"
+#include "settings/Settings.h"
+#include "guilib/LocalizeStrings.h"
 #include "utils/log.h"
 #include "utils/StringUtils.h"
 #include "music/infoscanner/MusicInfoScanner.h"
@@ -1262,6 +1264,21 @@ bool CGUIWindowMusicBase::CheckFilterAdvanced(CFileItemList &items) const
 bool CGUIWindowMusicBase::CanContainFilter(const CStdString &strDirectory) const
 {
   return strDirectory.Left(10).Equals("musicdb://");
+}
+
+void CGUIWindowMusicBase::OnInitWindow()
+{
+  CGUIMediaWindow::OnInitWindow();
+  if (CMediaSettings::Get().GetMusicNeedsUpdate() == 27 && !g_application.IsMusicScanning())
+  {
+    // rescan of music library required
+    if (CGUIDialogYesNo::ShowAndGetInput(799, 800, 801, -1))
+    {
+      g_application.StartMusicScan("", CMusicInfoScanner::SCAN_RESCAN);
+      CMediaSettings::Get().SetMusicNeedsUpdate(0); // once is enough (user may interrupt, but that's up to them)
+      CSettings::Get().Save();
+    }
+  }
 }
 
 CStdString CGUIWindowMusicBase::GetStartFolder(const CStdString &dir)
