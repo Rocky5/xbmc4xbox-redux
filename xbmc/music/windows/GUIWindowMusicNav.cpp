@@ -722,7 +722,7 @@ bool CGUIWindowMusicNav::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
         m_musicdatabase.SetScraperForPath(path,scraper);
         if (CGUIDialogYesNo::ShowAndGetInput(20442,20443,20444,20022))
         {
-          OnInfoAll(itemNumber,true);
+          OnInfoAll(itemNumber,true,true);
         }
       }
       return true;

@@ -54,8 +54,8 @@ public:
   virtual ~CMusicInfoScanner();
 
   void Start(const CStdString& strDirectory, int flags);
-  void FetchAlbumInfo(const CStdString& strDirectory);
-  void FetchArtistInfo(const CStdString& strDirectory);
+  void FetchAlbumInfo(const CStdString& strDirectory, bool refresh=false);
+  void FetchArtistInfo(const CStdString& strDirectory, bool refresh=false);
   bool IsScanning();
   void Stop();
 

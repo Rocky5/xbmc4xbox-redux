@@ -212,8 +212,8 @@ public:
 
   void StartVideoScan(const CStdString &path, bool scanAll = false);
   void StartMusicScan(const CStdString &path, int flags = 0);
-  void StartMusicAlbumScan(const CStdString& strDirectory);
-  void StartMusicArtistScan(const CStdString& strDirectory);
+  void StartMusicAlbumScan(const CStdString& strDirectory, bool refresh=false);
+  void StartMusicArtistScan(const CStdString& strDirectory, bool refresh=false);
 
   void UpdateLibraries();
   void CheckMusicPlaylist();

@@ -5540,24 +5540,26 @@ void CApplication::StartMusicScan(const CStdString &strDirectory, int flags)
   m_musicInfoScanner->Start(strDirectory, flags);
 }
 
-void CApplication::StartMusicAlbumScan(const CStdString& strDirectory)
+void CApplication::StartMusicAlbumScan(const CStdString& strDirectory,
+                                       bool refresh)
 {
   if (m_musicInfoScanner->IsScanning())
     return;
 
   m_musicInfoScanner->ShowDialog(true);
 
-  m_musicInfoScanner->FetchAlbumInfo(strDirectory);
+  m_musicInfoScanner->FetchAlbumInfo(strDirectory,refresh);
 }
 
-void CApplication::StartMusicArtistScan(const CStdString& strDirectory)
+void CApplication::StartMusicArtistScan(const CStdString& strDirectory,
+                                        bool refresh)
 {
   if (m_musicInfoScanner->IsScanning())
     return;
 
   m_musicInfoScanner->ShowDialog(true);
 
-  m_musicInfoScanner->FetchArtistInfo(strDirectory);
+  m_musicInfoScanner->FetchArtistInfo(strDirectory,refresh);
 }
 
 void CApplication::CheckPlayingProgress()

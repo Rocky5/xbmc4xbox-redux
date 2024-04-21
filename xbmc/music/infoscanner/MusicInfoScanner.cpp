@@ -245,7 +245,8 @@ void CMusicInfoScanner::Start(const CStdString& strDirectory, int flags)
   m_bRunning = true;
 }
 
-void CMusicInfoScanner::FetchAlbumInfo(const CStdString& strDirectory)
+void CMusicInfoScanner::FetchAlbumInfo(const CStdString& strDirectory,
+                                       bool refresh)
 {
   m_albumsToScan.clear();
   m_fileCountReader.StopThread();
@@ -270,6 +271,7 @@ void CMusicInfoScanner::FetchAlbumInfo(const CStdString& strDirectory)
     }
   }
 
+  m_musicDatabase.Open();
   for (int i=0;i<items.Size();++i)
   {
     if (CMusicDatabaseDirectory::IsAllItem(items[i]->GetPath()) || items[i]->IsParentFolder())
@@ -280,14 +282,22 @@ void CMusicInfoScanner::FetchAlbumInfo(const CStdString& strDirectory)
     album.artist = items[i]->GetMusicInfoTag()->GetArtist();
     album.genre.push_back(items[i]->GetPath()); // a bit hacky use of field
     m_albumsToScan.insert(album);
+    if (refresh)
+    {
+      int id = m_musicDatabase.GetAlbumByName(album.strAlbum, album.artist);
+      if (id > -1)
+        m_musicDatabase.DeleteAlbumInfo(id);
+    }
   }
+  m_musicDatabase.Close();
 
   m_scanType = 1;
   Create();
   m_bRunning = true;
 }
 
-void CMusicInfoScanner::FetchArtistInfo(const CStdString& strDirectory)
+void CMusicInfoScanner::FetchArtistInfo(const CStdString& strDirectory,
+                                        bool refresh)
 {
   m_artistsToScan.clear();
   m_fileCountReader.StopThread();
@@ -312,6 +322,7 @@ void CMusicInfoScanner::FetchArtistInfo(const CStdString& strDirectory)
     }
   }
 
+  m_musicDatabase.Open();
   for (int i=0;i<items.Size();++i)
   {
     if (CMusicDatabaseDirectory::IsAllItem(items[i]->GetPath()) || items[i]->IsParentFolder())
@@ -321,7 +332,14 @@ void CMusicInfoScanner::FetchArtistInfo(const CStdString& strDirectory)
     artist.strArtist = StringUtils::Join(items[i]->GetMusicInfoTag()->GetArtist(), g_advancedSettings.m_musicItemSeparator);
     artist.genre.push_back(items[i]->GetPath()); // a bit hacky use of field
     m_artistsToScan.insert(artist);
+    if (refresh)
+    {
+      int id = m_musicDatabase.GetArtistByName(artist.strArtist);
+      if (id > -1)
+        m_musicDatabase.DeleteArtistInfo(id);
+    }
   }
+  m_musicDatabase.Close();
 
   m_scanType = 2;
   Create();
