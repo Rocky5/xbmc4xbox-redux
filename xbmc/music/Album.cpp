@@ -49,7 +49,7 @@ CStdString CAlbum::GetArtistString() const
 
 CStdString CAlbum::GetGenreString() const
 {
-  return StringUtils::Join(artist, g_advancedSettings.m_musicItemSeparator);
+  return StringUtils::Join(genre, g_advancedSettings.m_musicItemSeparator);
 }
 
 bool CAlbum::operator<(const CAlbum &a) const
