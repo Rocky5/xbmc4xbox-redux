@@ -289,7 +289,13 @@ PopulateObjectFromTag(CVideoInfoTag&         tag,
 
     object.m_Description.description = tag.m_strTagLine;
     object.m_Description.long_description = tag.m_strPlot;
-    if (resource) resource->m_Duration = tag.GetDuration();
+    if (resource) {
+        resource->m_Duration = tag.GetDuration();
+        if (tag.HasStreamDetails()) {
+            const CStreamDetails details = tag.m_streamDetails;
+            resource->m_Resolution = NPT_String::FromInteger(details.GetVideoWidth()) + "x" + NPT_String::FromInteger(details.GetVideoHeight());
+        }
+    }
 
     return NPT_SUCCESS;
 }
@@ -381,6 +387,12 @@ BuildObject(CFileItem&                    item,
                 object->m_Resources.Add(resource);
             } else {
                 object->m_Resources.Insert(object->m_Resources.GetFirstItem(), resource);
+            }
+            // copy across the known metadata
+            for(unsigned i=0; i<object->m_Resources.GetItemCount(); i++) {
+                object->m_Resources[i].m_Size = resource.m_Size;
+                object->m_Resources[i].m_Duration = resource.m_Duration;
+                object->m_Resources[i].m_Resolution = resource.m_Resolution;
             }
         }
 
@@ -630,7 +642,10 @@ PopulateTagFromObject(CVideoInfoTag&         tag,
     tag.m_strShowTitle = object.m_Recorded.series_title;
 
     if(resource)
-      tag.m_duration = resource->m_Duration;
+    {
+      if (resource->m_Duration)
+        tag.m_duration = resource->m_Duration;
+    }
     return NPT_SUCCESS;
 }
 
