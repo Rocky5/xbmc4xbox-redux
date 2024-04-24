@@ -162,7 +162,7 @@ bool CMusicDatabase::CreateTables()
     CLog::Log(LOGINFO, "create song index3");
     m_pDS->exec("CREATE INDEX idxSong3 ON song(idAlbum)");
     CLog::Log(LOGINFO, "create song index6");
-    m_pDS->exec("CREATE UNIQUE INDEX idxSong6 ON song( idPath, strFileName(255) )");
+    m_pDS->exec("CREATE INDEX idxSong6 ON song( idPath, strFileName(255) )");
     CLog::Log(LOGINFO, "create song index7");
     m_pDS->exec("CREATE UNIQUE INDEX idxSong7 ON song( idAlbum, strMusicBrainzTrackID(36) )");
 
@@ -191,7 +191,7 @@ bool CMusicDatabase::CreateTables()
 
     CLog::Log(LOGINFO, "create art table, index and triggers");
     m_pDS->exec("CREATE TABLE art(art_id INTEGER PRIMARY KEY, media_id INTEGER, media_type TEXT, type TEXT, url TEXT)");
-    m_pDS->exec("CREATE INDEX ix_art ON art(media_id, media_type, type)");
+    m_pDS->exec("CREATE INDEX ix_art ON art(media_id, media_type(20), type(20))");
     m_pDS->exec("CREATE TRIGGER delete_song AFTER DELETE ON song FOR EACH ROW BEGIN DELETE FROM art WHERE media_id=old.idSong AND media_type='song'; END");
     m_pDS->exec("CREATE TRIGGER delete_album AFTER DELETE ON album FOR EACH ROW BEGIN DELETE FROM art WHERE media_id=old.idAlbum AND media_type='album'; END");
     m_pDS->exec("CREATE TRIGGER delete_artist AFTER DELETE ON artist FOR EACH ROW BEGIN DELETE FROM art WHERE media_id=old.idArtist AND media_type='artist'; END");
@@ -251,7 +251,7 @@ void CMusicDatabase::CreateViews()
                 "        album.idAlbum AS idAlbum, "
                 "        strAlbum, "
                 "        strMusicBrainzAlbumID, "
-                "        GROUP_CONCAT(strArtist || strJoinPhrase, '') as strArtists, "
+                "        album.strArtists AS strArtists, "
                 "        album.strGenres AS strGenres, "
                 "        album.iYear AS iYear, "
                 "        idAlbumInfo, "
@@ -269,10 +269,7 @@ void CMusicDatabase::CreateViews()
                 "   LEFT OUTER JOIN "
                 "       albuminfo ON album.idAlbum = albuminfo.idAlbum "
                 "   LEFT OUTER JOIN album_artist ON "
-                "       album.idAlbum = album_artist.idAlbum "
-                "   LEFT OUTER JOIN artist ON "
-                "       album_artist.idArtist = artist.idArtist "
-                "   GROUP BY album.idAlbum");
+                "       album.idAlbum = album_artist.idAlbum ");
   }
   else
   {
@@ -280,7 +277,7 @@ void CMusicDatabase::CreateViews()
                 "        album.idAlbum AS idAlbum, "
                 "        strAlbum, "
                 "        strMusicBrainzAlbumID, "
-                "        GROUP_CONCAT(strArtist, strJoinPhrase ORDER BY iOrder SEPARATOR '') as strArtists "
+                "        GROUP_CONCAT(strArtist, strJoinPhrase ORDER BY iOrder SEPARATOR '') as strArtists, "
                 "        album.strGenres AS strGenres, "
                 "        album.iYear AS iYear, "
                 "        idAlbumInfo, "
@@ -337,8 +334,6 @@ int CMusicDatabase::AddSong(const int idAlbum,
     // We need at least the title
     if (strTitle.IsEmpty())
       return -1;
-
-    ASSERT(URIUtils::HasSlashAtEnd(strPath));
 
     if (NULL == m_pDB.get()) return -1;
     if (NULL == m_pDS.get()) return -1;
