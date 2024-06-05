@@ -69,11 +69,11 @@ bool CGUIDialogYesNo::OnBack(int actionID)
 
 void CGUIDialogYesNo::OnInitWindow()
 {
-  CGUIDialogBoxBase::OnInitWindow();
-
-  SET_CONTROL_VISIBLE(CONTROL_YES_BUTTON);
-  SET_CONTROL_VISIBLE(CONTROL_NO_BUTTON);
+  SET_CONTROL_HIDDEN(CONTROL_CUSTOM_BUTTON);
+  SET_CONTROL_HIDDEN(CONTROL_PROGRESS_BAR);
   SET_CONTROL_FOCUS(CONTROL_NO_BUTTON, 0);
+
+  CGUIDialogBoxBase::OnInitWindow();
 }
 
 // \brief Show CGUIDialogYesNo dialog, then wait for user to dismiss it.
