@@ -1,7 +1,7 @@
 #pragma once
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,30 +21,25 @@
 
 #include <string>
 
-class TiXmlNode;
+class CSetting;
+class CSettingsManager;
 
-typedef enum {
-  SettingUpdateTypeNone   = 0,
-  SettingUpdateTypeRename,
-  SettingUpdateTypeChange
-} SettingUpdateType;
-
-class CSettingUpdate
+/*!
+ \ingroup settings
+ \brief Interface for creating a new setting of a custom setting type.
+ */
+class ISettingCreator
 {
 public:
-  CSettingUpdate();
-  virtual ~CSettingUpdate() { }
+  virtual ~ISettingCreator() { }
 
-  bool operator<(const CSettingUpdate& rhs) const;
+  /*!
+   \brief Creates a new setting of the given custom setting type.
 
-  virtual bool Deserialize(const TiXmlNode *node);
-
-  SettingUpdateType GetType() const { return m_type; }
-  const std::string& GetValue() const { return m_value; }
-
-private:
-  bool setType(const std::string &type);
-
-  SettingUpdateType m_type;
-  std::string m_value;
+   \param settingType string representation of the setting type
+   \param settingId Identifier of the setting to be created
+   \param settingsManager Reference to the settings manager
+   \return A new setting object of the given (custom) setting type or NULL if the setting type is unknown
+   */
+  virtual CSetting* CreateSetting(const std::string &settingType, const std::string &settingId, CSettingsManager *settingsManager = NULL) const = 0;
 };

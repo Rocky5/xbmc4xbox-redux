@@ -1,7 +1,7 @@
 #pragma once
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,35 +24,35 @@
 
 #include "SettingConditions.h"
 
-class CSettingCategoryAccessCondition : public CSettingConditionItem
+class CSettingRequirementCondition : public CSettingConditionItem
 {
 public:
-  CSettingCategoryAccessCondition(CSettingsManager *settingsManager = NULL)
+  CSettingRequirementCondition(CSettingsManager *settingsManager = NULL)
     : CSettingConditionItem(settingsManager)
   { }
-  virtual ~CSettingCategoryAccessCondition() { }
+  virtual ~CSettingRequirementCondition() { }
 
   virtual bool Check() const;
 };
 
-class CSettingCategoryAccessConditionCombination : public CSettingConditionCombination
+class CSettingRequirementConditionCombination : public CSettingConditionCombination
 {
 public:
-  CSettingCategoryAccessConditionCombination(CSettingsManager *settingsManager = NULL)
+  CSettingRequirementConditionCombination(CSettingsManager *settingsManager = NULL)
     : CSettingConditionCombination(settingsManager)
   { }
-  virtual ~CSettingCategoryAccessConditionCombination() { }
+  virtual ~CSettingRequirementConditionCombination() { }
 
   virtual bool Check() const;
 
 private:
-  virtual CBooleanLogicOperation* newOperation() { return new CSettingCategoryAccessConditionCombination(m_settingsManager); }
-  virtual CBooleanLogicValue* newValue() { return new CSettingCategoryAccessCondition(m_settingsManager); }
+  virtual CBooleanLogicOperation* newOperation() { return new CSettingRequirementConditionCombination(m_settingsManager); }
+  virtual CBooleanLogicValue* newValue() { return new CSettingRequirementCondition(m_settingsManager); }
 };
 
-class CSettingCategoryAccess : public CSettingCondition
+class CSettingRequirement : public CSettingCondition
 {
 public:
-  CSettingCategoryAccess(CSettingsManager *settingsManager = NULL);
-  virtual ~CSettingCategoryAccess() { }
+  CSettingRequirement(CSettingsManager *settingsManager = NULL);
+  virtual ~CSettingRequirement() { }
 };

@@ -1,7 +1,7 @@
 #pragma once
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -48,16 +48,18 @@ typedef enum {
 class CSettingDependencyCondition : public CSettingConditionItem
 {
 public:
-  CSettingDependencyCondition(CSettingsManager *settingsManager = NULL)
-    : CSettingConditionItem(settingsManager),
-      m_target(SettingDependencyTargetNone),  
-      m_operator(SettingDependencyOperatorEquals) 
-  { }
+  explicit CSettingDependencyCondition(CSettingsManager *settingsManager = NULL);
+  CSettingDependencyCondition(const std::string &setting, const std::string &value,
+                              SettingDependencyOperator op, bool negated = false,
+                              CSettingsManager *settingsManager = NULL);
+  CSettingDependencyCondition(const std::string &strProperty, const std::string &value,
+                              const std::string &setting = "", bool negated = false,
+                              CSettingsManager *settingsManager = NULL);
   virtual ~CSettingDependencyCondition() { }
 
   virtual bool Deserialize(const TiXmlNode *node);
   virtual bool Check() const;
-  
+
   const std::string& GetName() const { return m_name; }
   const std::string& GetSetting() const { return m_setting; }
   const SettingDependencyTarget GetTarget() const { return m_target; }
@@ -66,22 +68,35 @@ public:
 private:
   bool setTarget(const std::string &target);
   bool setOperator(const std::string &op);
-  
+
   SettingDependencyTarget m_target;
   SettingDependencyOperator m_operator;
 };
 
+typedef boost::shared_ptr<CSettingDependencyCondition> CSettingDependencyConditionPtr;
+
+class CSettingDependencyConditionCombination;
+typedef boost::shared_ptr<CSettingDependencyConditionCombination> CSettingDependencyConditionCombinationPtr;
+
 class CSettingDependencyConditionCombination : public CSettingConditionCombination
 {
 public:
-  CSettingDependencyConditionCombination(CSettingsManager *settingsManager = NULL)
+  explicit CSettingDependencyConditionCombination(CSettingsManager *settingsManager = NULL)
     : CSettingConditionCombination(settingsManager)
   { }
+  CSettingDependencyConditionCombination(BooleanLogicOperation op, CSettingsManager *settingsManager = NULL)
+    : CSettingConditionCombination(settingsManager)
+  {
+    SetOperation(op);
+  }
   virtual ~CSettingDependencyConditionCombination() { }
 
   virtual bool Deserialize(const TiXmlNode *node);
 
   const std::set<std::string>& GetSettings() const { return m_settings; }
+
+  CSettingDependencyConditionCombination* Add(CSettingDependencyConditionPtr condition);
+  CSettingDependencyConditionCombination* Add(CSettingDependencyConditionCombinationPtr operation);
 
 private:
   virtual CBooleanLogicOperation* newOperation() { return new CSettingDependencyConditionCombination(m_settingsManager); }
@@ -93,13 +108,17 @@ private:
 class CSettingDependency : public CSettingCondition
 {
 public:
-  CSettingDependency(CSettingsManager *settingsManager = NULL);
+  explicit CSettingDependency(CSettingsManager *settingsManager = NULL);
+  CSettingDependency(SettingDependencyType type, CSettingsManager *settingsManager = NULL);
   virtual ~CSettingDependency() { }
 
   virtual bool Deserialize(const TiXmlNode *node);
 
   SettingDependencyType GetType() const { return m_type; }
   std::set<std::string> GetSettings() const;
+
+  CSettingDependencyConditionCombinationPtr And();
+  CSettingDependencyConditionCombinationPtr Or();
 
 private:
   bool setType(const std::string &type);

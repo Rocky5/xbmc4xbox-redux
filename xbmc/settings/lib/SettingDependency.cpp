@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,6 +27,37 @@
 #include "utils/log.h"
 #include "utils/StringUtils.h"
 #include "utils/XBMCTinyXML.h"
+
+CSettingDependencyCondition::CSettingDependencyCondition(CSettingsManager *settingsManager /* = NULL */)
+  : CSettingConditionItem(settingsManager),
+    m_target(SettingDependencyTargetNone),
+    m_operator(SettingDependencyOperatorEquals)
+{ }
+
+CSettingDependencyCondition::CSettingDependencyCondition(const std::string &setting, const std::string &value,
+                            SettingDependencyOperator op, bool negated /* = false */,
+                            CSettingsManager *settingsManager /* = NULL */)
+  : CSettingConditionItem(settingsManager),
+    m_target(SettingDependencyTargetSetting),
+    m_operator(op)
+{
+  m_setting = m_name = setting;
+  m_value = value;
+  m_negated = negated;
+}
+
+CSettingDependencyCondition::CSettingDependencyCondition(const std::string &strProperty, const std::string &value,
+                            const std::string &setting /* = "" */, bool negated /* = false */,
+                            CSettingsManager *settingsManager /* = NULL */)
+  : CSettingConditionItem(settingsManager),
+    m_target(SettingDependencyTargetProperty),
+    m_operator(SettingDependencyOperatorEquals)
+{
+  m_name = strProperty;
+  m_value = value;
+  m_setting  = setting;
+  m_negated = negated;
+}
 
 bool CSettingDependencyCondition::Deserialize(const TiXmlNode *node)
 {
@@ -80,7 +111,7 @@ bool CSettingDependencyCondition::Check() const
       m_operator == SettingDependencyOperatorNone ||
       m_settingsManager == NULL)
     return false;
-  
+
   bool result = false;
   switch (m_target)
   {
@@ -106,7 +137,17 @@ bool CSettingDependencyCondition::Check() const
 
     case SettingDependencyTargetProperty:
     {
-      result = m_settingsManager->GetConditions().Check(m_name, m_value, m_setting);
+      const CSetting *setting = NULL;
+      if (!m_setting.empty())
+      {
+        setting = m_settingsManager->GetSetting(m_setting);
+        if (setting == NULL)
+        {
+          CLog::Log(LOGWARNING, "CSettingDependencyCondition: unable to check condition on unknown setting \"%s\"", m_setting.c_str());
+          return false;
+        }
+      }
+      result = m_settingsManager->GetConditions().Check(m_name, m_value, setting);
       break;
     }
 
@@ -202,9 +243,43 @@ bool CSettingDependencyConditionCombination::Deserialize(const TiXmlNode *node)
   return true;
 }
 
+CSettingDependencyConditionCombination* CSettingDependencyConditionCombination::Add(CSettingDependencyConditionPtr condition)
+{
+  if (condition != NULL)
+  {
+    m_values.push_back(condition);
+
+    std::string settingId = condition->GetSetting();
+    if (!settingId.empty())
+      m_settings.insert(settingId);
+  }
+
+  return this;
+}
+
+CSettingDependencyConditionCombination* CSettingDependencyConditionCombination::Add(CSettingDependencyConditionCombinationPtr operation)
+{
+  if (operation != NULL)
+  {
+    m_operations.push_back(operation);
+
+    const std::set<std::string>& settings = operation->GetSettings();
+    m_settings.insert(settings.begin(), settings.end());
+  }
+
+  return this;
+}
+
 CSettingDependency::CSettingDependency(CSettingsManager *settingsManager /* = NULL */)
   : CSettingCondition(settingsManager),
     m_type(SettingDependencyTypeNone)
+{
+  m_operation = CBooleanLogicOperationPtr(new CSettingDependencyConditionCombination(m_settingsManager));
+}
+
+CSettingDependency::CSettingDependency(SettingDependencyType type, CSettingsManager *settingsManager /* = NULL */)
+  : CSettingCondition(settingsManager),
+    m_type(type)
 {
   m_operation = CBooleanLogicOperationPtr(new CSettingDependencyConditionCombination(m_settingsManager));
 }
@@ -217,7 +292,7 @@ bool CSettingDependency::Deserialize(const TiXmlNode *node)
   const TiXmlElement *elem = node->ToElement();
   if (elem == NULL)
     return false;
-  
+
   const char *strType = elem->Attribute(SETTING_XML_ATTR_TYPE);
   if (strType == NULL || strlen(strType) <= 0 || !setType(strType))
   {
@@ -238,6 +313,26 @@ std::set<std::string> CSettingDependency::GetSettings() const
     return std::set<std::string>();
 
   return combination->GetSettings();
+}
+
+CSettingDependencyConditionCombinationPtr CSettingDependency::And()
+{
+  if (m_operation == NULL)
+    m_operation = CBooleanLogicOperationPtr(new CSettingDependencyConditionCombination(m_settingsManager));
+
+  m_operation->SetOperation(BooleanLogicOperationAnd);
+
+  return boost::dynamic_pointer_cast<CSettingDependencyConditionCombination>(m_operation);
+}
+
+CSettingDependencyConditionCombinationPtr CSettingDependency::Or()
+{
+  if (m_operation == NULL)
+    m_operation = CBooleanLogicOperationPtr(new CSettingDependencyConditionCombination(m_settingsManager));
+
+  m_operation->SetOperation(BooleanLogicOperationOr);
+
+  return boost::dynamic_pointer_cast<CSettingDependencyConditionCombination>(m_operation);
 }
 
 bool CSettingDependency::setType(const std::string &type)

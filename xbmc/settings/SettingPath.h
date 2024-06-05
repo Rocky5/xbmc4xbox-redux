@@ -1,7 +1,7 @@
 #pragma once
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,12 +21,13 @@
 
 #include <vector>
 
-#include "Setting.h"
+#include "settings/lib/Setting.h"
 
 class CSettingPath : public CSettingString
 {
 public:
   CSettingPath(const std::string &id, CSettingsManager *settingsManager = NULL);
+  CSettingPath(const std::string &id, int label, const std::string &value, CSettingsManager *settingsManager = NULL);
   CSettingPath(const std::string &id, const CSettingPath &setting);
   virtual ~CSettingPath() { }
 
@@ -36,7 +37,9 @@ public:
   virtual bool SetValue(const std::string &value);
 
   bool Writable() const { return m_writable; }
+  void SetWritable(bool writable) { m_writable = writable; }
   const std::vector<std::string>& GetSources() const { return m_sources; }
+  void SetSources(const std::vector<std::string> &sources) { m_sources = sources; }
 
 private:
   void copy(const CSettingPath &setting);

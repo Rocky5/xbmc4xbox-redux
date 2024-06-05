@@ -20,22 +20,26 @@
  */
 
 #include <set>
+#include <vector>
 
-#include "settings/ISettingCallback.h"
-#include "settings/ISettingControlCreator.h"
-#include "settings/ISettingCreator.h"
+#include <boost/shared_ptr.hpp>
+
+#include "settings/SettingControl.h"
+#include "settings/SettingCreator.h"
+#include "settings/lib/ISettingCallback.h"
 #include "threads/CriticalSection.h"
 #include "utils/Variant.h"
 
 #include "utils/StdString.h"
 
 class CSetting;
+class CSettingList;
 class CSettingSection;
 class CSettingsManager;
 class TiXmlElement;
 class TiXmlNode;
 
-class CSettings : public ISettingCreator, public ISettingControlCreator
+class CSettings : public CSettingCreator, public CSettingControlCreator
 {
 public:
   CSettings();
@@ -43,11 +47,7 @@ public:
 
   static CSettings& Get();
 
-  // implementation of ISettingCreator
-  virtual CSetting* CreateSetting(const std::string &settingType, const std::string &settingId, CSettingsManager *settingsManager = NULL) const;
-
-  // implementation of ISettingControlCreator
-  virtual ISettingControl* CreateControl(const std::string &controlType) const;
+  CSettingsManager* GetSettingsManager() const { return m_settingsManager; }
 
   bool Initialize();
   bool Load();
@@ -74,6 +74,11 @@ public:
   void UnregisterCallback(ISettingCallback *callback);
 
   CSetting* GetSetting(const std::string &id) const;
+  /*!
+   \brief Gets the full list of setting sections.
+   \return List of setting sections
+   */
+  std::vector<CSettingSection*> GetSections() const;
   CSettingSection* GetSection(const std::string &section) const;
 
   bool GetBool(const std::string &id) const;
@@ -101,7 +106,6 @@ public:
   bool SetList(const std::string &id, const std::vector<CVariant> &value);
 
   bool LoadSetting(const TiXmlNode *node, const std::string &settingId);
-
 private:
   CSettings(const CSettings&);
   CSettings const& operator=(CSettings const&);

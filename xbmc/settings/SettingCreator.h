@@ -1,6 +1,6 @@
 #pragma once
 /*
- *      Copyright (C) 2013 Team XBMC
+ *      Copyright (C) 2014 Team XBMC
  *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -19,27 +19,14 @@
  *
  */
 
-#include <string>
+#include "settings/lib/ISettingCreator.h"
 
-class TiXmlNode;
-
-class ISettingControl
+class CSettingCreator : public ISettingCreator
 {
 public:
-  ISettingControl()
-    : m_delayed(false)
-  { }
-  virtual ~ISettingControl() { }
+  CSettingCreator() { }
+  virtual ~CSettingCreator() { }
 
-  virtual std::string GetType() const = 0;
-  const std::string& GetFormat() const { return m_format; }
-  bool GetDelayed() const { return m_delayed; }
-
-  virtual bool Deserialize(const TiXmlNode *node, bool update = false);
-
-protected:
-  virtual bool SetFormat(const std::string &format) { return true; }
-
-  bool m_delayed;
-  std::string m_format;
+  // implementation of ISettingCreator
+  virtual CSetting* CreateSetting(const std::string &settingType, const std::string &settingId, CSettingsManager *settingsManager = NULL) const;
 };

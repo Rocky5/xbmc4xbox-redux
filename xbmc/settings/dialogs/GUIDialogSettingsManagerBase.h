@@ -1,6 +1,6 @@
 #pragma once
 /*
- *      Copyright (C) 2013 Team XBMC
+ *      Copyright (C) 2014 Team XBMC
  *      http://www.xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -19,15 +19,25 @@
  *
  */
 
-#include <string>
+#include "settings/dialogs/GUIDialogSettingsBase.h"
 
-class CSetting;
 class CSettingsManager;
 
-class ISettingCreator
+class CGUIDialogSettingsManagerBase : public CGUIDialogSettingsBase
 {
 public:
-  virtual ~ISettingCreator() { }
+  CGUIDialogSettingsManagerBase(int windowId, const std::string &xmlFile);
+  virtual ~CGUIDialogSettingsManagerBase();
 
-  virtual CSetting* CreateSetting(const std::string &settingType, const std::string &settingId, CSettingsManager *settingsManager = NULL) const = 0;
+protected:
+  // implementation of CGUIDialogSettingsBase
+  virtual CSetting* GetSetting(const std::string &settingId);
+
+  virtual std::set<std::string> CreateSettings();
+  virtual void FreeSettingsControls();
+
+  // implementation of ISettingControlCreator
+  virtual ISettingControl* CreateControl(const std::string &controlType);
+
+  CSettingsManager *m_settingsManager;
 };

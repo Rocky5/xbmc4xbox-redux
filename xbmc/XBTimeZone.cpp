@@ -21,7 +21,7 @@
 #include "system.h"
 #include "XBTimeZone.h"
 #include "LangInfo.h"
-#include "settings/Setting.h"
+#include "settings/lib/Setting.h"
 #include "settings/Settings.h"
 #include "utils/log.h"
 #ifdef HAS_XBOX_HARDWARE
@@ -981,7 +981,7 @@ void XBTimeZone::OnSettingChanged(const CSetting *setting)
     SetDST(((CSettingBool*)setting)->GetValue());
 }
 
-void XBTimeZone::SettingOptionsTimezonesFiller(const CSetting *setting, std::vector< std::pair<std::string, int> > &list, int &current)
+void XBTimeZone::SettingOptionsTimezonesFiller(const CSetting *setting, std::vector< std::pair<std::string, int> > &list, int &current, void *data)
 {
   current = ((const CSettingInt*)setting)->GetValue();
   bool found = false;

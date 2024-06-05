@@ -1,4 +1,3 @@
-#pragma once
 /*
  *      Copyright (C) 2013 Team XBMC
  *      http://xbmc.org
@@ -19,23 +18,17 @@
  *
  */
 
-#include <string>
+#include "SettingCreator.h"
+#include "settings/SettingAddon.h"
+#include "settings/SettingPath.h"
+#include "utils/StringUtils.h"
 
-class ISettingControl;
-
-/*!
- \ingroup settings
- \brief Interface for creating a new setting control of a custom setting control type.
- */
-class ISettingControlCreator
+CSetting* CSettingCreator::CreateSetting(const std::string &settingType, const std::string &settingId, CSettingsManager *settingsManager /* = NULL */) const
 {
-public:
-  virtual ~ISettingControlCreator() { }
+  if (StringUtils::EqualsNoCase(settingType, "addon"))
+    return new CSettingAddon(settingId, settingsManager);
+  else if (StringUtils::EqualsNoCase(settingType, "path"))
+    return new CSettingPath(settingId, settingsManager);
 
-  /*!
-   \brief Creates a new setting control of the given custom setting control type.
-   \param controlType string representation of the setting control type
-   \return A new setting control object of the given (custom) setting control type or NULL if the setting control type is unknown
-   */
-  virtual ISettingControl* CreateControl(const std::string &controlType) const = 0;
-};
+  return NULL;
+}

@@ -24,8 +24,8 @@
 
 // #include "guilib/Resolution.h" -> try to move RESOLUTION and RESOLUTION_INFO to Resolution.h
 #include "guilib/GraphicContext.h"
-#include "settings/ISettingCallback.h"
-#include "settings/ISubSettings.h"
+#include "settings/lib/ISettingCallback.h"
+#include "settings/lib/ISubSettings.h"
 #include "threads/CriticalSection.h"
 #include "utils/Observer.h"
 
@@ -80,8 +80,8 @@ public:
   float GetPixelRatio() const { return m_pixelRatio; }
   void SetPixelRatio(float pixelRatio) { m_pixelRatio = pixelRatio; }
 
-  static void SettingOptionsResolutionsFiller(const CSetting *setting, std::vector< std::pair<std::string, int> > &list, int &current);
-  static void SettingOptionsFramerateconversionsFiller(const CSetting *setting, std::vector< std::pair<std::string, int> > &list, int &current);
+  static void SettingOptionsResolutionsFiller(const CSetting *setting, std::vector< std::pair<std::string, int> > &list, int &current, void *data);
+  static void SettingOptionsFramerateconversionsFiller(const CSetting *setting, std::vector< std::pair<std::string, int> > &list, int &current, void *data);
 
 protected:
   CDisplaySettings();

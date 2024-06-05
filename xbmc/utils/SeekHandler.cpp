@@ -19,13 +19,14 @@
  *
  */
 
+#include "system.h" // <xtl.h>
 #include "SeekHandler.h"
 #include "guilib/LocalizeStrings.h"
 #include "GUIInfoManager.h"
 #include "Application.h"
 #include "settings/AdvancedSettings.h"
 #include "settings/Settings.h"
-#include "settings/Setting.h"
+#include "settings/lib/Setting.h"
 #include "utils/log.h"
 #include "utils/StringUtils.h"
 
@@ -181,7 +182,7 @@ void CSeekHandler::Process()
   }
 }
 
-void CSeekHandler::SettingOptionsSeekStepsFiller(const CSetting *setting, std::vector< std::pair<std::string, int> > &list, int &current)
+void CSeekHandler::SettingOptionsSeekStepsFiller(const CSetting *setting, std::vector< std::pair<std::string, int> > &list, int &current, void *data)
 {
   std::string label;
   for (std::vector<int>::iterator it = g_advancedSettings.m_videoSeekSteps.begin(); it != g_advancedSettings.m_videoSeekSteps.end(); ++it) {

@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,22 +18,27 @@
  *
  */
 
-#include "SettingRequirement.h"
+#include "SettingCategoryAccess.h"
+#include "SettingConditions.h"
 #include "SettingsManager.h"
+#include "utils/log.h"
 
-bool CSettingRequirementCondition::Check() const
+bool CSettingCategoryAccessCondition::Check() const
 {
+  if (m_value.empty())
+    return true;
+
   if (m_settingsManager == NULL)
     return false;
 
-  bool found = m_settingsManager->GetConditions().Check("IsDefined", m_value);
+  bool found = m_settingsManager->GetConditions().Check(m_value, "true");
   if (m_negated)
     return !found;
 
   return found;
 }
 
-bool CSettingRequirementConditionCombination::Check() const
+bool CSettingCategoryAccessConditionCombination::Check() const
 {
   if (m_operations.empty() && m_values.empty())
     return true;
@@ -41,8 +46,8 @@ bool CSettingRequirementConditionCombination::Check() const
   return CSettingConditionCombination::Check();
 }
 
-CSettingRequirement::CSettingRequirement(CSettingsManager *settingsManager /* = NULL */)
+CSettingCategoryAccess::CSettingCategoryAccess(CSettingsManager *settingsManager /* = NULL */)
   : CSettingCondition(settingsManager)
 {
-  m_operation = CBooleanLogicOperationPtr(new CSettingRequirementConditionCombination(m_settingsManager));
+  m_operation = CBooleanLogicOperationPtr(new CSettingCategoryAccessConditionCombination(m_settingsManager));
 }

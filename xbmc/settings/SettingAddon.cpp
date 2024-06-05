@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,10 +20,11 @@
 
 #include "SettingAddon.h"
 #include "addons/Addon.h"
-#include "settings/SettingsManager.h"
+#include "settings/lib/SettingsManager.h"
 #include "utils/log.h"
 #include "utils/XBMCTinyXML.h"
 #include "utils/XMLUtils.h"
+#include "utils/StdString.h"
 
 #define XML_ELM_DEFAULT     "default"
 
@@ -31,7 +32,12 @@ CSettingAddon::CSettingAddon(const std::string &id, CSettingsManager *settingsMa
   : CSettingString(id, settingsManager),
     m_addonType(ADDON::ADDON_UNKNOWN)
 { }
-  
+
+CSettingAddon::CSettingAddon(const std::string &id, int label, const std::string &value, CSettingsManager *settingsManager /* = NULL */)
+  : CSettingString(id, label, value, settingsManager),
+    m_addonType(ADDON::ADDON_UNKNOWN)
+{ }
+
 CSettingAddon::CSettingAddon(const std::string &id, const CSettingAddon &setting)
   : CSettingString(id, setting)
 {
@@ -49,7 +55,7 @@ bool CSettingAddon::Deserialize(const TiXmlNode *node, bool update /* = false */
 
   if (!CSettingString::Deserialize(node, update))
     return false;
-    
+
   if (m_control != NULL &&
      (m_control->GetType() != "button" || m_control->GetFormat() != "addon"))
   {

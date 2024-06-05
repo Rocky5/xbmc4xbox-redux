@@ -19,12 +19,12 @@
  *  http://www.gnu.org/copyleft/gpl.html
  *
  */
+#include <math.h>
 
 #include "Addon.h"
 #include "DllAddon.h"
 #include "AddonManager.h"
 #include "AddonStatusHandler.h"
-#include "settings/dialogs/GUIDialogSettings.h"
 #include "utils/URIUtils.h"
 #include "filesystem/File.h"
 #include "filesystem/SpecialProtocol.h"

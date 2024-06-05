@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -71,40 +71,7 @@ bool CSettingsManager::Initialize(const TiXmlElement *root)
         section = itSection->second;
 
       if (section->Deserialize(sectionNode, update))
-      {
-        section->CheckRequirements();
-        if (!update)
-          m_sections[section->GetId()] = section;
-
-        // get all settings and add them to the settings map
-        for (SettingCategoryList::const_iterator categoryIt = section->GetCategories().begin(); categoryIt != section->GetCategories().end(); ++categoryIt)
-        {
-          (*categoryIt)->CheckRequirements();
-          for (SettingGroupList::const_iterator groupIt = (*categoryIt)->GetGroups().begin(); groupIt != (*categoryIt)->GetGroups().end(); ++groupIt)
-          {
-            (*groupIt)->CheckRequirements();
-            for (SettingList::const_iterator settingIt = (*groupIt)->GetSettings().begin(); settingIt != (*groupIt)->GetSettings().end(); ++settingIt)
-            {
-              (*settingIt)->CheckRequirements();
-
-              const std::string &settingId = (*settingIt)->GetId();
-              SettingMap::iterator setting = m_settings.find(settingId);
-              if (setting == m_settings.end())
-              {
-                Setting tmpSetting = { NULL };
-                std::pair<SettingMap::iterator, bool> tmpIt = m_settings.insert(make_pair(settingId, tmpSetting));
-                setting = tmpIt.first;
-              }
-                
-              if (setting->second.setting == NULL)
-              {
-                setting->second.setting = *settingIt;
-                (*settingIt)->m_callback = this;
-              }
-            }
-          }
-        }
-      }
+        AddSection(section);
       else
       {
         CLog::Log(LOGWARNING, "CSettingsManager: unable to read section \"%s\"", sectionId.c_str());
@@ -112,40 +79,8 @@ bool CSettingsManager::Initialize(const TiXmlElement *root)
           delete section;
       }
     }
-      
+
     sectionNode = sectionNode->NextSibling(SETTING_XML_ELM_SECTION);
-  }
-
-  for (SettingMap::iterator itSettingDep = m_settings.begin(); itSettingDep != m_settings.end(); ++itSettingDep)
-  {
-    if (itSettingDep->second.setting == NULL)
-      continue;
-
-    const SettingDependencies& deps = itSettingDep->second.setting->GetDependencies();
-    for (SettingDependencies::const_iterator depIt = deps.begin(); depIt != deps.end(); ++depIt)
-    {
-      std::set<std::string> settingIds = depIt->GetSettings();
-      for (std::set<std::string>::const_iterator itSettingId = settingIds.begin(); itSettingId != settingIds.end(); ++itSettingId)
-      {
-        SettingMap::iterator setting = m_settings.find(*itSettingId);
-        if (setting == m_settings.end())
-          continue;
-
-        bool newDep = true;
-        SettingDependencies &settingDeps = setting->second.dependencies[itSettingDep->first];
-        for (SettingDependencies::const_iterator itDeps = settingDeps.begin(); itDeps != settingDeps.end(); ++itDeps)
-        {
-          if (itDeps->GetType() == depIt->GetType())
-          {
-            newDep = false;
-            break;
-          }
-        }
-
-        if (newDep)
-          settingDeps.push_back(*depIt);
-      }
-    }
   }
 
   return true;
@@ -270,6 +205,87 @@ void CSettingsManager::SetInitialized()
     SettingMap::iterator tmpIterator = setting++;
     if (tmpIterator->second.setting == NULL)
       m_settings.erase(tmpIterator);
+  }
+
+  // figure out all the dependencies between settings
+  for (SettingMap::iterator itSettingDep = m_settings.begin(); itSettingDep != m_settings.end(); ++itSettingDep)
+  {
+    if (itSettingDep->second.setting == NULL)
+      continue;
+
+    // if the setting has a parent setting, add it to its children
+    std::string parentSettingId = itSettingDep->second.setting->GetParent();
+    if (!parentSettingId.empty())
+    {
+      SettingMap::iterator itParentSetting = m_settings.find(parentSettingId);
+      if (itParentSetting != m_settings.end())
+        itParentSetting->second.children.insert(itSettingDep->first);
+    }
+
+    // handle all dependencies of the setting
+    const SettingDependencies& deps = itSettingDep->second.setting->GetDependencies();
+    for (SettingDependencies::const_iterator depIt = deps.begin(); depIt != deps.end(); ++depIt)
+    {
+      std::set<std::string> settingIds = depIt->GetSettings();
+      for (std::set<std::string>::const_iterator itSettingId = settingIds.begin(); itSettingId != settingIds.end(); ++itSettingId)
+      {
+        SettingMap::iterator setting = m_settings.find(*itSettingId);
+        if (setting == m_settings.end())
+          continue;
+
+        bool newDep = true;
+        SettingDependencies &settingDeps = setting->second.dependencies[itSettingDep->first];
+        for (SettingDependencies::const_iterator itDeps = settingDeps.begin(); itDeps != settingDeps.end(); ++itDeps)
+        {
+          if (itDeps->GetType() == depIt->GetType())
+          {
+            newDep = false;
+            break;
+          }
+        }
+
+        if (newDep)
+          settingDeps.push_back(*depIt);
+      }
+    }
+  }
+}
+
+void CSettingsManager::AddSection(CSettingSection *section)
+{
+  if (section == NULL)
+    return;
+
+  section->CheckRequirements();
+  m_sections[section->GetId()] = section;
+
+  // get all settings and add them to the settings map
+  for (SettingCategoryList::const_iterator categoryIt = section->GetCategories().begin(); categoryIt != section->GetCategories().end(); ++categoryIt)
+  {
+    (*categoryIt)->CheckRequirements();
+    for (SettingGroupList::const_iterator groupIt = (*categoryIt)->GetGroups().begin(); groupIt != (*categoryIt)->GetGroups().end(); ++groupIt)
+    {
+      (*groupIt)->CheckRequirements();
+      for (SettingList::const_iterator settingIt = (*groupIt)->GetSettings().begin(); settingIt != (*groupIt)->GetSettings().end(); ++settingIt)
+      {
+        (*settingIt)->CheckRequirements();
+
+        const std::string &settingId = (*settingIt)->GetId();
+        SettingMap::iterator setting = m_settings.find(settingId);
+        if (setting == m_settings.end())
+        {
+          Setting tmpSetting = { NULL };
+          std::pair<SettingMap::iterator, bool> tmpIt = m_settings.insert(make_pair(settingId, tmpSetting));
+          setting = tmpIt.first;
+        }
+
+        if (setting->second.setting == NULL)
+        {
+          setting->second.setting = *settingIt;
+          (*settingIt)->SetCallback(this);
+        }
+      }
+    }
   }
 }
 
@@ -398,9 +414,9 @@ void* CSettingsManager::GetSettingOptionsFiller(const CSetting *setting)
   // get the option filler's identifier
   std::string filler;
   if (setting->GetType() == SettingTypeInteger)
-    filler = ((const CSettingInt*)setting)->GetOptionsFiller();
+    filler = ((const CSettingInt*)setting)->GetOptionsFillerName();
   else if (setting->GetType() == SettingTypeString)
-    filler = ((const CSettingString*)setting)->GetOptionsFiller();
+    filler = ((const CSettingString*)setting)->GetOptionsFillerName();
 
   if (filler.empty())
     return NULL;
@@ -423,7 +439,7 @@ void* CSettingsManager::GetSettingOptionsFiller(const CSetting *setting)
 
       break;
     }
-    
+
     case SettingOptionsFillerTypeString:
     {
       if (setting->GetType() != SettingTypeString)
@@ -454,6 +470,16 @@ CSetting* CSettingsManager::GetSetting(const std::string &id) const
 
   CLog::Log(LOGDEBUG, "CSettingsManager: requested setting (%s) was not found.", id.c_str());
   return NULL;
+}
+
+std::vector<CSettingSection*> CSettingsManager::GetSections() const
+{
+  CSharedLock lock(m_critical);
+  std::vector<CSettingSection*> sections;
+  for (SettingSectionMap::const_iterator sectionIt = m_sections.begin(); sectionIt != m_sections.end(); ++sectionIt)
+    sections.push_back(sectionIt->second);
+
+  return sections;
 }
 
 CSettingSection* CSettingsManager::GetSection(const std::string &section) const
@@ -618,7 +644,7 @@ void CSettingsManager::AddCondition(const std::string &identifier, SettingCondit
 
   m_conditions.AddCondition(identifier, condition);
 }
-  
+
 bool CSettingsManager::Serialize(TiXmlNode *parent) const
 {
   if (parent == NULL)
@@ -637,20 +663,20 @@ bool CSettingsManager::Serialize(TiXmlNode *parent) const
       CLog::Log(LOGWARNING, "CSettingsManager: unable to save setting \"%s\"", it->first.c_str());
       continue;
     }
-      
+
     TiXmlNode *sectionNode = parent->FirstChild(parts.at(0));
     if (sectionNode == NULL)
     {
       TiXmlElement sectionElement(parts.at(0));
       sectionNode = parent->InsertEndChild(sectionElement);
-        
+
       if (sectionNode == NULL)
       {
         CLog::Log(LOGWARNING, "CSettingsManager: unable to write <%s> tag", parts.at(0).c_str());
         continue;
       }
     }
-      
+
     TiXmlElement settingElement(parts.at(1));
     TiXmlNode *settingNode = sectionNode->InsertEndChild(settingElement);
     if (settingNode == NULL)
@@ -664,14 +690,14 @@ bool CSettingsManager::Serialize(TiXmlNode *parent) const
       if (settingElem != NULL)
         settingElem->SetAttribute(SETTING_XML_ELM_DEFAULT, "true");
     }
-      
+
     TiXmlText value(it->second.setting->ToString());
     settingNode->InsertEndChild(value);
   }
 
   return true;
 }
-  
+
 bool CSettingsManager::Deserialize(const TiXmlNode *node, bool &updated, std::map<std::string, CSetting*> *loadedSettings /* = NULL */)
 {
   updated = false;
@@ -722,13 +748,13 @@ bool CSettingsManager::OnSettingChanging(const CSetting *setting)
 
   return true;
 }
-  
+
 void CSettingsManager::OnSettingChanged(const CSetting *setting)
 {
   CSharedLock lock(m_settingsCritical);
   if (!m_loaded || setting == NULL)
     return;
-    
+
   SettingMap::const_iterator settingIt = m_settings.find(setting->GetId());
   if (settingIt == m_settings.end())
     return;
@@ -736,7 +762,7 @@ void CSettingsManager::OnSettingChanged(const CSetting *setting)
   Setting settingData = settingIt->second;
   // now that we have a copy of the setting's data, we can leave the lock
   lock.Leave();
-    
+
   for (CallbackSet::iterator callback = settingData.callbacks.begin();
         callback != settingData.callbacks.end();
         ++callback)
@@ -812,6 +838,20 @@ void CSettingsManager::OnSettingPropertyChanged(const CSetting *setting, const c
         callback != settingData.callbacks.end();
         ++callback)
     (*callback)->OnSettingPropertyChanged(setting, propertyName);
+
+  // check the changed property and if it may have an influence on the
+  // children of the setting
+  SettingDependencyType dependencyType = SettingDependencyTypeNone;
+  if (StringUtils::EqualsNoCase(propertyName, "enabled"))
+    dependencyType = SettingDependencyTypeEnable;
+  else if (StringUtils::EqualsNoCase(propertyName, "visible"))
+    dependencyType = SettingDependencyTypeVisible;
+
+  if (dependencyType != SettingDependencyTypeNone)
+  {
+    for (std::set<std::string>::const_iterator childIt = settingIt->second.children.begin(); childIt != settingIt->second.children.end(); ++childIt)
+      UpdateSettingByDependency(*childIt, dependencyType);
+  }
 }
 
 CSetting* CSettingsManager::CreateSetting(const std::string &settingType, const std::string &settingId, CSettingsManager *settingsManager /* = NULL */) const
@@ -1007,11 +1047,16 @@ bool CSettingsManager::UpdateSetting(const TiXmlNode *node, CSetting *setting, c
 
 void CSettingsManager::UpdateSettingByDependency(const std::string &settingId, const CSettingDependency &dependency)
 {
+  UpdateSettingByDependency(settingId, dependency.GetType());
+}
+
+void CSettingsManager::UpdateSettingByDependency(const std::string &settingId, SettingDependencyType dependencyType)
+{
   CSetting *setting = GetSetting(settingId);
   if (setting == NULL)
     return;
 
-  switch (dependency.GetType())
+  switch (dependencyType)
   {
     case SettingDependencyTypeEnable:
       // just trigger the property changed callback and a call to

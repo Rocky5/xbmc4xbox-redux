@@ -1,6 +1,6 @@
 /*
  *      Copyright (C) 2013 Team XBMC
- *      http://www.xbmc.org
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 #include "SettingPath.h"
-#include "settings/SettingsManager.h"
+#include "settings/lib/SettingsManager.h"
 #include "utils/log.h"
 #include "utils/StringUtils.h"
 #include "utils/XBMCTinyXML.h"
@@ -32,7 +32,12 @@ CSettingPath::CSettingPath(const std::string &id, CSettingsManager *settingsMana
   : CSettingString(id, settingsManager),
     m_writable(true)
 { }
-  
+
+CSettingPath::CSettingPath(const std::string &id, int label, const std::string &value, CSettingsManager *settingsManager /* = NULL */)
+  : CSettingString(id, label, value, settingsManager),
+    m_writable(true)
+{ }
+
 CSettingPath::CSettingPath(const std::string &id, const CSettingPath &setting)
   : CSettingString(id, setting)
 {
@@ -50,14 +55,14 @@ bool CSettingPath::Deserialize(const TiXmlNode *node, bool update /* = false */)
 
   if (!CSettingString::Deserialize(node, update))
     return false;
-    
+
   if (m_control != NULL &&
      (m_control->GetType() != "button" || m_control->GetFormat() != "path"))
   {
     CLog::Log(LOGERROR, "CSettingPath: invalid <control> of \"%s\"", m_id.c_str());
     return false;
   }
-    
+
   const TiXmlNode *constraints = node->FirstChild(XML_ELM_CONSTRAINTS);
   if (constraints != NULL)
   {
