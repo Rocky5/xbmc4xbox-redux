@@ -859,7 +859,7 @@ bool PAPlayer::CanSeek()
   return ((m_decoder[m_currentDecoder].TotalTime() > 0) && m_decoder[m_currentDecoder].CanSeek());
 }
 
-void PAPlayer::Seek(bool bPlus, bool bLargeStep)
+void PAPlayer::Seek(bool bPlus, bool bLargeStep, bool bChapterOverride)
 {
   __int64 seek;
   if (g_advancedSettings.m_musicUseTimeSeeking && GetTotalTime() > 2*g_advancedSettings.m_musicTimeSeekForwardBig)

@@ -1546,7 +1546,7 @@ bool CMPlayer::HasAudio() const
   return (mplayer_HasAudio() == TRUE);
 }
 
-void CMPlayer::Seek(bool bPlus, bool bLargeStep)
+void CMPlayer::Seek(bool bPlus, bool bLargeStep, bool bChapterOverride)
 {
   // Use relative time seeking if we dont know the length of the video
   // or its explicitly enabled, and the length is alteast twice the size of the largest forward seek value

@@ -194,7 +194,7 @@ bool ModPlayer::HasAudio() const
   return true;
 }
 
-void ModPlayer::Seek(bool bPlus, bool bLargeStep)
+void ModPlayer::Seek(bool bPlus, bool bLargeStep, bool bChapterOverride)
 {}
 
 void ModPlayer::SetVolume(long nVolume)

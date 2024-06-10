@@ -143,7 +143,7 @@ public:
   virtual bool HasVideo() const;
   virtual bool HasAudio() const;
 
-  virtual void Seek(bool bPlus = true, bool bLargeStep = false);
+  virtual void Seek(bool bPlus = true, bool bLargeStep = false, bool bChapterOverride = false);
   virtual bool SeekScene(bool bPlus = true);
   virtual void SetVolume(long nVolume);
   virtual void SetDynamicRangeCompression(long drc);

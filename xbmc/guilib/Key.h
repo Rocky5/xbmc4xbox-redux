@@ -184,6 +184,9 @@
 #define ACTION_MUTE                 91
 #define ACTION_NAV_BACK             92
 
+#define ACTION_CHAPTER_OR_BIG_STEP_FORWARD       97 // Goto the next chapter, if not available perform a big step forward
+#define ACTION_CHAPTER_OR_BIG_STEP_BACK          98 // Goto the previous chapter, if not available perform a big step back
+
 #define ACTION_MOUSE_START            100
 #define ACTION_MOUSE_LEFT_CLICK       100
 #define ACTION_MOUSE_RIGHT_CLICK      101

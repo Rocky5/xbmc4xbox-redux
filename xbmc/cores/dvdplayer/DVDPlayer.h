@@ -172,7 +172,7 @@ public:
   virtual bool HasVideo() const;
   virtual bool HasAudio() const;
   virtual bool CanSeek();
-  virtual void Seek(bool bPlus, bool bLargeStep);
+  virtual void Seek(bool bPlus, bool bLargeStep, bool bChapterOverride);
   virtual bool SeekScene(bool bPlus = true);
   virtual void SeekPercentage(float iPercent);
   virtual float GetPercentage();
