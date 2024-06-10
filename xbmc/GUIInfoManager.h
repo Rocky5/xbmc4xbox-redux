@@ -102,6 +102,7 @@ namespace INFO
 #define PLAYER_SEEKOFFSET            47
 #define PLAYER_PROGRESS_CACHE        48
 #define PLAYER_ITEM_ART              49
+#define PLAYER_SEEKSTEPSIZE          56
 
 #define WEATHER_CONDITIONS          100
 #define WEATHER_TEMPERATURE         101
@@ -706,6 +707,7 @@ public:
 
   bool GetDisplayAfterSeek();
   void SetDisplayAfterSeek(unsigned int timeOut = 2500, int seekOffset = 0);
+  void SetSeekStepSize(int seekStepSize) { m_seekStepSize = seekStepSize; };
   void SetSeeking(bool seeking) { m_playerSeeking = seeking; };
   void SetShowTime(bool showtime) { m_playerShowTime = showtime; };
   void SetShowCodec(bool showcodec) { m_playerShowCodec = showcodec; };
@@ -834,6 +836,7 @@ protected:
   //Fullscreen OSD Stuff
   DWORD m_AfterSeekTimeout;
   int m_seekOffset;
+  int m_seekStepSize;
   bool m_playerSeeking;
   bool m_playerShowTime;
   bool m_playerShowCodec;
