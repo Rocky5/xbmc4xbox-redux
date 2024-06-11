@@ -23,6 +23,7 @@
 #include "utils/SystemInfo.h"
 #include "XBVideoConfig.h"
 #include "AlarmClock.h"
+#include "utils/SeekHandler.h"
 #include "Application.h"
 #include "ApplicationMessenger.h"
 #include "Autorun.h"
@@ -123,6 +124,7 @@ const BUILT_IN commands[] = {
   { "RunAddon",                   true,   "Run the specified plugin/script" },
   { "Extract",                    true,   "Extracts the specified archive" },
   { "PlayMedia",                  true,   "Play the specified media file (or playlist)" },
+  { "Seek",                       true,   "Performs a seek in seconds on the current playing media file" },
   { "SlideShow",                  true,   "Run a slideshow from the specified directory" },
   { "RecursiveSlideShow",         true,   "Run a slideshow from the specified directory, including all subdirs" },
   { "ReloadSkin",                 false,  "Reload XBMC's skin" },
@@ -591,6 +593,16 @@ int CBuiltins::Execute(const CStdString& execString)
         return false;
       }
     }
+  }
+  else if (execute == "seek")
+  {
+    if (!params.size())
+    {
+      CLog::Log(LOGERROR, "Seek called with empty parameter");
+      return -3;
+    }
+    if (g_application.m_pPlayer->IsPlaying())
+      CSeekHandler::Get().SeekSeconds(atoi(params[0].c_str()));
   }
   else if (execute.Equals("showPicture"))
   {
