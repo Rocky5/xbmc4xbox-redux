@@ -115,14 +115,12 @@ void CAdvancedSettings::Initialize()
   m_audioApplyDrc = true;
   m_dvdplayerIgnoreDTSinWAV = false;
 
-  m_seekSteps.push_back(7);
-  m_seekSteps.push_back(15);
+  m_seekSteps.push_back(10);
   m_seekSteps.push_back(30);
   m_seekSteps.push_back(60);
   m_seekSteps.push_back(180);
   m_seekSteps.push_back(300);
   m_seekSteps.push_back(600);
-  m_seekSteps.push_back(900);
   m_seekSteps.push_back(1800);
 
   m_karaokeChangeGenreForKaraokeSongs = false;
