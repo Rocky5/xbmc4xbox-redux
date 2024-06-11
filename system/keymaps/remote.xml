@@ -191,10 +191,10 @@
   </PlayerControls>
   <Visualisation>
     <remote>
-      <left>PreviousPreset</left>
-      <right>NextPreset</right>
-      <up>IncreaseRating</up>
-      <down>DecreaseRating</down>
+      <left>StepBack</left>
+      <right>StepForward</right>
+      <up>SkipNext</up>
+      <down>SkipPrevious</down>
       <back>LockPreset</back>
       <title>CodecInfo</title>
       <select>XBMC.ActivateWindow(VisualisationPresetList)</select>

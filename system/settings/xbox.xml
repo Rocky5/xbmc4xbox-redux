@@ -434,10 +434,10 @@
       </group>
     </category>
     <category id="musicplayer">
-      <group id="4">
+      <group id="5">
         <default>visualization.milkdrop</default>
       </group>
-      <group id="5">
+      <group id="6">
         <setting id="musicplayer.defaultplayer" type="integer" label="38784" help="">
           <level>0</level>
           <default>2</default> <!-- PLAYER_PAPLAYER -->

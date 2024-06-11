@@ -3001,6 +3001,9 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					RelativePath=".\xbmc\interfaces\Builtins.h">
 				</File>
 				<File
+					RelativePath=".\xbmc\interfaces\IActionListener.h">
+				</File>
+				<File
 					RelativePath=".\xbmc\interfaces\IAnnouncer.h">
 				</File>
 				<File

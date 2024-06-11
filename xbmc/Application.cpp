@@ -329,7 +329,6 @@ CApplication::CApplication(void)
   , m_progressTrackingItem(new CFileItem)
   , m_videoInfoScanner(new CVideoInfoScanner)
   , m_musicInfoScanner(new CMusicInfoScanner)
-  , m_seekHandler(&CSeekHandler::Get())
 {
   m_network = NULL;
   m_iPlaySpeed = 1;
@@ -372,6 +371,8 @@ CApplication::CApplication(void)
 CApplication::~CApplication(void)
 {
   delete m_currentStack;
+
+  m_actionListeners.clear();
 }
 
 // text out routine for below
@@ -1334,6 +1335,9 @@ HRESULT CApplication::Initialize()
 #endif
   CAddonMgr::Get().StartServices(false);
 
+  // register action listeners
+  RegisterActionListener(&CSeekHandler::Get());
+
   CLog::Log(LOGNOTICE, "initialize done");
 
   m_bInitializing = false;
@@ -2210,6 +2214,10 @@ bool CApplication::OnAction(CAction &action)
 
   // handle extra global presses
 
+  // notify action listeners
+  if (NotifyActionListeners(action))
+    return true;
+
   // screenshot : take a screenshot :)
   if (action.GetID() == ACTION_TAKE_SCREENSHOT)
   {
@@ -2467,13 +2475,6 @@ bool CApplication::OnAction(CAction &action)
     }
     return true;
   }
-  // Check for global seek control
-  if (IsPlaying() && action.GetAmount() && (action.GetID() == ACTION_ANALOG_SEEK_FORWARD || action.GetID() == ACTION_ANALOG_SEEK_BACK))
-  {
-    if (!m_pPlayer->CanSeek()) return false;
-    m_seekHandler->Seek(action.GetID() == ACTION_ANALOG_SEEK_FORWARD, action.GetAmount(), action.GetRepeat(), true);
-    return true;
-  }
   if (action.GetID() == ACTION_SHOW_PLAYLIST)
   {
     int iPlaylist = g_playlistPlayer.GetCurrentPlaylist();
@@ -2551,6 +2552,10 @@ void CApplication::FrameMove(bool processEvents, bool processGUI)
     ProcessRemote(frameTime);
     ProcessGamepad(frameTime);
     ProcessEventServer(frameTime);
+    if (processGUI)
+    {
+      CSeekHandler::Get().Process();
+    }
   }
   if (processGUI)
   {
@@ -3257,6 +3262,9 @@ void CApplication::Stop(bool bLCDStop)
 
     // Stop services before unloading Python
     CAddonMgr::Get().StopServices(false);
+
+    // unregister action listeners
+    UnregisterActionListener(&CSeekHandler::Get());
 
     // stop all remaining scripts; must be done after skin has been unloaded,
     // not before some windows still need it when deinitializing during skin
@@ -4586,7 +4594,7 @@ bool CApplication::OnMessage(CGUIMessage& message)
   case GUI_MSG_PLAYBACK_STARTED:
     {
       // reset the seek handler
-      m_seekHandler->Reset();
+      CSeekHandler::Get().Reset();
 
       // Update our infoManager with the new details etc.
       if (m_nextPlaylistItem >= 0)
@@ -5832,6 +5840,34 @@ bool CApplication::OnSettingUpdate(CSetting* &setting, const char *oldSettingId,
   //     return true;
   //   }
   // }
+
+  return false;
+}
+
+void CApplication::RegisterActionListener(IActionListener *listener)
+{
+  CSingleLock lock(m_critSection);
+  std::vector<IActionListener *>::iterator it = std::find(m_actionListeners.begin(), m_actionListeners.end(), listener);
+  if (it == m_actionListeners.end())
+    m_actionListeners.push_back(listener);
+}
+
+void CApplication::UnregisterActionListener(IActionListener *listener)
+{
+  CSingleLock lock(m_critSection);
+  std::vector<IActionListener *>::iterator it = std::find(m_actionListeners.begin(), m_actionListeners.end(), listener);
+  if (it != m_actionListeners.end())
+    m_actionListeners.erase(it);
+}
+
+bool CApplication::NotifyActionListeners(const CAction &action) const
+{
+  CSingleLock lock(m_critSection);
+  for (std::vector<IActionListener *>::const_iterator it = m_actionListeners.begin(); it != m_actionListeners.end(); ++it)
+  {
+    if ((*it)->OnAction(action))
+      return true;
+  }
 
   return false;
 }

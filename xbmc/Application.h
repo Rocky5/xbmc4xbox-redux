@@ -47,6 +47,7 @@ namespace ADDON
 #include "Autorun.h"
 #include "video/Bookmark.h"
 #include "utils/Stopwatch.h"
+#include "interfaces/IActionListener.h"
 
 class CNetwork;
 
@@ -269,15 +270,21 @@ public:
 
   void SetLoggingIn(bool loggingIn) { m_loggingIn = loggingIn; }
 
+  /*!
+   \brief Register an action listener.
+   \param listener The listener to register
+   */
+  void RegisterActionListener(IActionListener *listener);
+  /*!
+   \brief Unregister an action listener.
+   \param listener The listener to unregister
+   */
+  void UnregisterActionListener(IActionListener *listener);
+
   bool SwitchToFullScreen(bool force = false);
 
   CSplash* GetSplash() { return m_splash; }
 
-  /*! \brief Retrieve the applications seek handler.
-   \return a constant pointer to the seek handler.
-   \sa CSeekHandler
-   */
-  CSeekHandler* const GetSeekHandler() const { return m_seekHandler; };
 protected:
   virtual bool OnSettingsSaving() const;
 
@@ -289,6 +296,13 @@ protected:
   virtual bool OnSettingUpdate(CSetting* &setting, const char *oldSettingId, const TiXmlNode *oldSettingNode);
 
   bool LoadSkin(const boost::shared_ptr<ADDON::CSkinInfo>& skin);
+
+  /*!
+   \brief Delegates the action to all registered action handlers.
+   \param action The action
+   \return true, if the action was taken by one of the action listener.
+   */
+  bool NotifyActionListeners(const CAction &action) const;
 
   bool m_skinReverting;
 
@@ -368,7 +382,6 @@ protected:
 
   void InitDirectoriesXbox();
 
-  CSeekHandler *m_seekHandler;
   CNetwork    *m_network;
   
 #ifdef HAS_EVENT_SERVER
@@ -376,6 +389,11 @@ protected:
 #endif
 
   ReplayGainSettings m_replayGainSettings;
+
+  std::vector<IActionListener *> m_actionListeners;
+
+private:
+  CCriticalSection                m_critSection;                 /*!< critical section for all changes to this class, except for changes to triggers */
 };
 
 XBMC_GLOBAL_REF(CApplication,g_application);
