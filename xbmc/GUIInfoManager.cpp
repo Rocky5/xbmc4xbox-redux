@@ -68,6 +68,7 @@
 #include "settings/SkinSettings.h"
 #include "utils/URIUtils.h"
 #include "threads/SingleLock.h"
+#include "messaging/ApplicationMessenger.h"
 
 // stuff for current song
 #ifdef HAS_FILESYSTEM
@@ -4917,4 +4918,55 @@ bool CGUIInfoManager::ConditionsChangedValues(const std::map<INFO::InfoPtr, bool
       return true;
   }
   return false;
+}
+
+int CGUIInfoManager::GetMessageMask()
+{
+  return TMSG_MASK_GUIINFOMANAGER;
+}
+
+void CGUIInfoManager::OnApplicationMessage(KODI::MESSAGING::ThreadMessage* pMsg)
+{
+  switch (pMsg->dwMessage)
+  {
+  case TMSG_GUI_INFOLABEL:
+  {
+    if (pMsg->lpVoid)
+    {
+      std::vector<std::string>* infoLabels = static_cast<std::vector<std::string>*>(pMsg->lpVoid);
+      for (std::vector<std::string>::iterator it = pMsg->params.begin(); it < pMsg->params.end(); ++it)
+        infoLabels->push_back(GetLabel(TranslateString(*it)));
+    }
+  }
+  break;
+
+  case TMSG_GUI_INFOBOOL:
+  {
+    if (pMsg->lpVoid)
+    {
+      std::vector<bool>* infoLabels = static_cast<std::vector<bool>*>(pMsg->lpVoid);
+      for (std::vector<std::string>::iterator it = pMsg->params.begin(); it < pMsg->params.end(); ++it)
+        infoLabels->push_back(EvaluateBool(*it));
+    }
+  }
+  break;
+
+  case TMSG_UPDATE_CURRENT_ITEM:
+  {
+    CFileItem* item = static_cast<CFileItem*>(pMsg->lpVoid);
+    if (!item)
+      return;
+    if (pMsg->param1 == 1 && item->HasMusicInfoTag()) // only grab music tag
+      SetCurrentSongTag(*item->GetMusicInfoTag());
+    else if (pMsg->param1 == 2 && item->HasVideoInfoTag()) // only grab video tag
+      SetCurrentVideoTag(*item->GetVideoInfoTag());
+    else
+      SetCurrentItem(*item);
+    delete item;
+  }
+  break;
+
+  default:
+    break;
+  }
 }

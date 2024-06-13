@@ -20,7 +20,7 @@
 
 #include "GUIPassword.h"
 #include "GUIUserMessages.h"
-#include "ApplicationMessenger.h"
+#include "messaging/ApplicationMessenger.h"
 #include "dialogs/GUIDialogGamepad.h"
 #include "guilib/GUIKeyboardFactory.h"
 #include "dialogs/GUIDialogNumeric.h"
@@ -37,6 +37,8 @@
 #include "guilib/LocalizeStrings.h"
 #include "utils/log.h"
 #include "view/ViewStateSettings.h"
+
+using namespace KODI::MESSAGING;
 
 CGUIPassword g_passwordManager;
 
@@ -160,7 +162,7 @@ bool CGUIPassword::CheckStartUpLock()
   }
   else
   {
-    CApplicationMessenger::Get().Shutdown(); // Turn off the box
+    CApplicationMessenger::Get().PostMsg(TMSG_SHUTDOWN); // Turn off the box
     return false;
   }
 }
@@ -283,7 +285,7 @@ void CGUIPassword::UpdateMasterLockRetryCount(bool bResetCount)
         {
           // Shutdown enabled, tell the user we're shutting off
           CGUIDialogOK::ShowAndGetInput(12345, 12346, 12347, 0);
-          CApplicationMessenger::Get().Shutdown();
+          CApplicationMessenger::Get().PostMsg(TMSG_SHUTDOWN);
           return ;
         }
         // Tell the user they ran out of retry attempts

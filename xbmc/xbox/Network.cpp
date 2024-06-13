@@ -24,12 +24,14 @@
 #ifdef HAS_XBOX_NETWORK
 #include "Undocumented.h"
 #endif
-#include "ApplicationMessenger.h"
+#include "messaging/ApplicationMessenger.h"
 #include "network/NetworkServices.h"
 #include "settings/Settings.h"
 #include "utils/log.h"
 
 #include "defs_from_settings.h"
+
+using namespace KODI::MESSAGING;
 
 #ifdef _XBOX
 static char* inet_ntoa (struct in_addr in)
@@ -291,7 +293,7 @@ void CNetwork::NetworkDown()
   m_lastlink = 0;
   m_laststate = 0;
   m_networkup = false;
-  CApplicationMessenger::Get().NetworkMessage(SERVICES_DOWN, 0);
+  CApplicationMessenger::Get().PostMsg(TMSG_NETWORKMESSAGE, SERVICES_DOWN, 0);
 }
 
 void CNetwork::NetworkUp()
@@ -316,7 +318,7 @@ void CNetwork::NetworkUp()
 
   m_networkup = true;
   
-  CApplicationMessenger::Get().NetworkMessage(SERVICES_UP, 0);
+  CApplicationMessenger::Get().PostMsg(TMSG_NETWORKMESSAGE, SERVICES_UP, 0);
 }
 
 /* update network state, call repeatedly while return value is XNET_GET_XNADDR_PENDING */

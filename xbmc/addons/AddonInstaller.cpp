@@ -27,7 +27,7 @@
 #include "guilib/LocalizeStrings.h"
 #include "filesystem/Directory.h"
 #include "settings/Settings.h"
-#include "ApplicationMessenger.h"
+#include "messaging/ApplicationMessenger.h"
 #include "utils/JobManager.h"
 #include "dialogs/GUIDialogYesNo.h"
 #include "addons/AddonManager.h"
@@ -41,7 +41,7 @@
 using namespace std;
 using namespace XFILE;
 using namespace ADDON;
-
+using namespace KODI::MESSAGING;
 
 struct find_map : public binary_function<CAddonInstaller::JobMap::value_type, unsigned int, bool>
 {
@@ -481,7 +481,8 @@ bool CAddonInstallJob::OnPreInstall()
   // check whether this is an active skin - we need to unload it if so
   if (CSettings::Get().GetString("lookandfeel.skin") == m_addon->ID())
   {
-    CApplicationMessenger::Get().ExecBuiltIn("UnloadSkin", true);
+    CApplicationMessenger::Get().SendMsg(TMSG_EXECUTE_BUILT_IN, -1, -1, NULL, "UnloadSkin");
+
     return true;
   }
 

@@ -47,7 +47,7 @@
 #include "settings/Settings.h"
 #include "GUIUserMessages.h"
 #include "LocalizeStrings.h"
-#include "ApplicationMessenger.h"
+#include "messaging/ApplicationMessenger.h"
 #include "TextureCache.h"
 #include "music/MusicDatabase.h"
 #include "video/VideoThumbLoader.h"
@@ -58,10 +58,12 @@
 #include "network/upnp/UPnP.h"
 #endif
 #include "utils/FileUtils.h"
+#include "boost/make_shared.hpp"
 
 using namespace std;
 using namespace XFILE::VIDEODATABASEDIRECTORY;
 using namespace XFILE;
+using namespace KODI::MESSAGING;
 
 #define CONTROL_IMAGE                3
 #define CONTROL_TEXTAREA             4
@@ -902,9 +904,13 @@ void CGUIDialogVideoInfo::PlayTrailer()
   Close(true);
 
   if (item.IsPlayList())
-    CApplicationMessenger::Get().MediaPlay(item);
+  {
+    CFileItemList *l = new CFileItemList; //don't delete,
+    l->Add(boost::make_shared<CFileItem>(item));
+    CApplicationMessenger::Get().PostMsg(TMSG_MEDIA_PLAY, -1, -1, static_cast<void*>(l));
+  }
   else
-    CApplicationMessenger::Get().PlayFile(item);
+    CApplicationMessenger::Get().PostMsg(TMSG_MEDIA_PLAY, 0, 0, static_cast<void*>(new CFileItem(item)));
 }
 
 void CGUIDialogVideoInfo::SetLabel(int iControl, const CStdString &strLabel)
