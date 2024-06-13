@@ -275,7 +275,7 @@ int CBuiltins::Execute(const CStdString& execString)
   {
     int index = CProfilesManager::Get().GetProfileIndex(parameter);
     if (index >= 0)
-      CGUIWindowLoginScreen::LoadProfile(index);
+      CApplicationMessenger::Get().PostMsg(TMSG_LOADPROFILE, index);
   }
   else if (execute.Equals("mastermode"))
   {
