@@ -115,6 +115,7 @@ const BUILT_IN commands[] = {
   { "RestartApp",                 false,  "Restart XBMC" },
   { "Reset",                      false,  "Reset the xbox (warm reboot)" },
   { "Mastermode",                 false,  "Control master mode" },
+  { "SetGUILanguage",             true,   "Set GUI Language" },
   { "ActivateWindow",             true,   "Activate the specified window" },
   { "ReplaceWindow",              true,   "Replaces the current window with the new one" },
   { "TakeScreenshot",             false,  "Takes a Screenshot" },
@@ -295,6 +296,13 @@ int CBuiltins::Execute(const CStdString& execString)
     CUtil::DeleteVideoDatabaseDirectoryCache();
     CGUIMessage msg(GUI_MSG_NOTIFY_ALL, 0, 0, GUI_MSG_UPDATE);
     g_windowManager.SendMessage(msg);
+  }
+  else if (execute.Equals("setguilanguage"))
+  {
+    if (params.size())
+    {
+      CApplicationMessenger::Get().PostMsg(TMSG_SETLANGUAGE, -1, -1, NULL, params[0]);
+    }
   }
   else if (execute.Equals("takescreenshot"))
   {
