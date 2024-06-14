@@ -31,6 +31,7 @@
 #include "dialogs/GUIDialogSlider.h"
 #include "guilib/GUIEditControl.h"
 #include "guilib/GUIImage.h"
+#include "guilib/GUILabelControl.h"
 #include "guilib/GUIRadioButtonControl.h"
 #include "guilib/GUISettingsSliderControl.h"
 #include "guilib/GUISpinControlEx.h"
@@ -286,18 +287,17 @@ bool CGUIControlListSetting::OnClick()
 
   dialog->Reset();
   dialog->SetHeading(g_localizeStrings.Get(m_pSetting->GetLabel()));
-  dialog->SetItems(&options);
+  dialog->SetItems(options);
   dialog->SetMultiSelection(control->CanMultiSelect());
   dialog->Open();
 
   if (!dialog->IsConfirmed())
     return false;
 
-  const CFileItemList &items = dialog->GetSelectedItems();
   std::vector<CVariant> values;
-  for (int index = 0; index < items.Size(); index++)
+  for (std::vector<int>::const_iterator it = dialog->GetSelectedItems().begin(); it < dialog->GetSelectedItems().end(); ++it)
   {
-    const CFileItemPtr item = items[index];
+    const CFileItemPtr item = options.Get(*it);
     if (item == NULL || !item->HasProperty("value"))
       return false;
 
@@ -1135,4 +1135,17 @@ CGUIControlSeparatorSetting::CGUIControlSeparatorSetting(CGUIImage *pImage, int 
 }
 
 CGUIControlSeparatorSetting::~CGUIControlSeparatorSetting()
+{ }
+
+CGUIControlGroupTitleSetting::CGUIControlGroupTitleSetting(CGUILabelControl *pLabel, int id)
+  : CGUIControlBaseSetting(id, NULL)
+{
+  m_pLabel = pLabel;
+  if (m_pLabel == NULL)
+    return;
+
+  m_pLabel->SetID(id);
+}
+
+CGUIControlGroupTitleSetting::~CGUIControlGroupTitleSetting()
 { }

@@ -317,7 +317,7 @@ bool CGUIDialogAddonSettings::ShowVirtualKeyboard(int iControl)
                 pDlg->SetSelected(i); // FIXME: the SetSelected() does not select "i", it always defaults to the first position
             }
             pDlg->Open();
-            int iSelected = pDlg->GetSelectedLabel();
+            int iSelected = pDlg->GetSelectedItem();
             if (iSelected >= 0)
             {
               if (setting->Attribute("lvalues"))
@@ -475,11 +475,10 @@ bool CGUIDialogAddonSettings::ShowVirtualKeyboard(int iControl)
               if (multiSelect)
               {
                 // construct vector of addon IDs (IDs are comma seperated in single string)
-                CStdStringArray addonIDs;
-                StringUtils::SplitString(value, ",", addonIDs);
+                std::vector<std::string> addonIDs = StringUtils::Split(value, ',');
                 if (CGUIWindowAddonBrowser::SelectAddonID(types, addonIDs, false) == 1)
                 {
-                  StringUtils::JoinString(addonIDs, ",", value);
+                  value = StringUtils::Join(addonIDs, ",");
                   ((CGUIButtonControl*) control)->SetLabel2(GetAddonNames(value));
                 }
               }

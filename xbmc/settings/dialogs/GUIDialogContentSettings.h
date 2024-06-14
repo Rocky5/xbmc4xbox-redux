@@ -36,14 +36,9 @@ class CGUIDialogContentSettings : public CGUIDialogSettingsManualBase
 {
 public:
   CGUIDialogContentSettings();
-  virtual ~CGUIDialogContentSettings();
-
-  // specializations of CGUIControl
-  virtual bool OnMessage(CGUIMessage &message);
 
   // specialization of CGUIWindow
   virtual bool HasListItems() const { return true; };
-  virtual CFileItemPtr GetCurrentListItem(int offset = 0);
 
   CONTENT_TYPE GetContent() const { return m_content; }
   void SetContent(CONTENT_TYPE content);
@@ -68,25 +63,32 @@ protected:
 
   // implementations of ISettingCallback
   virtual void OnSettingChanged(const CSetting *setting);
+  virtual void OnSettingAction(const CSetting *setting);
 
   // specialization of CGUIDialogSettingsBase
   virtual bool AllowResettingSettings() const { return false; }
   virtual void Save();
-  virtual void OnOkay();
-  virtual void OnCancel();
   virtual void SetupView();
 
   // specialization of CGUIDialogSettingsManualBase
   virtual void InitializeSettings();
 
 private:
-  void FillContentTypes();
-  void FillContentTypes(CONTENT_TYPE content);
-  void FillScraperList();
+  void SetLabel2(const std::string &settingid, const std::string &label);
+  void ToggleState(const std::string &settingid, bool enabled);
+  void SetFocus(const std::string &settingid);
 
-  bool m_needsSaving;
+  /*!
+  * @brief The currently selected content type
+  */
   CONTENT_TYPE m_content;
+  /*!
+  * @brief The selected content type at dialog creation
+  */
   CONTENT_TYPE m_originalContent;
+  /*!
+  * @brief The currently selected scraper
+  */
   ADDON::ScraperPtr m_scraper;
 
   bool m_showScanSettings;
@@ -95,8 +97,4 @@ private:
   bool m_containsSingleItem;
   bool m_exclude;
   bool m_noUpdating;
-  
-  std::map<CONTENT_TYPE, ADDON::VECADDONS> m_scrapers;
-  std::map<CONTENT_TYPE, ADDON::AddonPtr> m_lastSelected;
-  CFileItemList* m_vecItems;
 };

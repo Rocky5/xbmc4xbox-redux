@@ -252,7 +252,7 @@ CStdStringArray URIUtils::SplitPath(const CStdString& strPath)
   return dirs;
 }
 
-void URIUtils::GetCommonPath(CStdString& strParent, const CStdString& strPath)
+void URIUtils::GetCommonPath(std::string& strParent, const std::string& strPath)
 {
   // find the common path of parent and path
   unsigned int j = 1;
@@ -299,7 +299,7 @@ CStdString URIUtils::GetParentPath(const CStdString& strPath)
   return strReturn;
 }
 
-bool URIUtils::GetParentPath(const CStdString& strPath, CStdString& strParent)
+bool URIUtils::GetParentPath(const std::string& strPath, std::string& strParent)
 {
   strParent = "";
 
@@ -496,6 +496,26 @@ CStdString URIUtils::SubstitutePath(const CStdString& strPath, bool reverse /* =
 bool URIUtils::IsProtocol(const std::string& url, const std::string &type)
 {
   return StringUtils::StartsWithNoCase(url, type + "://");
+}
+
+bool URIUtils::PathHasParent(std::string path, std::string parent, bool translate /* = false */)
+{
+  if (translate)
+  {
+    path = CSpecialProtocol::TranslatePath(path);
+    parent = CSpecialProtocol::TranslatePath(parent);
+  }
+
+  if (parent.empty())
+    return false;
+
+  if (path == parent)
+    return true;
+
+  // Make sure parent has a trailing slash
+  AddSlashAtEnd(parent);
+
+  return StringUtils::StartsWith(path, parent);
 }
 
 bool URIUtils::PathStarts(const std::string& url, const char *start)

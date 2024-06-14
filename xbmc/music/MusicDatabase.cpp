@@ -64,12 +64,16 @@
 #include "utils/XMLUtils.h"
 #include "URL.h"
 #include "playlists/SmartPlayList.h"
+#include "messaging/helpers/DialogHelper.h"
 
 using namespace std;
 using namespace AUTOPTR;
 using namespace XFILE;
 using namespace MUSICDATABASEDIRECTORY;
+using namespace KODI::MESSAGING;
+
 using ADDON::AddonPtr;
+using namespace KODI::MESSAGING::HELPERS;
 
 #define RECENTLY_PLAYED_LIMIT 25
 #define MIN_FULL_SEARCH_LENGTH 3
@@ -2813,7 +2817,7 @@ bool CMusicDatabase::LookupCDDBInfo(bool bRequery/*=false*/)
         pDlgSelect->Open();
 
         // Has the user selected a match...
-        int iSelectedCD = pDlgSelect->GetSelectedLabel();
+        int iSelectedCD = pDlgSelect->GetSelectedItem();
         if (iSelectedCD >= 0)
         {
           // ...query cddb for the inexact match
@@ -2896,20 +2900,20 @@ void CMusicDatabase::DeleteCDDBInfo()
     pDlg->Open();
 
     // and wait till user selects one
-    int iSelectedAlbum = pDlg->GetSelectedLabel();
+    int iSelectedAlbum = pDlg->GetSelectedItem();
     if (iSelectedAlbum < 0)
     {
       mapCDDBIds.erase(mapCDDBIds.begin(), mapCDDBIds.end());
       return ;
     }
 
-    CStdString strSelectedAlbum = pDlg->GetSelectedLabelText();
+    std::string strSelectedAlbum = pDlg->GetSelectedFileItem()->GetLabel();
     map<ULONG, CStdString>::iterator it;
     for (it = mapCDDBIds.begin();it != mapCDDBIds.end();it++)
     {
       if (it->second == strSelectedAlbum)
       {
-        CStdString strFile = StringUtils::Format("%x.cddb", it->first);
+        std::string strFile = StringUtils::Format("%x.cddb", it->first);
         CFile::Delete(URIUtils::AddFileToFolder(CProfilesManager::Get().GetCDDBFolder(), strFile));
         break;
       }
@@ -2929,7 +2933,7 @@ void CMusicDatabase::Clean()
     return;
   }
 
-  if (CGUIDialogYesNo::ShowAndGetInput(313, 333, 0, 0))
+  if (HELPERS::ShowYesNoDialogText(313, 333) == YES)
   {
     CGUIDialogProgress* dlgProgress = (CGUIDialogProgress*)g_windowManager.GetWindow(WINDOW_DIALOG_PROGRESS);
     if (dlgProgress)
