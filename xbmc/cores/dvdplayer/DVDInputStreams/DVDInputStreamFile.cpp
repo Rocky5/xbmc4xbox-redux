@@ -59,16 +59,17 @@ bool CDVDInputStreamFile::Open(const char* strFile, const std::string& content)
     flags |= READ_AUDIO_VIDEO;
 
   /*
-   * There are 4 buffer modes available (configurable in as.xml)
+   * There are 5 buffer modes available (configurable in as.xml)
    * 0) Buffer all internet filesystems (like 2 but additionally also ftp, webdav, etc.) (default)
    * 1) Buffer all filesystems (including local)
    * 2) Only buffer true internet filesystems (streams) (http, etc.)
    * 3) No buffer
+   * 4) Buffer all non-local (remote) filesystems
    */
   if (!URIUtils::IsOnDVD(strFile)/* && !URIUtils::IsBluray(strFile)*/) // Never cache these
   {
-    if ((g_advancedSettings.m_cacheBufferMode == CACHE_BUFFER_MODE_INTERNET && URIUtils::IsInternetStream(strFile, false))
-     || (g_advancedSettings.m_cacheBufferMode == CACHE_BUFFER_MODE_TRUE_INTERNET && URIUtils::IsInternetStream(strFile, true))
+    if ((g_advancedSettings.m_cacheBufferMode == CACHE_BUFFER_MODE_INTERNET && URIUtils::IsInternetStream(strFile, true))
+     || (g_advancedSettings.m_cacheBufferMode == CACHE_BUFFER_MODE_TRUE_INTERNET && URIUtils::IsInternetStream(strFile, false))
      || (g_advancedSettings.m_cacheBufferMode == CACHE_BUFFER_MODE_REMOTE && URIUtils::IsRemote(strFile))
      || (g_advancedSettings.m_cacheBufferMode == CACHE_BUFFER_MODE_ALL))
     {
