@@ -1588,7 +1588,7 @@ void CMPlayer::Seek(bool bPlus, bool bLargeStep, bool bChapterOverride)
 
     //If current time isn't bound by the total time, 
     //we have to seek using absolute percentage instead
-    if( GetTime() > iTime * 1000 )
+    if( GetTime() > iTime )
     {
       //TODO EDL compensation for this?
       SeekPercentage(GetPercentage()+percent);
@@ -1596,7 +1596,7 @@ void CMPlayer::Seek(bool bPlus, bool bLargeStep, bool bChapterOverride)
     else
     {
       // time based seeking
-      float timeInSecs = percent * 0.01f * iTime;
+      float timeInSecs = percent * 0.01f * iTime / 1000;
       
       //Seek a minimum of 1 second
       if( timeInSecs < 1 && timeInSecs > 0 )
@@ -1746,7 +1746,7 @@ void CMPlayer::SeekPercentage(float percent)
 float CMPlayer::GetPercentage()
 {
   if (m_Edl.HasCut())
-    return ( (float)(100 / ((double)(GetTotalTime()*1000)/(double)GetTime())) ); 
+    return ( (float)(100 / ((double)(GetTotalTime())/(double)GetTime())) ); 
 
   return (float)mplayer_getPercentage(); 
 }
@@ -1953,14 +1953,14 @@ __int64 CMPlayer::GetTime()
   return time;
 }
 
-int CMPlayer::GetTotalTime()
+int64_t CMPlayer::GetTotalTime()
 {
-  int time = 0;
+  int64_t time = 0;
   if (m_bIsPlaying)
   {
     try 
     {
-      time = mplayer_getTime();
+      time = (int64_t)mplayer_getTime();
     }
     XBMCCOMMONS_HANDLE_UNCHECKED
     catch(...)
@@ -1971,7 +1971,7 @@ int CMPlayer::GetTotalTime()
   }
 
   if(m_Edl.HasCut())
-    time -= (int)(m_Edl.GetTotalCutTime()/1000);
+    time -= (int64_t)m_Edl.GetTotalCutTime();
 
   return time;
 }

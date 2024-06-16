@@ -74,7 +74,7 @@ public:
   virtual void GetVideoAspectRatio(float& fAR) {}
   virtual void ToFFRW(int iSpeed = 0);
   virtual int GetCacheLevel() const; 
-  virtual int GetTotalTime();
+  virtual int64_t GetTotalTime();
   __int64 GetTotalTime64();
   virtual int GetAudioBitrate();
   virtual int GetChannels();

@@ -69,7 +69,7 @@ public:
 
   virtual void SeekTime(__int64 iTime);
   virtual __int64 GetTime();
-  virtual int GetTotalTime();
+  virtual int64_t GetTotalTime();
   virtual void ToFFRW(int iSpeed);
   virtual void ShowOSD(bool bOnoff);
   virtual void DoAudioWork()                                    {}

@@ -178,7 +178,7 @@ public:
 
   virtual bool CanSeek();
   virtual void SeekTime(__int64 iTime = 0);
-  virtual int GetTotalTime();
+  virtual int64_t GetTotalTime();
   virtual __int64 GetTime();
   virtual void ToFFRW(int iSpeed = 0);
   virtual void DoAudioWork();

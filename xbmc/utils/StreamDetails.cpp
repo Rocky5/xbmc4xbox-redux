@@ -379,6 +379,13 @@ int CStreamDetails::GetVideoDuration(int idx) const
     return 0;
 }
 
+void CStreamDetails::SetVideoDuration(int idx, const int duration)
+{
+  CStreamDetailVideo *item = (CStreamDetailVideo *)GetNthStream(CStreamDetail::VIDEO, idx);
+  if (item)
+    item->m_iDuration = duration;
+}
+
 CStdString CStreamDetails::GetAudioCodec(int idx) const
 {
   CStreamDetailAudio *item = (CStreamDetailAudio *)GetNthStream(CStreamDetail::AUDIO, idx);

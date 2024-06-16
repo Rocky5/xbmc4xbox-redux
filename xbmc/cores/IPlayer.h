@@ -134,9 +134,15 @@ public:
    \return True if the player supports relative seeking, otherwise false
    */
   virtual bool SeekTimeRelative(int64_t iTime) { return false; }
-  virtual __int64 GetTime(){ return 0;};
+  /*!
+   \brief current time in milliseconds
+   */
+  virtual int64_t GetTime() { return 0; }
+  /*!
+   \brief total time in milliseconds
+   */
+  virtual int64_t GetTotalTime() { return 0; }
   virtual void ResetTime() {};
-  virtual int GetTotalTime(){ return 0;};
   virtual int GetAudioBitrate(){ return 0;}
   virtual int GetVideoBitrate(){ return 0;}
   virtual int GetSourceBitrate(){ return 0;}

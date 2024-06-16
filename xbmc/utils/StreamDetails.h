@@ -111,6 +111,7 @@ public:
   int GetVideoWidth(int idx = 0) const;
   int GetVideoHeight(int idx = 0) const;
   int GetVideoDuration(int idx = 0) const;
+  void SetVideoDuration(int idx, const int duration);
 
   CStdString GetAudioCodec(int idx = 0) const;
   CStdString GetAudioLanguage(int idx = 0) const;
