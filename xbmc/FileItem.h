@@ -272,6 +272,12 @@ public:
    */
   CStdString FindLocalArt(const std::string &artFile, bool useFolder) const;
 
+  /*! \brief Whether or not to skip searching for local art.
+   \return true if local art should be skipped for this item, false otherwise.
+   \sa GetLocalArt, FindLocalArt
+   */
+  bool SkipLocalArt() const;
+
   // Sets the cached thumb for the item if it exists
   void SetCachedGameSavesThumb();
 
