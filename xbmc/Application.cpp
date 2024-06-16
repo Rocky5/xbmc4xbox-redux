@@ -4470,13 +4470,18 @@ void CApplication::UpdateFileState()
         m_progressTrackingPlayCountUpdate = true;
       }
 
-      if (m_progressTrackingItem->IsVideo())
+      // Check whether we're *really* playing video else we may race when getting eg. stream details
+      if (IsPlayingVideo())
       {
-        if ((m_progressTrackingItem->IsDVDImage() || m_progressTrackingItem->IsDVDFile()) && m_pPlayer->GetTotalTime() > 15*60*1000)
+        // Special case for DVDs: Only extract streamdetails if title length > 15m. Should yield more correct info
+        if (!(m_progressTrackingItem->IsDVDImage() || m_progressTrackingItem->IsDVDFile()) || m_pPlayer->GetTotalTime() > 15*60*1000)
         {
-          m_progressTrackingItem->GetVideoInfoTag()->m_streamDetails.Reset();
-          m_pPlayer->GetStreamDetails(m_progressTrackingItem->GetVideoInfoTag()->m_streamDetails);
+          CStreamDetails details;
+          // Update with stream details from player, if any
+          if (m_pPlayer->GetStreamDetails(details))
+            m_progressTrackingItem->GetVideoInfoTag()->m_streamDetails = details;
         }
+
         // Update bookmark for save
         m_progressTrackingVideoResumeBookmark.player = CPlayerCoreFactory::Get().GetPlayerName(m_eCurrentPlayer);
         m_progressTrackingVideoResumeBookmark.playerState = m_pPlayer->GetPlayerState();
