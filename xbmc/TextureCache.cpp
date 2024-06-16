@@ -253,7 +253,7 @@ CStdString CTextureCache::GetCachedPath(const CStdString &file)
 
 void CTextureCache::OnJobComplete(unsigned int jobID, bool success, CJob *job)
 {
-  if (strcmp(job->GetType(), "cacheimage") == 0 && success)
+  if (strcmp(job->GetType(), kJobTypeCacheImage) == 0 && success)
   {
     CTextureCacheJob *cacheJob = (CTextureCacheJob *)job;
     if (cacheJob->m_oldHash == cacheJob->m_details.hash)
@@ -279,7 +279,7 @@ void CTextureCache::OnJobComplete(unsigned int jobID, bool success, CJob *job)
 
 void CTextureCache::OnJobProgress(unsigned int jobID, unsigned int progress, unsigned int total, const CJob *job)
 {
-  if (strcmp(job->GetType(), "cacheimage") == 0 && !progress)
+  if (strcmp(job->GetType(), kJobTypeCacheImage) == 0 && !progress)
   { // check our processing list
     {
       CSingleLock lock(m_processingSection);
