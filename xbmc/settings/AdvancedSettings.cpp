@@ -160,11 +160,11 @@ void CAdvancedSettings::Initialize()
   m_musicPercentSeekBackwardBig = -10;
   m_musicResample = 48000;
 
-  m_cacheMemBufferSize = 1024 * 1024;
-  m_networkBufferMode = 0; // Default (buffer all internet streams/filesystems)
+  m_cacheMemSize = 1024 * 1024;
+  m_cacheBufferMode = CACHE_BUFFER_MODE_INTERNET; // Default (buffer all internet streams/filesystems)
   // the following setting determines the readRate of a player data
   // as multiply of the default data read rate
-  m_readBufferFactor = 4.0f;
+  m_cacheReadFactor = 4.0f;
 
   m_slideshowPanAmount = 2.5f;
   m_slideshowZoomAmount = 5.0f;
@@ -515,9 +515,14 @@ void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
     XMLUtils::GetInt(pElement, "curlclienttimeout", m_curlconnecttimeout, 1, 1000);
     XMLUtils::GetInt(pElement, "curllowspeedtime", m_curllowspeedtime, 1, 1000);
     XMLUtils::GetInt(pElement, "curlretries", m_curlretries, 0, 10);
-    XMLUtils::GetUInt(pElement, "cachemembuffersize", m_cacheMemBufferSize);
-    XMLUtils::GetUInt(pElement, "buffermode", m_networkBufferMode, 0, 3);
-    XMLUtils::GetFloat(pElement, "readbufferfactor", m_readBufferFactor);
+  }
+
+  pElement = pRootElement->FirstChildElement("cache");
+  if (pElement)
+  {
+    XMLUtils::GetUInt(pElement, "memorysize", m_cacheMemSize);
+    XMLUtils::GetUInt(pElement, "buffermode", m_cacheBufferMode, 0, 4);
+    XMLUtils::GetFloat(pElement, "readfactor", m_cacheReadFactor);
   }
 
   pElement = pRootElement->FirstChildElement("samba");

@@ -27,6 +27,12 @@
 #include "utils/StdString.h"
 #include "utils/GlobalsHandling.h"
 
+#define CACHE_BUFFER_MODE_INTERNET      0
+#define CACHE_BUFFER_MODE_ALL           1
+#define CACHE_BUFFER_MODE_TRUE_INTERNET 2
+#define CACHE_BUFFER_MODE_NONE          3
+#define CACHE_BUFFER_MODE_REMOTE        4
+
 class TiXmlElement;
 namespace ADDON
 {
@@ -131,9 +137,9 @@ class CAdvancedSettings : public ISettingCallback, public ISettingsHandler
     bool m_guiVisualizeDirtyRegions;
     int  m_guiAlgorithmDirtyRegions;
 
-    unsigned int m_cacheMemBufferSize;
-    unsigned int m_networkBufferMode;
-    float m_readBufferFactor;
+    unsigned int m_cacheMemSize;
+    unsigned int m_cacheBufferMode;
+    float m_cacheReadFactor;
 
     float m_slideshowBlackBarCompensation;
     float m_slideshowZoomAmount;
