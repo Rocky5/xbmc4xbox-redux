@@ -1769,7 +1769,7 @@ CStdString CGUIInfoManager::GetLabel(int info, int contextWindow, std::string *f
     }
     break;
   case SYSTEM_LANGUAGE:
-    strLabel = CSettings::Get().GetString("locale.language");
+    strLabel = g_langInfo.GetEnglishLanguageName();
     break;
   case SYSTEM_TEMPERATURE_UNITS:
     strLabel = g_langInfo.GetTempUnitString();
@@ -2021,7 +2021,7 @@ bool CGUIInfoManager::GetInt(int &value, int info, int contextWindow, const CGUI
       }
 #ifdef HAS_XBOX_HARDWARE
     case SYSTEM_HDD_TEMPERATURE:
-      value = atoi(g_sysinfo.GetInfo(LCD_HDD_TEMPERATURE));
+      value = atoi(g_sysinfo.GetInfo(LCD_HDD_TEMPERATURE).c_str());
       return true;
     case SYSTEM_CPU_TEMPERATURE:
       value = atoi(CFanController::Instance()->GetCPUTemp().ToString().c_str());
@@ -3918,11 +3918,9 @@ string CGUIInfoManager::GetSystemHeatInfo(int info)
   return text;
 }
 
-CStdString CGUIInfoManager::GetVersion()
+std::string CGUIInfoManager::GetVersion()
 {
-  CStdString tmp;
-  tmp.Format("%s", VERSION_STRING);
-  return tmp;
+  return StringUtils::Format("%s", VERSION_STRING);
 }
 
 CStdString CGUIInfoManager::GetBuild()

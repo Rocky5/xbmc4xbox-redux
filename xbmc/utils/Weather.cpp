@@ -43,6 +43,7 @@
 #include "utils/CharsetConverter.h"
 #include "addons/GUIDialogAddonSettings.h"
 #include "utils/log.h"
+#include "utils/URIUtils.h"
 
 #include "addons/AddonManager.h"
 #include "addons/IAddon.h"
@@ -147,7 +148,7 @@ const CWeatherInfo &CWeatherJob::GetInfo() const
   return m_info;
 }
 
-void CWeatherJob::GetString(const TiXmlElement* pRootElement, const CStdString& strTagName, CStdString &value, const CStdString& strDefaultValue)
+void CWeatherJob::GetString(const TiXmlElement* pRootElement, const CStdString& strTagName, std::string &value, const CStdString& strDefaultValue)
 {
   value = "";
   const TiXmlNode *pChild = pRootElement->FirstChild(strTagName.c_str());
@@ -157,7 +158,7 @@ void CWeatherJob::GetString(const TiXmlElement* pRootElement, const CStdString& 
     if (value == "-")
       value = "";
   }
-  if (value.IsEmpty())
+  if (value.empty())
     value = strDefaultValue;
 }
 
@@ -186,7 +187,7 @@ void CWeatherJob::LocalizeOverviewToken(CStdString &token)
   token = strLocStr;
 }
 
-void CWeatherJob::LocalizeOverview(CStdString &str)
+void CWeatherJob::LocalizeOverview(std::string &str)
 {
   CStdStringArray words;
   StringUtils::SplitString(str, " ", words);
@@ -196,7 +197,7 @@ void CWeatherJob::LocalizeOverview(CStdString &str)
     LocalizeOverviewToken(words[i]);
     str += words[i] + " ";
   }
-  str.TrimRight(" ");
+  str = StringUtils::TrimRight(str, " ");
 }
 
 // input param must be kmh
@@ -393,7 +394,7 @@ bool CWeatherJob::LoadWeather(const CStdString &weatherXML)
         else
         {
           CTemperature temp=CTemperature::CreateFromCelsius(atoi(iTmpStr));
-          m_info.forecast[i].m_high.Format("%2.0f", temp.ToLocale());
+          m_info.forecast[i].m_high = StringUtils::Format("%2.0f", temp.ToLocale());
         }
 
         GetString(pOneDayElement, "low", iTmpStr, "");
@@ -402,7 +403,7 @@ bool CWeatherJob::LoadWeather(const CStdString &weatherXML)
         else
         {
           CTemperature temp=CTemperature::CreateFromCelsius(atoi(iTmpStr));
-          m_info.forecast[i].m_low.Format("%2.0f", temp.ToLocale());
+          m_info.forecast[i].m_low = StringUtils::Format("%2.0f", temp.ToLocale());
         }
 
         TiXmlElement *pDayTimeElement = pOneDayElement->FirstChildElement("part"); //grab the first day/night part (should be day)
@@ -410,9 +411,9 @@ bool CWeatherJob::LoadWeather(const CStdString &weatherXML)
         {
           GetString(pDayTimeElement, "icon", iTmpStr, ""); //string cause i've seen it return N/A
           if (iTmpStr == "N/A")
-            m_info.forecast[i].m_icon.Format("%s128x128/na.png", WEATHER_BASE_PATH);
+            m_info.forecast[i].m_icon = StringUtils::Format("%s128x128/na.png", WEATHER_BASE_PATH);
           else
-            m_info.forecast[i].m_icon.Format("%s128x128/%s.png", WEATHER_BASE_PATH, iTmpStr);
+            m_info.forecast[i].m_icon = StringUtils::Format("%s128x128/%s.png", WEATHER_BASE_PATH, iTmpStr);
 
           GetString(pDayTimeElement, "t", m_info.forecast[i].m_overview, "");
           LocalizeOverview(m_info.forecast[i].m_overview);
@@ -428,7 +429,7 @@ bool CWeatherJob::LoadWeather(const CStdString &weatherXML)
 }
 
 //convert weather.com day strings into localized string id's
-void CWeatherJob::LocalizeDay(CStdString &day)
+void CWeatherJob::LocalizeDay(std::string &day)
 {
   if (day == "Monday")   //monday is localized string 11
     day = g_localizeStrings.Get(11);
@@ -452,10 +453,14 @@ void CWeatherJob::LocalizeDay(CStdString &day)
 void CWeatherJob::LoadLocalizedToken()
 {
   // We load the english strings in to get our tokens
+  std::string language = CORE_LANGUAGE_DEFAULT;
+  CSettingString* languageSetting = static_cast<CSettingString*>(CSettings::Get().GetSetting("locale.language"));
+  if (languageSetting != NULL)
+    language = languageSetting->GetDefault();
 
   // Try the strings PO file first
   CPODocument PODoc;
-  if (PODoc.LoadFile("special://xbmc/language/English/strings.po"))
+  if (PODoc.LoadFile(URIUtils::AddFileToFolder(CLangInfo::GetLanguagePath(language), "strings.po")))
   {
     int counter = 0;
 
@@ -488,7 +493,7 @@ void CWeatherJob::LoadLocalizedToken()
             "fallback to strings.xml file");
 
   // We load the tokens from the strings.xml file
-  CStdString strLanguagePath = "special://xbmc/language/English/strings.xml";
+  CStdString strLanguagePath = URIUtils::AddFileToFolder(CLangInfo::GetLanguagePath(language), "strings.xml");
   
   CXBMCTinyXML xmlDoc;
   if (!xmlDoc.LoadFile(strLanguagePath) || !xmlDoc.RootElement())
@@ -659,7 +664,7 @@ bool CWeather::GetSearchResults(const CStdString &strSearch, CStdString &strResu
   return true;
 }
 
-CStdString CWeather::BusyInfo(int info) const
+std::string CWeather::BusyInfo(int info) const
 {
   if (info == WEATHER_IMAGE_CURRENT_ICON)
   {
@@ -670,7 +675,7 @@ CStdString CWeather::BusyInfo(int info) const
   return CInfoLoader::BusyInfo(info);
 }
 
-CStdString CWeather::TranslateInfo(int info) const
+std::string CWeather::TranslateInfo(int info) const
 {
   if (info == WEATHER_LABEL_CURRENT_COND) return m_info.currentConditions;
   else if (info == WEATHER_IMAGE_CURRENT_ICON) return m_info.currentIcon;

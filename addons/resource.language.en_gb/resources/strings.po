@@ -9730,7 +9730,7 @@ msgctxt "#24106"
 msgid "If not saved to movie folder subtitles will be downloaded to custom subtitle folder"
 msgstr ""
 
-#: xbmc/dialogs/GUIDialogSubtitles.cpp 
+#: xbmc/dialogs/GUIDialogSubtitles.cpp
 msgctxt "#24107"
 msgid "Searching for subtitles ..."
 msgstr ""
@@ -9770,7 +9770,7 @@ msgctxt "#24114"
 msgid "No subtitle services installed"
 msgstr ""
 
-#: system/settings/settings.xml 
+#: system/settings/settings.xml
 msgctxt "#24115"
 msgid "Save subtitles to movie folder"
 msgstr ""
@@ -12722,7 +12722,7 @@ msgctxt "#38694"
 msgid "Default (Dashboard)"
 msgstr ""
 
-#empty string with id 38695 
+#empty string with id 38695
 
 #: system/settings/settings.xml
 msgctxt "#38696"
@@ -12933,21 +12933,21 @@ msgctxt "#38743"
 msgid "Xbox Live key:"
 msgstr ""
 
-#empty string with id 38744 
+#empty string with id 38744
 
 #: system/settings/settings.xml
 msgctxt "#38745"
 msgid "Front LED colour"
 msgstr ""
 
-#empty string with id 38746 
+#empty string with id 38746
 
 #: system/settings/settings.xml
 msgctxt "#38747"
 msgid "Use MCE/Universal Remote"
 msgstr ""
 
-#empty strings from id 38748 to 38749 
+#empty strings from id 38748 to 38749
 
 #: system/settings/settings.xml
 msgctxt "#38750"
