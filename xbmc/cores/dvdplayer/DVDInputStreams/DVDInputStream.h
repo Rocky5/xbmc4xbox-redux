@@ -130,7 +130,7 @@ public:
 
   CDVDInputStream(DVDStreamType m_streamType);
   virtual ~CDVDInputStream();
-  virtual bool Open(const char* strFileName, const std::string& content);
+  virtual bool Open(const char* strFileName, const std::string& content, bool contentLookup);
   virtual void Close() = 0;
   virtual int Read(BYTE* buf, int buf_size) = 0;
   virtual int64_t Seek(int64_t offset, int whence) = 0;
@@ -160,6 +160,8 @@ public:
 
   void SetFileItem(const CFileItem& item);
 
+  bool ContentLookup() { return m_contentLookup; }
+
 protected:
   DVDStreamType m_streamType;
   std::string m_strFileName;
@@ -167,4 +169,5 @@ protected:
   BitstreamStats m_stats;
   std::string m_content;
   CFileItem m_item;
+  bool m_contentLookup;
 };

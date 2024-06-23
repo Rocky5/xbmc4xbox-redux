@@ -65,10 +65,10 @@ CDVDInputStreamNavigator::~CDVDInputStreamNavigator()
   Close();
 }
 
-bool CDVDInputStreamNavigator::Open(const char* strFile, const std::string& content)
+bool CDVDInputStreamNavigator::Open(const char* strFile, const std::string& content, bool contentLookup)
 {
   char* strDVDFile;
-  if (!CDVDInputStream::Open(strFile, "video/x-dvd-mpeg")) 
+  if (!CDVDInputStream::Open(strFile, "video/x-dvd-mpeg", contentLookup))
     return false;
   
   // load libdvdnav.dll

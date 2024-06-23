@@ -84,9 +84,9 @@ CDVDInputStreamHTSP::~CDVDInputStreamHTSP()
   Close();
 }
 
-bool CDVDInputStreamHTSP::Open(const char* file, const std::string& content)
+bool CDVDInputStreamHTSP::Open(const char* file, const std::string& content, bool contentLookup)
 {
-  if (!CDVDInputStream::Open(file, content))
+  if (!CDVDInputStream::Open(file, content, contentLookup))
     return false;
 
   CURL url(file);

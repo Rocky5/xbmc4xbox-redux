@@ -53,7 +53,7 @@ bool CDVDFileInfo::GetFileDuration(const CStdString &path, int& duration)
   if (!input.get())
     return false;
 
-  if (!input->Open(path, ""))
+  if (!input->Open(path.c_str(), "", true))
     return false;
 
   demux.reset(CDVDFactoryDemuxer::CreateDemuxer(input.get()));
@@ -84,7 +84,7 @@ bool CDVDFileInfo::ExtractThumb(const CStdString &strPath, CTextureDetails &deta
     return false;
   }
 
-  if (!pInputStream->Open(strPath.c_str(), ""))
+  if (!pInputStream->Open(strPath.c_str(), "", true))
   {
     CLog::Log(LOGERROR, "InputStream: Error opening, %s", strPath.c_str());
     if (pInputStream)
@@ -277,7 +277,7 @@ bool CDVDFileInfo::GetFileStreamDetails(CFileItem *pItem)
   if (!pInputStream)
     return false;
 
-  if (pInputStream->IsStreamType(DVDSTREAM_TYPE_DVD) || !pInputStream->Open(playablePath.c_str(), ""))
+  if (pInputStream->IsStreamType(DVDSTREAM_TYPE_DVD) || !pInputStream->Open(playablePath.c_str(), "", true))
   {
     delete pInputStream;
     return false;
