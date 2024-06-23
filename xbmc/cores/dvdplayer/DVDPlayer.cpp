@@ -495,18 +495,6 @@ bool CDVDPlayer::OpenInputStream()
 #endif
   }
 
-  // before creating the input stream, if this is an HLS playlist then get the
-  // most appropriate bitrate based on our network settings
-  if (filename.Left(7) == "http://" && filename.Right(5) == ".m3u8")
-  {
-    // get the available bandwidth (as per user settings)
-    int maxrate = CSettings::Get().GetInt("network.bandwidth");
-    if(maxrate <= 0)
-      maxrate = INT_MAX;
-
-    // determine the most appropriate stream
-    m_filename = PLAYLIST::CPlayListM3U::GetBestBandwidthStream(m_filename, (size_t)maxrate);
-  }
   m_pInputStream = CDVDFactoryInputStream::CreateInputStream(this, m_filename, m_mimetype);
   if(m_pInputStream == NULL)
   {
