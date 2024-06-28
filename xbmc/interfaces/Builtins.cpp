@@ -390,23 +390,29 @@ int CBuiltins::Execute(const CStdString& execString)
   else if (execute.Equals("runscript") && params.size())
   {
     {
-      vector<string> argv;
-      for (vector<string>::const_iterator param = params.begin(); param != params.end(); ++param)
-        argv.push_back(*param);
-
-      AddonPtr script;
-      CStdString scriptpath(params[0]);
-      if (CAddonMgr::Get().GetAddon(params[0], script, ADDON_SCRIPT) ||
-          CAddonMgr::Get().GetAddon(params[0], script, ADDON_SCRIPT_WEATHER) ||
-          CAddonMgr::Get().GetAddon(params[0], script, ADDON_SCRIPT_LYRICS))
-        scriptpath = script->LibPath();
+      AddonPtr addon;
+      std::string scriptpath;
+      if (CAddonMgr::Get().GetAddon(params[0], addon))
+      {
+        //Get the correct extension point to run
+        if (CAddonMgr::Get().GetAddon(params[0], addon, ADDON_SCRIPT) ||
+            CAddonMgr::Get().GetAddon(params[0], addon, ADDON_SCRIPT_WEATHER) ||
+            CAddonMgr::Get().GetAddon(params[0], addon, ADDON_SCRIPT_LYRICS) ||
+            CAddonMgr::Get().GetAddon(params[0], addon, ADDON_SCRIPT_LIBRARY))
+          scriptpath = addon->LibPath();
+        else
+          CLog::Log(LOGERROR, "RunScript called for invalid add-on id '%s'. Not a script.", params[0].c_str());
+      }
+      else
+        scriptpath = params[0];
 
       // split the path up to find the filename
+      vector<string> argv = params;
       std::string filename = URIUtils::GetFileName(scriptpath);
       if (!filename.empty())
         argv[0] = filename;
 
-      CScriptInvocationManager::Get().Execute(scriptpath, script, argv);
+      CScriptInvocationManager::Get().Execute(scriptpath, addon, argv);
     }
   }
   else if (execute.Equals("stopscript"))
@@ -505,28 +511,50 @@ int CBuiltins::Execute(const CStdString& execString)
     if (params.size())
     {
       AddonPtr addon;
-      if (CAddonMgr::Get().GetAddon(params[0],addon) && addon)
+      CStdString cmd;
+      if (CAddonMgr::Get().GetAddon(params[0],addon,ADDON_PLUGIN))
       {
         PluginPtr plugin = boost::dynamic_pointer_cast<CPluginSource>(addon);
-        CStdString cmd;
-        if (plugin && addon->Type() == ADDON_PLUGIN)
+        CStdString addonid = params[0];
+        CStdString urlParameters;
+        CStdStringArray parameters;
+        if (params.size() == 2 &&
+           (StringUtils::StartsWith(params[1], "/") || StringUtils::StartsWith(params[1], "?")))
+          urlParameters = params[1];
+        else if (params.size() > 1)
         {
-          if (plugin->Provides(CPluginSource::VIDEO))
-            cmd.Format("ActivateWindow(Video,plugin://%s)",params[0]);
-          if (plugin->Provides(CPluginSource::AUDIO))
-            cmd.Format("ActivateWindow(Music,plugin://%s)",params[0]);
-          if (plugin->Provides(CPluginSource::EXECUTABLE))
-            cmd.Format("ActivateWindow(Programs,plugin://%s)",params[0]);
-          if (plugin->Provides(CPluginSource::IMAGE))
-            cmd.Format("ActivateWindow(Pictures,plugin://%s)",params[0]);
+          parameters.insert(parameters.begin(), params.begin() + 1, params.end());
+          urlParameters = "?" + StringUtils::JoinString(parameters, "&");
         }
-        if (addon->Type() == ADDON_SCRIPT)
-          // Pass the script name (params[0]) and all the parameters
-          // (params[1] ... params[x]) separated by a comma to RunScript
-          cmd.Format("RunScript(%s)", StringUtils::Join(params, ","));
+        else
+        {
+          // Add '/' if addon is run without params (will be removed later so it's safe)
+          // Otherwise there are 2 entries for the same plugin in ViewModesX.db
+          urlParameters = "/";
+        }
 
-        return Execute(cmd);
+        if (plugin->Provides(CPluginSource::VIDEO))
+          cmd = StringUtils::Format("ActivateWindow(Videos,plugin://%s%s,return)", addonid.c_str(), urlParameters.c_str());
+        else if (plugin->Provides(CPluginSource::AUDIO))
+          cmd = StringUtils::Format("ActivateWindow(Music,plugin://%s%s,return)", addonid.c_str(), urlParameters.c_str());
+        else if (plugin->Provides(CPluginSource::EXECUTABLE))
+          cmd = StringUtils::Format("ActivateWindow(Programs,plugin://%s%s,return)", addonid.c_str(), urlParameters.c_str());
+        else if (plugin->Provides(CPluginSource::IMAGE))
+          cmd = StringUtils::Format("ActivateWindow(Pictures,plugin://%s%s,return)", addonid.c_str(), urlParameters.c_str());
+        else
+          // Pass the script name (params[0]) and all the parameters
+          // (params[1] ... params[x]) separated by a comma to RunPlugin
+          cmd = StringUtils::Format("RunPlugin(%s)", StringUtils::Join(params, ",").c_str());
       }
+      else if (CAddonMgr::Get().GetAddon(params[0], addon, ADDON_SCRIPT) ||
+               CAddonMgr::Get().GetAddon(params[0], addon, ADDON_SCRIPT_WEATHER) ||
+               CAddonMgr::Get().GetAddon(params[0], addon, ADDON_SCRIPT_LYRICS) ||
+               CAddonMgr::Get().GetAddon(params[0], addon, ADDON_SCRIPT_LIBRARY))
+        // Pass the script name (params[0]) and all the parameters
+        // (params[1] ... params[x]) separated by a comma to RunScript
+        cmd = StringUtils::Format("RunScript(%s)", StringUtils::Join(params, ",").c_str());
+
+      return Execute(cmd);
     }
     else
     {
