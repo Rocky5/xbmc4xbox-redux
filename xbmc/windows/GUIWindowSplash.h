@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- *      Copyright (C) 2005-2013 Team XBMC
+ *      Copyright (C) 2015 Team XBMC
  *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -21,25 +21,21 @@
  */
 
 #include <boost/move/unique_ptr.hpp>
-#include <string>
 
-class CGUIImage;
+#include "guilib/GUIWindow.h"
+
 class CGUITextLayout;
+class CGUIImage;
 
-class CSplash
+class CGUIWindowSplash : public CGUIWindow
 {
 public:
-  static CSplash& GetInstance();
-
-  void Show(const std::string& message = "");
-
+  CGUIWindowSplash(void);
+  virtual ~CGUIWindowSplash(void);
+  virtual bool OnAction(const CAction &action) { return false; };
+  virtual void Render();
 protected:
-  CSplash();
-  CSplash(const CSplash&);
-  CSplash& operator=(CSplash const&);
-  virtual ~CSplash() {};
-
+  virtual void OnInitWindow();
 private:
   boost::movelib::unique_ptr<CGUIImage> m_image;
-  boost::movelib::unique_ptr<CGUITextLayout> m_messageLayout;
 };

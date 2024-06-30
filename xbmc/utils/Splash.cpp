@@ -24,39 +24,36 @@
 #include "guilib/GUILabelControl.h"
 #include "guilib/GUIFontManager.h"
 #include "filesystem/File.h"
-#include "log.h"
+#include "settings/AdvancedSettings.h"
 
 using namespace XFILE;
 
-CSplash::CSplash(const CStdString& imageName) : CThread("CSplash")
+CSplash::CSplash()
 {
-  m_ImageName = imageName;
-  m_messageLayout = NULL;
-  m_image = NULL;
-  m_layoutWasLoading = false;
 }
 
-
-CSplash::~CSplash()
+CSplash& CSplash::GetInstance()
 {
-  Stop();
-  delete m_image;
-  delete m_messageLayout;
+  static CSplash instance;
+  return instance;
 }
 
-void CSplash::OnStartup()
-{}
-
-void CSplash::OnExit()
-{}
-
-void CSplash::Show()
+void CSplash::Show(const std::string& message /* = "" */)
 {
-  Show("");
-}
+  if (!g_advancedSettings.m_splashImage && !(m_image || !message.empty()))
+    return;
 
-void CSplash::Show(const CStdString& message)
-{
+  if (!m_image)
+  {
+    std::string splashImage = "special://home/media/Splash.png";
+    if (!XFILE::CFile::Exists(splashImage))
+      splashImage = "special://xbmc/media/Splash.png";
+
+    m_image = boost::movelib::unique_ptr<CGUIImage>(new CGUIImage(0, 0, 0, 0, g_graphicsContext.GetWidth(),
+        g_graphicsContext.GetHeight(), CTextureInfo(splashImage)));
+    m_image->SetAspectRatio(CAspectRatio::AR_SCALE);
+  }
+
   g_graphicsContext.Lock();
 #ifdef HAS_XBOX_D3D
   g_graphicsContext.Get3DDevice()->Clear(0, NULL, D3DCLEAR_TARGET, 0, 0, 0);
@@ -64,46 +61,39 @@ void CSplash::Show(const CStdString& message)
   g_graphicsContext.Clear();
 #endif
 
-  RESOLUTION_INFO res(1280,720,0);
+  RESOLUTION_INFO res = g_graphicsContext.GetResInfo();
   g_graphicsContext.SetRenderingResolution(res, true);
-  if (!m_image)
-  {
-    m_image = new CGUIImage(0, 0, 0, 0, 1280, 720, m_ImageName);
-    m_image->SetAspectRatio(CAspectRatio::AR_CENTER);
-  }
 
   //render splash image
-#ifndef HAS_XBOX_D3D
+#ifdef HAS_XBOX_D3D
   g_graphicsContext.Get3DDevice()->BeginScene();
+#else
+  g_Windowing.BeginRender();
 #endif
 
   m_image->AllocResources();
   m_image->Render();
   m_image->FreeResources();
 
-  // render message
-  if (!message.IsEmpty())
+  if (!message.empty())
   {
-    if (!m_layoutWasLoading)
+    if (!m_messageLayout)
     {
-      // load arial font, white body, no shadow, size: 20, no additional styling
       CGUIFont *messageFont = g_fontManager.LoadTTF("__splash__", "arial.ttf", 0xFFFFFFFF, 0, 20, FONT_STYLE_NORMAL, false, 1.0f, 1.0f, &res);
       if (messageFont)
-        m_messageLayout = new CGUITextLayout(messageFont, true, 0);
-      m_layoutWasLoading = true;
+        m_messageLayout = boost::movelib::unique_ptr<CGUITextLayout>(new CGUITextLayout(messageFont, true, 0));
     }
+
     if (m_messageLayout)
     {
       m_messageLayout->Update(message, 1150, false, true);
-
       float textWidth, textHeight;
       m_messageLayout->GetTextExtent(textWidth, textHeight);
-      // ideally place text in center of empty area below splash image
-      float y = 540 + m_image->GetTextureHeight() / 4 - textHeight / 2;
-      if (y + textHeight > 720) // make sure entire text is visible
-        y = 720 - textHeight;
 
-      m_messageLayout->RenderOutline(640, y, 0, 0xFF000000, XBFONT_CENTER_X, 1280);
+      int width = g_graphicsContext.GetWidth();
+      int height = g_graphicsContext.GetHeight();
+      float y = height - textHeight - 100;
+      m_messageLayout->RenderOutline(width/2, y, 0, 0xFF000000, XBFONT_CENTER_X, width);
     }
   }
 
@@ -112,29 +102,8 @@ void CSplash::Show(const CStdString& message)
   g_graphicsContext.Get3DDevice()->BlockUntilVerticalBlank();
   g_graphicsContext.Get3DDevice()->Present( NULL, NULL, NULL, NULL );
 #else
-  g_graphicsContext.Get3DDevice()->EndScene();
-  g_graphicsContext.Flip();
+  g_Windowing.EndRender();
+  g_graphicsContext.Flip(true, false);
 #endif
   g_graphicsContext.Unlock();
-}
-
-void CSplash::Process()
-{
-  Show();
-}
-
-bool CSplash::Start()
-{
-  if (m_ImageName.IsEmpty() || !CFile::Exists(m_ImageName))
-  {
-    CLog::Log(LOGDEBUG, "Splash image %s not found", m_ImageName.c_str());
-    return false;
-  }
-  Create();
-  return true;
-}
-
-void CSplash::Stop()
-{
-  StopThread();
 }

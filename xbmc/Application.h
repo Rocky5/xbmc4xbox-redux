@@ -298,8 +298,6 @@ public:
 
   bool SwitchToFullScreen(bool force = false);
 
-  CSplash* GetSplash() { return m_splash; }
-
 protected:
   virtual bool OnSettingsSaving() const;
 
@@ -343,7 +341,6 @@ protected:
   CFileItemPtr m_stackFileItemToUpdate;
 
   CStdString m_prevMedia;
-  CSplash* m_splash;
   DWORD m_threadID;       // application thread ID.  Used in applicationMessanger to know where we are firing a thread with delay from.
   PLAYERCOREID m_eCurrentPlayer;
   bool m_bInitializing;

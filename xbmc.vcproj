@@ -1703,6 +1703,12 @@ bundler xbelogo\saveimage.rdf -o xbelogo\saveimage.xbx
 					RelativePath=".\xbmc\pictures\GUIWindowSlideShow.cpp">
 				</File>
 				<File
+					RelativePath=".\xbmc\windows\GUIWindowSplash.cpp">
+				</File>
+				<File
+					RelativePath=".\xbmc\windows\GUIWindowSplash.h">
+				</File>
+				<File
 					RelativePath=".\xbmc\windows\GUIWindowStartup.cpp">
 				</File>
 				<File

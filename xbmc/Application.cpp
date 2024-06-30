@@ -40,6 +40,7 @@
 #include "playlists/PlayListFactory.h"
 #include "guilib/GUIFontManager.h"
 #include "guilib/GUIColorManager.h"
+#include "guilib/GUIImage.h"
 #include "addons/LanguageResource.h"
 #include "addons/Skin.h"
 #include "interfaces/generic/ScriptInvocationManager.h"
@@ -466,11 +467,6 @@ void CApplication::InitBasicD3D()
   }
 #endif
 
-  if (m_splash)
-  {
-    m_splash->Stop();
-  }
-
   m_pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET, 0, 0, 0);
   m_pd3dDevice->Present( NULL, NULL, NULL, NULL );
 }
@@ -484,11 +480,6 @@ void CApplication::FatalErrorHandler(bool InitD3D, bool MapDrives, bool InitNetw
   bool HaveGamepad = true; // should always have the gamepad when we get here
   if (InitD3D)
     InitBasicD3D();
-
-  if (m_splash)
-  {
-    m_splash->Stop();
-  }
 
   m_pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET, 0, 0, 0);
   m_pd3dDevice->Present( NULL, NULL, NULL, NULL );
@@ -1191,21 +1182,7 @@ HRESULT CApplication::Create(HWND hWnd)
   // set GUI res and force the clear of the screen
   g_graphicsContext.SetVideoResolution(CDisplaySettings::Get().GetCurrentResolution(), TRUE, true);
 
-  if (g_advancedSettings.m_splashImage)
-  {
-    CStdString strUserSplash = "special://home/media/Splash.png";
-    if (CFile::Exists(strUserSplash))
-    {
-      CLog::Log(LOGINFO, "load user splash image: %s", CSpecialProtocol::TranslatePath(strUserSplash).c_str());
-      m_splash = new CSplash(strUserSplash);
-    }
-    else
-    {
-      CLog::Log(LOGINFO, "load default splash image: %s", CSpecialProtocol::TranslatePath("special://xbmc/media/Splash.png").c_str());
-      m_splash = new CSplash("special://xbmc/media/Splash.png");
-    }
-    m_splash->Show();
-  }
+  CSplash::GetInstance().Show();
 
   int iResolution = g_graphicsContext.GetVideoResolution();
   CLog::Log(LOGINFO, "GUI format %ix%i %s",
@@ -1277,10 +1254,13 @@ HRESULT CApplication::Initialize()
   g_windowManager.CreateWindows();
   /* window id's 3000 - 3100 are reserved for python */
 
-  m_ctrDpad.SetDelays(100, 500); //g_settings.m_iMoveDelayController, g_settings.m_iRepeatDelayController);
-
+  // initialize splash window after splash screen disappears
+  // because we need a real window in the background which gets
+  // rendered while we load the main window or enter the master lock key
   if (g_advancedSettings.m_splashImage)
-    SAFE_DELETE(m_splash);
+    g_windowManager.ActivateWindow(WINDOW_SPLASH);
+
+  m_ctrDpad.SetDelays(100, 500); //g_settings.m_iMoveDelayController, g_settings.m_iRepeatDelayController);
 
   if (CSettings::Get().GetBool("masterlock.startuplock") && 
       CProfilesManager::Get().GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE &&
@@ -2632,11 +2612,6 @@ void CApplication::OnApplicationMessage(ThreadMessage* pMsg)
     ShowVolumeBar(&action);
   }
   break;
-
-  case TMSG_SPLASH_MESSAGE:
-    if (GetSplash())
-      GetSplash()->Show(pMsg->strParam);
-    break;
 
   case TMSG_DISPLAY_SETUP:
 #ifndef _XBOX
@@ -4971,6 +4946,9 @@ bool CApplication::OnMessage(CGUIMessage& message)
       }
       else if (message.GetParam1() == GUI_MSG_UI_READY)
       {
+        // remove splash window
+        g_windowManager.Delete(WINDOW_SPLASH);
+
         if (m_fallbackLanguageLoaded)
           CGUIDialogOK::ShowAndGetInput(24133, 24134);
       }
