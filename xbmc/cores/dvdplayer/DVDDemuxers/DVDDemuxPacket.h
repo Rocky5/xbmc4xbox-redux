@@ -1,7 +1,7 @@
 #pragma once
 
 /*
- *      Copyright (C) 2005-2013 Team XBMC
+ *      Copyright (C) 2012-2013 Team XBMC
  *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -20,12 +20,17 @@
  *
  */
 
-#include "DVDDemuxPacket.h"
+#define DMX_SPECIALID_STREAMINFO    -10
+#define DMX_SPECIALID_STREAMCHANGE  -11
 
-class CDVDDemuxUtils
+ typedef struct DemuxPacket
 {
-public:
-  static void FreeDemuxPacket(DemuxPacket* pPacket);
-  static DemuxPacket* AllocateDemuxPacket(int iDataSize = 0);
-};
+  BYTE* pData;   // data
+  int iSize;     // data size
+  int iStreamId; // integer representing the stream index
+  int iGroupId;  // the group this data belongs to, used to group data from different streams together
 
+  double pts; // pts in DVD_TIME_BASE
+  double dts; // dts in DVD_TIME_BASE
+  double duration; // duration in DVD_TIME_BASE if available
+} DemuxPacket;

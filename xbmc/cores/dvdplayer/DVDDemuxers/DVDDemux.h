@@ -22,6 +22,7 @@
 
 #include "utils/StdString.h"
 #include "system.h"
+#include "DVDDemuxPacket.h"
 
 class CDVDInputStream;
 
@@ -71,9 +72,13 @@ public:
     disabled = false;
     changes = 0;
     flags = FLAG_NONE;
+    orig_type = 0;
   }
 
-  virtual ~CDemuxStream() {}
+  virtual ~CDemuxStream()
+  {
+    delete [] ExtraData;
+  }
 
   virtual void GetStreamInfo(std::string& strInfo)
   {
@@ -94,13 +99,15 @@ public:
 
   int iDuration; // in mseconds
   void* pPrivate; // private pointer for the demuxer
-  void* ExtraData; // extra data for codec to use
+  uint8_t*     ExtraData; // extra data for codec to use
   unsigned int ExtraSize; // size of extra data
 
   char language[4]; // ISO 639 3-letter language code (empty string if undefined)
   bool disabled; // set when stream is disabled. (when no decoder exists)
 
   int  changes; // increment on change which player may need to know about
+
+  int orig_type; // type of origininal source
 
   enum EFlags
   { FLAG_NONE     = 0x0000 
@@ -173,19 +180,6 @@ public:
     type = STREAM_SUBTITLE;
   }
 };
-
-typedef struct DemuxPacket
-{
-  BYTE* pData;   // data
-  int iSize;     // data size
-  int iStreamId; // integer representing the stream index
-  int iGroupId;  // the group this data belongs to, used to group data from different streams together
-  
-  double pts; // pts in DVD_TIME_BASE
-  double dts; // dts in DVD_TIME_BASE
-  double duration; // duration in DVD_TIME_BASE if available
-} DemuxPacket;
-
 
 class CDVDDemux
 {
