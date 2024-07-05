@@ -112,6 +112,7 @@ public:
   bool Aborted();
 
   AVFormatContext* m_pFormatContext;
+  CDVDInputStream* m_pInput;
 
 protected:
   friend class CDemuxStreamAudioFFmpeg;
@@ -141,7 +142,5 @@ protected:
   int      m_speed;
   unsigned m_program;
   XbmcThreads::EndTime  m_timeout;
-
-  CDVDInputStream* m_pInput;
 };
 

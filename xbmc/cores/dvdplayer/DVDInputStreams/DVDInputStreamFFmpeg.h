@@ -37,6 +37,9 @@ public:
   virtual bool IsEOF();
   virtual int64_t GetLength();
 
+  virtual void    Abort()    { m_aborted = true;  }
+  bool            Aborted()  { return m_aborted;  }
+
   bool            CanSeek()  { return m_can_seek; }
   bool            CanPause() { return m_can_pause; }
 
@@ -52,4 +55,5 @@ private:
 protected:
   bool m_can_pause;
   bool m_can_seek;
+  bool m_aborted;
 };

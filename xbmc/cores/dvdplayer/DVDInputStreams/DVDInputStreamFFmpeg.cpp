@@ -32,6 +32,9 @@ using PLAYLIST::CPlayListM3U;
 
 CDVDInputStreamFFmpeg::CDVDInputStreamFFmpeg(CFileItem& fileitem)
   : CDVDInputStream(DVDSTREAM_TYPE_FFMPEG, fileitem)
+  , m_can_pause(false)
+  , m_can_seek(false)
+  , m_aborted(false)
 {
 
 }
@@ -43,7 +46,10 @@ CDVDInputStreamFFmpeg::~CDVDInputStreamFFmpeg()
 
 bool CDVDInputStreamFFmpeg::IsEOF()
 {
-  return false;
+  if(m_aborted)
+    return true;
+  else
+    return false;
 }
 
 bool CDVDInputStreamFFmpeg::Open()
@@ -69,6 +75,7 @@ bool CDVDInputStreamFFmpeg::Open()
 
   m_can_pause = true;
   m_can_seek  = true;
+  m_aborted   = false;
 
   if(strnicmp(m_item.GetPath().c_str(), "udp://", 6) == 0 ||
      strnicmp(m_item.GetPath().c_str(), "rtp://", 6) == 0)
