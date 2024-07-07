@@ -2072,7 +2072,6 @@ INFO::InfoPtr CGUIInfoManager::Register(const std::string &expression, int conte
 {
   std::string condition(CGUIInfoLabel::ReplaceLocalize(expression));
   StringUtils::Trim(condition);
-  StringUtils::ToLower(condition);
 
   if (condition.empty())
     return INFO::InfoPtr();
