@@ -126,6 +126,7 @@ int64_t CShoutcastFile::Seek(int64_t iFilePosition, int iWhence)
 void CShoutcastFile::Close()
 {
   delete[] m_buffer;
+  m_buffer = NULL;
   m_file.Close();
 }
 
