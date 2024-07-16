@@ -58,13 +58,16 @@ typedef int ssize_t;
 #define strncasecmp _strnicmp
 #endif
 
-#ifndef va_copy 
-#define va_copy(dst, src) ((dst) = (src)) 
+#ifndef va_copy
+#define va_copy(dst, src) ((dst) = (src))
 #endif
 
 #define lrint(x) ((x) >= 0 ? ((int)((x) + 0.5)) : ((int)((x) - 0.5)))
 #define llrint(x) ((x) >= 0 ? ((__int64)((x) + 0.5)) : ((__int64)((x) - 0.5)))
-#define strtoll(p, e, b) _strtoi64(p, e, b)
+#define strtoll  _strtoi64
+#define strtoull _strtoui64
+#define wcstoll  _wcstoi64
+#define wcstoull _wcstoui64
 
 #define ETIMEDOUT WSAETIMEDOUT
 
@@ -85,12 +88,32 @@ public:
 
    template<class C, class T> /* or any type of null           */
       operator T C::*() const /* member pointer...             */
-      { return 0; }   
+      { return 0; }
 
 private:
    void operator&() const;    /* Can't take address of nullptr */
 
 } nullptr = {};               /* and whose name is nullptr     */
+
+#include <sstream>
+namespace std
+{
+  template<typename T>
+  std::string to_string(const T & value)
+  {
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
+  }
+
+  template<typename T>
+  std::wstring to_wstring(const T & value)
+  {
+    std::wostringstream oss;
+    oss << value;
+    return oss.str();
+  }
+}
 
 #endif // _WIN32
 
