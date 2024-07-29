@@ -554,7 +554,7 @@ BuildObject(CFileItem&                    item,
 
         std::string fanart = item.GetArt("fanart");
         if (!fanart.empty())
-            upnp_server->AddSafeResourceUri(object, ips, CTextureUtils::GetWrappedImageURL(fanart), "xbmc.org:*:fanart:*");
+            upnp_server->AddSafeResourceUri(object, ips, CTextureUtils::GetWrappedImageURL(fanart).c_str(), "xbmc.org:*:fanart:*");
     }
 
     return object;

@@ -1,6 +1,6 @@
 /*
- *      Copyright (C) 2005-2010 Team XBMC
- *      http://www.xbmc.org
+ *      Copyright (C) 2005-2013 Team XBMC
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,17 +13,19 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
- *  http://www.gnu.org/copyleft/gpl.html
+ *  along with XBMC; see the file COPYING.  If not, see
+ *  <http://www.gnu.org/licenses/>.
  *
  */
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "dbwrappers/Database.h"
 #include "TextureCacheJob.h"
-#include "playlists/SmartPlayList.h"
+#include "dbwrappers/DatabaseQuery.h"
 
 class CVariant;
 
@@ -54,15 +56,15 @@ public:
    \param options which options we need (eg size=thumb)
    \return full wrapped URL of the image file
    */
-  static CStdString GetWrappedImageURL(const CStdString &image, const CStdString &type = "", const CStdString &options = "");
-  static CStdString GetWrappedThumbURL(const CStdString &image);
+  static std::string GetWrappedImageURL(const std::string &image, const std::string &type = "", const std::string &options = "");
+  static std::string GetWrappedThumbURL(const std::string &image);
 
   /*! \brief Unwrap an image://<url_encoded_path> style URL
    Such urls are used for art over the webserver or other users of the VFS
    \param image url of the image
    \return the unwrapped URL, or the original URL if unwrapping is inappropriate.
    */
-  static CStdString UnwrapImageURL(const CStdString &image);
+  static std::string UnwrapImageURL(const std::string &image);
 };
 
 class CTextureDatabase : public CDatabase, public IDatabaseQueryRuleFactory
@@ -72,11 +74,11 @@ public:
   virtual ~CTextureDatabase();
   virtual bool Open();
 
-  bool GetCachedTexture(const CStdString &originalURL, CTextureDetails &details);
-  bool AddCachedTexture(const CStdString &originalURL, const CTextureDetails &details);
-  bool SetCachedTextureValid(const CStdString &originalURL, bool updateable);
-  bool ClearCachedTexture(const CStdString &originalURL, CStdString &cacheFile);
-  bool ClearCachedTexture(int textureID, CStdString &cacheFile);
+  bool GetCachedTexture(const std::string &originalURL, CTextureDetails &details);
+  bool AddCachedTexture(const std::string &originalURL, const CTextureDetails &details);
+  bool SetCachedTextureValid(const std::string &originalURL, bool updateable);
+  bool ClearCachedTexture(const std::string &originalURL, std::string &cacheFile);
+  bool ClearCachedTexture(int textureID, std::string &cacheFile);
   bool IncrementUseCount(const CTextureDetails &details);
 
   /*! \brief Invalidate a previously cached texture
@@ -84,7 +86,7 @@ public:
    next texture load it will be re-cached.
    \param url texture path
    */
-  bool InvalidateCachedTexture(const CStdString &originalURL);
+  bool InvalidateCachedTexture(const std::string &originalURL);
 
   /*! \brief Get a texture associated with the given path
    Used for retrieval of previously discovered images to save
@@ -93,7 +95,7 @@ public:
    \param type type of image to look for
    \return URL of the texture associated with the given path
    */
-  CStdString GetTextureForPath(const CStdString &url, const CStdString &type);
+  std::string GetTextureForPath(const std::string &url, const std::string &type);
 
   /*! \brief Set a texture associated with the given path
    Used for setting of previously discovered images to save
@@ -104,7 +106,7 @@ public:
    \param type type of image to associate
    \param texture URL of the texture to associate with the path
    */
-  void SetTextureForPath(const CStdString &url, const CStdString &type, const CStdString &texture);
+  void SetTextureForPath(const std::string &url, const std::string &type, const std::string &texture);
 
   /*! \brief Clear a texture associated with the given path
    \param url path that was used to find the texture
@@ -112,7 +114,7 @@ public:
    \param texture URL of the texture to associate with the path
    \sa GetTextureForPath, SetTextureForPath
    */
-  void ClearTextureForPath(const CStdString &url, const CStdString &type);
+  void ClearTextureForPath(const std::string &url, const std::string &type);
 
   bool GetTextures(CVariant &items, const Filter &filter);
 
@@ -125,7 +127,7 @@ protected:
    \param url url to hash
    \return a hash for this url
    */
-  unsigned int GetURLHash(const CStdString &url) const;
+  unsigned int GetURLHash(const std::string &url) const;
 
   virtual void CreateTables();
   virtual void CreateAnalytics();

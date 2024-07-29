@@ -1,6 +1,6 @@
 /*
- *      Copyright (C) 2012 Team XBMC
- *      http://www.xbmc.org
+ *      Copyright (C) 2012-2013 Team XBMC
+ *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,15 +13,17 @@
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, write to
- *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
- *  http://www.gnu.org/copyleft/gpl.html
+ *  along with XBMC; see the file COPYING.  If not, see
+ *  <http://www.gnu.org/licenses/>.
  *
  */
 
 #pragma once
 
-#include "utils/StdString.h"
+#include <stdint.h>
+#include <string>
+#include <vector>
+
 #include "utils/Job.h"
 
 class CBaseTexture;
@@ -39,6 +41,12 @@ public:
     width = height = 0;
     updateable = false;
   };
+  bool operator==(const CTextureDetails &right) const
+  {
+    return (id    == right.id    &&
+            file  == right.file  &&
+            width == right.width );
+  };
   int          id;
   std::string  file;
   std::string  hash;
@@ -50,13 +58,13 @@ public:
 /*!
  \ingroup textures
  \brief Job class for caching textures
- 
+
  Handles loading and caching of textures.
  */
 class CTextureCacheJob : public CJob
 {
 public:
-  CTextureCacheJob(const CStdString &url, const CStdString &oldHash = "");
+  CTextureCacheJob(const std::string &url, const std::string &oldHash = "");
   virtual ~CTextureCacheJob();
 
   virtual const char* GetType() const { return kJobTypeCacheImage; };
@@ -70,8 +78,8 @@ public:
    */
   bool CacheTexture(CBaseTexture **texture = NULL);
 
-  CStdString m_url;
-  CStdString m_oldHash;
+  std::string m_url;
+  std::string m_oldHash;
   CTextureDetails m_details;
 private:
   /*! \brief retrieve a hash for the given image
@@ -79,7 +87,7 @@ private:
    \param url location of the image
    \return a hash string for this image
    */
-  static CStdString GetImageHash(const CStdString &url);
+  static std::string GetImageHash(const std::string &url);
 
   /*! \brief Check whether a given URL represents an image that can be updated
    We currently don't check http:// and https:// URLs for updates, under the assumption that
@@ -88,7 +96,7 @@ private:
    \param url the url to check
    \return true if the image given by the URL should be checked for updates, false otehrwise
    */
-  bool UpdateableURL(const CStdString &url) const;
+  bool UpdateableURL(const std::string &url) const;
 
   /*! \brief Decode an image URL to the underlying image, width, height and orientation
    \param url wrapped URL of the image
@@ -97,7 +105,7 @@ private:
    \param additional_info additional information, such as "flipped" to flip horizontally
    \return URL of the underlying image file.
    */
-  static CStdString DecodeImageURL(const CStdString &url, unsigned int &width, unsigned int &height, std::string &additional_info);
+  static std::string DecodeImageURL(const std::string &url, unsigned int &width, unsigned int &height, std::string &additional_info);
 
   /*! \brief Load an image at a given target size and orientation.
 
@@ -110,21 +118,22 @@ private:
    \param additional_info extra info for loading, such as whether to flip horizontally.
    \return a pointer to a CBaseTexture object, NULL if failed.
    */
-  static CBaseTexture *LoadImage(const CStdString &image, unsigned int width, unsigned int height, const std::string &additional_info);
+  static CBaseTexture *LoadImage(const std::string &image, unsigned int width, unsigned int height, const std::string &additional_info);
 
-  CStdString    m_cachePath;
+  std::string    m_cachePath;
 };
 
-/* \brief Job class for creating .dds versions of textures
+/* \brief Job class for storing the use count of textures
  */
-class CTextureDDSJob : public CJob
+class CTextureUseCountJob : public CJob
 {
 public:
-  CTextureDDSJob(const CStdString &original);
+  CTextureUseCountJob(const std::vector<CTextureDetails> &textures);
 
-  virtual const char* GetType() const { return kJobTypeDDSCompress; };
+  virtual const char* GetType() const { return "usecount"; };
   virtual bool operator==(const CJob *job) const;
   virtual bool DoWork();
 
-  CStdString m_original;
+private:
+  std::vector<CTextureDetails> m_textures;
 };

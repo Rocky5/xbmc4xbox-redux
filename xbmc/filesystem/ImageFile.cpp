@@ -40,7 +40,7 @@ bool CImageFile::Open(const CURL& url)
 {
   CStdString file = url.Get();
   bool needsRecaching = false;
-  CStdString cachedFile = CTextureCache::Get().CheckCachedImage(file, false, needsRecaching);
+  CStdString cachedFile = CTextureCache::Get().CheckCachedImage(file, needsRecaching);
   if (cachedFile.IsEmpty())
   { // not in the cache, so cache it
     cachedFile = CTextureCache::Get().CacheImage(file);
@@ -56,7 +56,7 @@ bool CImageFile::Open(const CURL& url)
 bool CImageFile::Exists(const CURL& url)
 {
   bool needsRecaching = false;
-  CStdString cachedFile = CTextureCache::Get().CheckCachedImage(url.Get(), false, needsRecaching);
+  CStdString cachedFile = CTextureCache::Get().CheckCachedImage(url.Get(), needsRecaching);
   if (!cachedFile.IsEmpty())
     return CFile::Exists(cachedFile);
 
@@ -72,7 +72,7 @@ bool CImageFile::Exists(const CURL& url)
 int CImageFile::Stat(const CURL& url, struct __stat64* buffer)
 {
   bool needsRecaching = false;
-  CStdString cachedFile = CTextureCache::Get().CheckCachedImage(url.Get(), false, needsRecaching);
+  CStdString cachedFile = CTextureCache::Get().CheckCachedImage(url.Get(), needsRecaching);
   if (!cachedFile.IsEmpty())
     return CFile::Stat(cachedFile, buffer);
 
