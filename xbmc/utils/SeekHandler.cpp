@@ -210,7 +210,8 @@ void CSeekHandler::FrameMove()
     CSingleLock lock(m_critSection);
 
     // perform relative seek
-    g_application.m_pPlayer->SeekTimeRelative(static_cast<int64_t>(m_seekSize * 1000));
+    if (g_application.m_pPlayer)
+      g_application.m_pPlayer->SeekTimeRelative(static_cast<int64_t>(m_seekSize * 1000));
 
     Reset();
   }
