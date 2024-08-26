@@ -38,11 +38,13 @@
 #include "FileItem.h"
 #include "profiles/ProfilesManager.h"
 #include "settings/Settings.h"
+#include "settings/AdvancedSettings.h"
 #include "settings/MediaSourceSettings.h"
 #include "utils/URIUtils.h"
 #include "LocalizeStrings.h"
 #include "utils/log.h"
 #include "utils/StringUtils.h"
+#include "utils/XMLUtils.h"
 #include "view/GUIViewState.h"
 
 using namespace XFILE;
@@ -159,18 +161,18 @@ void CGUIWindowPrograms::GetContextButtons(int itemNumber, CContextButtons &butt
             strLaunch += " (PAL-60)";
         }
         buttons.Add(CONTEXT_BUTTON_LAUNCH, strLaunch);
-  
+
         DWORD dwTitleId = CUtil::GetXbeID(item->GetPath());
         CStdString strTitleID;
         strTitleID.Format("%08X",dwTitleId);
         CStdString strGameSavepath = URIUtils::AddFileToFolder("E:\\udata\\",strTitleID);
-  
+
         if (CDirectory::Exists(strGameSavepath))
           buttons.Add(CONTEXT_BUTTON_GAMESAVES, 38778);         // Goto GameSaves
-  
+
         if (CSettings::GetInstance().GetBool("myprograms.gameautoregion"))
           buttons.Add(CONTEXT_BUTTON_LAUNCH_IN, 519); // launch in video mode
-  
+
         if (g_passwordManager.IsMasterLockUnlocked(false) || CProfilesManager::Get().GetCurrentProfile().canWriteDatabases())
         {
           if (item->IsShortCut())
@@ -178,12 +180,12 @@ void CGUIWindowPrograms::GetContextButtons(int itemNumber, CContextButtons &butt
           else
             buttons.Add(CONTEXT_BUTTON_RENAME, 38693); // edit xbe title
         }
-  
+
         if (m_database.ItemHasTrainer(dwTitleId))
           buttons.Add(CONTEXT_BUTTON_TRAINER_OPTIONS, 38712); // trainer options
       }
       buttons.Add(CONTEXT_BUTTON_SCAN_TRAINERS, 38709); // scan trainers
-    }  
+    }
   }
   CGUIMediaWindow::GetContextButtons(itemNumber, buttons);
 }
@@ -265,6 +267,11 @@ bool CGUIWindowPrograms::OnContextButton(int itemNumber, CONTEXT_BUTTON button)
   return CGUIMediaWindow::OnContextButton(itemNumber, button);
 }
 
+bool CGUIWindowPrograms::OnAddMediaSource()
+{
+  return CGUIDialogMediaSource::ShowAndAddMediaSource("programs");
+}
+
 bool CGUIWindowPrograms::OnChooseVideoModeAndLaunch(int item)
 {
   if (item < 0 || item >= m_vecItems->Size()) return false;
@@ -323,7 +330,7 @@ bool CGUIWindowPrograms::OnChooseVideoModeAndLaunch(int item)
   return true;
 }
 
-bool CGUIWindowPrograms::Update(const CStdString &strDirectory, bool updateFilterPath /* = true */)
+bool CGUIWindowPrograms::Update(const std::string &strDirectory, bool updateFilterPath /* = true */)
 {
   if (m_thumbLoader.IsLoading())
     m_thumbLoader.StopThread();
@@ -335,7 +342,7 @@ bool CGUIWindowPrograms::Update(const CStdString &strDirectory, bool updateFilte
   return true;
 }
 
-bool CGUIWindowPrograms::OnPlayMedia(int iItem)
+bool CGUIWindowPrograms::OnPlayMedia(int iItem, const std::string &player)
 {
   if ( iItem < 0 || iItem >= (int)m_vecItems->Size() ) return false;
   CFileItemPtr pItem = m_vecItems->Get(iItem);
@@ -566,7 +573,7 @@ void CGUIWindowPrograms::PopulateTrainersList()
     Update(m_vecItems->GetPath());
 }
 
-bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemList &items)
+bool CGUIWindowPrograms::GetDirectory(const std::string &strDirectory, CFileItemList &items)
 {
 #ifdef _XBOX
   bool bFlattened=false;
@@ -602,12 +609,6 @@ bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemL
   {
     items.SetLabel("");
     return true;
-  }
-
-  if (strDirectory.Equals("plugin://programs/"))
-  {
-    items.SetContent("plugins");
-    items.SetLabel(g_localizeStrings.Get(24001));
   }
 
   // flatten any folders
@@ -698,6 +699,114 @@ bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemL
     }
     if (!shortcutPath.IsEmpty())
       item->SetPath(shortcutPath);
+
+    if (item->IsXBE())
+    {
+      // Load XBMC4Gamers artwork and metadata
+      CFileItemList items;
+      std::string strRootPath = URIUtils::GetParentPath(item->GetPath());
+      std::string strPath = URIUtils::AddFileToFolder(strRootPath, "_resources\\artwork\\");
+      if(CDirectory::Exists(strPath) && CDirectory::GetDirectory(strPath, items, g_advancedSettings.m_pictureExtensions))
+      {
+        for (int i = 0; i < items.Size(); i++)
+        {
+          std::string strProperty(items[i]->GetLabel());
+          URIUtils::RemoveExtension(strProperty);
+          item->SetArt(strProperty, items[i]->GetPath());
+        }
+      }
+
+      items.Clear();
+      strPath = URIUtils::AddFileToFolder(strRootPath, "_resources\\screenshots\\");
+      if(CDirectory::Exists(strPath) && CDirectory::GetDirectory(strPath, items, g_advancedSettings.m_pictureExtensions))
+      {
+        for (int i = 0; i < items.Size(); i++)
+        {
+          std::string strProperty(items[i]->GetLabel());
+          URIUtils::RemoveExtension(strProperty);
+          item->SetArt(strProperty, items[i]->GetPath());
+        }
+      }
+
+      items.Clear();
+      strPath = URIUtils::AddFileToFolder(strRootPath, "_resources\\media\\");
+      if(CDirectory::Exists(strPath) && CDirectory::GetDirectory(strPath, items, g_advancedSettings.m_videoExtensions))
+      {
+        for (int i = 0; i < items.Size(); i++)
+        {
+          std::string strProperty(items[i]->GetLabel());
+          URIUtils::RemoveExtension(strProperty);
+          item->SetProperty(StringUtils::Format("media_%s", strProperty.c_str()), items[i]->GetPath());
+        }
+      }
+
+      CXBMCTinyXML doc;
+      strPath = URIUtils::AddFileToFolder(strRootPath, "_resources\\default.xml");
+      if (doc.LoadFile(strPath) && doc.RootElement())
+      {
+        const TiXmlElement* synopsis = doc.RootElement();
+        std::string value;
+        float fValue;
+        int iValue;
+
+        if (XMLUtils::GetString(synopsis, "sourcename", value))
+          item->SetProperty("sourcename", value);
+
+        if (XMLUtils::GetString(synopsis, "foldername", value))
+          item->SetProperty("foldername", value);
+
+        if (XMLUtils::GetString(synopsis, "title", value))
+        {
+          item->SetLabel(value);
+          item->SetProperty("title", value);
+        }
+
+        if (XMLUtils::GetString(synopsis, "developer", value))
+          item->SetProperty("developer", value);
+
+        if (XMLUtils::GetString(synopsis, "publisher", value))
+          item->SetProperty("publisher", value);
+
+        if (XMLUtils::GetString(synopsis, "features_general", value))
+          item->SetProperty("features_general", value);
+
+        if (XMLUtils::GetString(synopsis, "features_online", value))
+          item->SetProperty("features_online", value);
+
+        if (XMLUtils::GetString(synopsis, "esrb", value))
+          item->SetProperty("esrb", value);
+
+        if (XMLUtils::GetString(synopsis, "esrb_descriptors", value))
+          item->SetProperty("esrb_descriptors", value);
+
+        if (XMLUtils::GetString(synopsis, "genre", value))
+          item->SetProperty("genre", value);
+
+        if (XMLUtils::GetString(synopsis, "release_date", value))
+          item->SetProperty("release_date", value);
+
+        if (XMLUtils::GetInt(synopsis, "year", iValue))
+          item->SetProperty("year", iValue);
+
+        if (XMLUtils::GetFloat(synopsis, "rating", fValue))
+          item->SetProperty("rating", fValue);
+
+        if (XMLUtils::GetString(synopsis, "platform", value))
+          item->SetProperty("platform", value);
+
+        if (XMLUtils::GetString(synopsis, "exclusive", value))
+          item->SetProperty("exclusive", value);
+
+        if (XMLUtils::GetString(synopsis, "titleid", value))
+          item->SetProperty("titleid", value);
+
+        if (XMLUtils::GetString(synopsis, "overview", value))
+        {
+          item->SetLabel2(value);
+          item->SetProperty("overview", value);
+        }
+      }
+    }
   }
   m_database.CommitTransaction();
 
@@ -712,11 +821,11 @@ bool CGUIWindowPrograms::GetDirectory(const CStdString &strDirectory, CFileItemL
   return true;
 }
 
-CStdString CGUIWindowPrograms::GetStartFolder(const CStdString &dir)
+std::string CGUIWindowPrograms::GetStartFolder(const std::string &dir)
 {
-  if (dir.Equals("Plugins") || dir.Equals("Addons"))
+  if (dir == "Plugins" || dir == "Addons")
     return "addons://sources/executable/";
-    
+
   SetupShares();
   VECSOURCES shares;
   m_rootDir.GetSources(shares);

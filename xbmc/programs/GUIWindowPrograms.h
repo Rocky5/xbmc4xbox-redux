@@ -36,12 +36,13 @@ public:
   void PopulateTrainersList();
 protected:
   virtual void OnItemLoaded(CFileItem* pItem) {};
-  virtual bool Update(const CStdString& strDirectory, bool updateFilterPath = true);
-  virtual bool OnPlayMedia(int iItem);
-  virtual bool GetDirectory(const CStdString &strDirectory, CFileItemList &items);
+  virtual bool Update(const std::string& strDirectory, bool updateFilterPath = true);
+  virtual bool OnPlayMedia(int iItem, const std::string &player = "");
+  virtual bool GetDirectory(const std::string &strDirectory, CFileItemList &items);
   virtual void GetContextButtons(int itemNumber, CContextButtons &buttons);
   virtual bool OnContextButton(int itemNumber, CONTEXT_BUTTON button);
-  virtual CStdString GetStartFolder(const CStdString &dir);
+  virtual bool OnAddMediaSource();
+  virtual std::string GetStartFolder(const std::string &dir);
 
   int GetRegion(int iItem, bool bReload=false);
   bool OnChooseVideoModeAndLaunch(int iItem);
