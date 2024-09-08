@@ -5337,6 +5337,9 @@ void CApplication::ProcessSlow()
   if (!IsPlayingVideo())
     g_largeTextureManager.CleanupUnusedImages();
 
+  if (!IsPlayingVideo())
+    g_TextureManager.FreeUnusedTextures(5000);
+
   // checks whats in the DVD drive and tries to autostart the content (xbox games, dvd, cdda, avi files...)
   if (!IsPlayingVideo())
     m_Autorun.HandleAutorun();
