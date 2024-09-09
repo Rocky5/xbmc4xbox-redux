@@ -19,12 +19,12 @@
  *
  */
 
-
 #include "IDirectory.h"
-#include "utils/StdString.h"
 #include "utils/RegExp.h"
+#include <string>
+#include <vector>
 
-namespace XFILE 
+namespace XFILE
 {
   class CStackDirectory : public IDirectory
   {
@@ -33,12 +33,11 @@ namespace XFILE
     ~CStackDirectory();
     virtual bool GetDirectory(const CURL& url, CFileItemList& items);
     virtual bool AllowAll() const { return true; }
-    static CStdString GetStackedTitlePath(const CStdString &strPath);
-    static CStdString GetStackedTitlePath(const CStdString &strPath, VECCREGEXP& RegExps);
-    static CStdString GetFirstStackedFile(const CStdString &strPath);
-    static bool GetPaths(const CStdString& strPath, std::vector<CStdString>& vecPaths);
-    static CStdString ConstructStackPath(const CFileItemList& items, const std::vector<int> &stack);
-    static bool ConstructStackPath(const std::vector<CStdString> &paths, CStdString &stackedPath);
+    static std::string GetStackedTitlePath(const std::string &strPath);
+    static std::string GetStackedTitlePath(const std::string &strPath, VECCREGEXP& RegExps);
+    static std::string GetFirstStackedFile(const std::string &strPath);
+    static bool GetPaths(const std::string& strPath, std::vector<std::string>& vecPaths);
+    static std::string ConstructStackPath(const CFileItemList& items, const std::vector<int> &stack);
     static bool ConstructStackPath(const std::vector<std::string> &paths, std::string &stackedPath);
   };
 }

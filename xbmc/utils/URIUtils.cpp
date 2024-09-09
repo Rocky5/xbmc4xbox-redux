@@ -1358,11 +1358,11 @@ bool URIUtils::UpdateUrlEncoding(std::string &strFilename)
   // if this is a stack:// URL we need to work with its filename
   if (URIUtils::IsStack(strFilename))
   {
-    vector<CStdString> files;
+    vector<std::string> files;
     if (!CStackDirectory::GetPaths(strFilename, files))
       return false;
 
-    for (vector<CStdString>::iterator file = files.begin(); file != files.end(); file++)
+    for (vector<std::string>::iterator file = files.begin(); file != files.end(); file++)
     {
       std::string filePath = *file;
       UpdateUrlEncoding(filePath);
