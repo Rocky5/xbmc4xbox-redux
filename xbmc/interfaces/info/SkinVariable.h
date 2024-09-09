@@ -1,6 +1,6 @@
 #pragma once
 /*
- *      Copyright (C) 2005-2011 Team XBMC
+ *      Copyright (C) 2005-2013 Team XBMC
  *      http://xbmc.org
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -19,7 +19,8 @@
  *
  */
 
-#include "utils/StdString.h"
+#include <string>
+#include <vector>
 #include "guilib/GUIInfoTypes.h"
 #include "interfaces/info/InfoBool.h"
 
@@ -38,13 +39,13 @@ public:
 class CSkinVariableString
 {
 public:
-  const CStdString& GetName() const;
+  const std::string& GetName() const;
   int GetContext() const;
-  CStdString GetValue(bool preferImage = false, const CGUIListItem *item = NULL );
+  std::string GetValue(bool preferImage = false, const CGUIListItem *item = NULL );
 private:
   CSkinVariableString();
 
-  CStdString m_name;
+  std::string m_name;
   int m_context;
 
   struct ConditionLabelPair
