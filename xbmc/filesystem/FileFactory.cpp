@@ -23,7 +23,6 @@
 #include "FileFactory.h"
 #include "HDFile.h"
 #include "CurlFile.h"
-#include "HTTPFile.h"
 #include "DAVFile.h"
 #include "ShoutcastFile.h"
 #include "FileReaderFile.h"
@@ -94,8 +93,9 @@ IFile* CFileFactory::CreateLoader(const CURL& url)
     if (url.IsProtocol("ftp")
     ||  url.IsProtocol("ftpx")
     ||  url.IsProtocol("ftps")
-    ||  url.IsProtocol("rss")) return new CCurlFile();
-    else if (url.IsProtocol("http") ||  url.IsProtocol("https")) return new CHTTPFile();
+    ||  url.IsProtocol("rss")
+    ||  url.IsProtocol("http") 
+    ||  url.IsProtocol("https")) return new CCurlFile();
     else if (url.IsProtocol("dav") || url.IsProtocol("davs")) return new CDAVFile();
     else if (url.IsProtocol("shout")) return new CShoutcastFile();
     else if (url.IsProtocol("tuxbox")) return new CTuxBoxFile();
