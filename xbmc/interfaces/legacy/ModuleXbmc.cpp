@@ -181,7 +181,7 @@ namespace XBMCAddon
     String getLanguage(int format /* = CLangCodeExpander::ENGLISH_NAME */, bool region /*= false*/)
     {
       XBMC_TRACE;
-      CStdString lang = CSettings::GetInstance().GetString("locale.language");
+      CStdString lang = g_langInfo.GetEnglishLanguageName();
 
       switch (format)
       {
