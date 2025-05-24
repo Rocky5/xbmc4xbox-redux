@@ -1,39 +1,23 @@
 /*
- *      Copyright (C) 2013 Team XBMC
- *      http://xbmc.org
+ *  Copyright (C) 2013-2018 Team Kodi
+ *  This file is part of Kodi - https://kodi.tv
  *
- *  This Program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *
- *  This Program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
- *  <http://www.gnu.org/licenses/>.
- *
+ *  SPDX-License-Identifier: GPL-2.0-or-later
+ *  See LICENSES/README.md for more information.
  */
 
-#if (defined HAVE_CONFIG_H) && (!defined TARGET_WINDOWS)
-  #include "config.h"
-#endif
-
 // python.h should always be included first before any other includes
-#include <Python.h>
-#include <osdefs.h>
-
 #include "system.h"
 #include "AddonPythonInvoker.h"
 
 #include <utility>
 
+#include <Python.h>
+#include <osdefs.h>
+
 #define MODULE "xbmc"
 
-#define RUNSCRIPT_PRAMBLE \
+#define RUNSCRIPT_PREAMBLE \
         "" \
         "import " MODULE "\n" \
         "xbmc.abortRequested = False\n" \
@@ -65,18 +49,18 @@
   ""
 
 #define RUNSCRIPT_POSTSCRIPT \
-        "print '-->Python Interpreter Initialized<--'\n" \
+        "print('-->Python Interpreter Initialized<--')\n" \
         ""
 
 #if defined(TARGET_ANDROID)
 
 #define RUNSCRIPT_COMPLIANT \
-  RUNSCRIPT_PRAMBLE RUNSCRIPT_SETUPTOOLS_HACK RUNSCRIPT_POSTSCRIPT
+  RUNSCRIPT_PREAMBLE RUNSCRIPT_SETUPTOOLS_HACK RUNSCRIPT_POSTSCRIPT
 
 #else
 
 #define RUNSCRIPT_COMPLIANT \
-  RUNSCRIPT_PRAMBLE RUNSCRIPT_POSTSCRIPT
+  RUNSCRIPT_PREAMBLE RUNSCRIPT_POSTSCRIPT
 
 #endif
 

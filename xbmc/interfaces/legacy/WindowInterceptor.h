@@ -1,27 +1,15 @@
- /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
+/*
+ *  Copyright (C) 2005-2018 Team Kodi
+ *  This file is part of Kodi - https://kodi.tv
  *
- *  This Program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *
- *  This Program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
- *  <http://www.gnu.org/licenses/>.
- *
+ *  SPDX-License-Identifier: GPL-2.0-or-later
+ *  See LICENSES/README.md for more information.
  */
 
 #pragma once
 
-#include "guilib/GUIWindow.h"
 #include "Window.h"
+#include "guilib/GUIWindow.h"
 
 #include "threads/ThreadLocal.h"
 
@@ -54,13 +42,13 @@ namespace XBMCAddon
        *
        * ref(window)->UpCall()
        *
-       * durring the context of 'UpCall' it's possible that another call will
+       * during the context of 'UpCall' it's possible that another call will
        *  be made back on the window from the xbmc core side (this happens in
        *  sometimes in OnMessage). In that case, if upcall is still 'true', than
        *  the call will wrongly proceed back to the xbmc core side rather than
        *  to the Addon API side.
        */
-      static bool up() { bool ret = (upcallTls.get() != NULL); upcallTls.set(NULL); return ret; }
+      static bool up() { bool ret = ((upcallTls.get()) != NULL); upcallTls.set(NULL); return ret; }
     public:
 
       virtual ~InterceptorBase() { if (window.isNotNull()) { window->interceptorClear(); } }
@@ -89,7 +77,7 @@ namespace XBMCAddon
     {
       InterceptorBase* w;
     public:
-      inline ref(InterceptorBase* b) : w(b) { w->upcallTls.set(this); }
+      inline explicit ref(InterceptorBase* b) : w(b) { w->upcallTls.set(this); }
       inline ~ref() { w->upcallTls.set(NULL); }
       inline CGUIWindow* operator->() { return w->get(); }
       inline CGUIWindow* get() { return w->get(); }
@@ -121,9 +109,6 @@ namespace XBMCAddon
     protected:
       virtual CGUIWindow* get() { return this; }
 
-      // this is only called from XBMC core and we only want it to return true every time
-      virtual bool     Update(const String &strPath) { return true; }
-
     public:
       Interceptor(const char* specializedName,
                   Window* _window, int windowid) : P(windowid, ""),
@@ -150,36 +135,38 @@ namespace XBMCAddon
         P::SetLoadType(CGUIWindow::LOAD_ON_GUI_INIT);
       }
 
+#ifdef ENABLE_XBMC_TRACE_API
       virtual ~Interceptor()
       {
-#ifdef ENABLE_XBMC_TRACE_API
         XBMCAddonUtils::TraceGuard tg;
         CLog::Log(LOGDEBUG, "%sNEWADDON LIFECYCLE destroying %s 0x%lx", tg.getSpaces(),classname.c_str(), (long)(((void*)this)));
-#endif
       }
+#else
+      virtual ~Interceptor() {};
+#endif
 
-      virtual bool    OnMessage(CGUIMessage& message)
+      virtual bool OnMessage(CGUIMessage& message)
       { XBMC_TRACE; return up() ? P::OnMessage(message) : checkedb(OnMessage(message)); }
-      virtual bool    OnAction(const CAction &action)
+      virtual bool OnAction(const CAction &action)
       { XBMC_TRACE; return up() ? P::OnAction(action) : checkedb(OnAction(action)); }
 
       // NOTE!!: This ALWAYS skips up to the CGUIWindow instance.
-      virtual bool    OnBack(int actionId)
+      virtual bool OnBack(int actionId)
       { XBMC_TRACE; return up() ? CGUIWindow::OnBack(actionId) : checkedb(OnBack(actionId)); }
 
       virtual void OnDeinitWindow(int nextWindowID)
       { XBMC_TRACE; if(up()) P::OnDeinitWindow(nextWindowID); else checkedv(OnDeinitWindow(nextWindowID)); }
 
-      virtual bool    IsModalDialog() const { XBMC_TRACE; return checkedb(IsModalDialog()); };
+      virtual bool IsModalDialog() const { XBMC_TRACE; return checkedb(IsModalDialog()); };
 
-      virtual bool    IsDialogRunning() const { XBMC_TRACE; return checkedb(IsDialogRunning()); };
-      virtual bool    IsDialog() const { XBMC_TRACE; return checkedb(IsDialog()); };
-      virtual bool    IsMediaWindow() const { XBMC_TRACE; return checkedb(IsMediaWindow());; };
+      virtual bool IsDialogRunning() const { XBMC_TRACE; return checkedb(IsDialogRunning()); };
+      virtual bool IsDialog() const { XBMC_TRACE; return checkedb(IsDialog()); };
+      virtual bool IsMediaWindow() const { XBMC_TRACE; return checkedb(IsMediaWindow()); };
 
-      virtual void    SetRenderOrder(int renderOrder) { XBMC_TRACE; P::m_renderOrder = renderOrder; }
+      virtual void SetRenderOrder(int renderOrder) { XBMC_TRACE; P::m_renderOrder = renderOrder; }
 
-      virtual void    setActive(bool active) { XBMC_TRACE; P::m_active = active; }
-      virtual bool    isActive() { XBMC_TRACE; return P::m_active; }
+      virtual void setActive(bool active) { XBMC_TRACE; P::m_active = active; }
+      virtual bool isActive() { XBMC_TRACE; return P::m_active; }
     };
 
     template <class P /* extends CGUIWindow*/> class InterceptorDialog :

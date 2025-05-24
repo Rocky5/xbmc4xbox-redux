@@ -6,20 +6,20 @@
  *  See LICENSES/README.md for more information.
  */
 
-#include <cstdlib>
-#include <sstream>
-
 #include "ListItem.h"
-#include "AddonUtils.h"
 
-#include "video/VideoInfoTag.h"
+#include "AddonUtils.h"
+#include "Util.h"
 #include "music/tags/MusicInfoTag.h"
 #include "pictures/PictureInfoTag.h"
-#include "utils/log.h"
-#include "utils/Variant.h"
-#include "utils/StringUtils.h"
 #include "settings/AdvancedSettings.h"
-#include "Util.h"
+#include "utils/StringUtils.h"
+#include "utils/Variant.h"
+#include "utils/log.h"
+#include "video/VideoInfoTag.h"
+
+#include <cstdlib>
+#include <sstream>
 
 namespace XBMCAddon
 {
@@ -45,9 +45,9 @@ namespace XBMCAddon
       if (!label2.empty())
         item->SetLabel2( label2 );
       if (!iconImage.empty())
-        item->SetIconImage( iconImage );
+        CLog::Log(LOGWARNING, "Using iconImage in ListItem constructor results in NOP. Use setArt.");
       if (!thumbnailImage.empty())
-        item->SetArt("thumb",  thumbnailImage );
+        CLog::Log(LOGWARNING, "Using thumbnailImage in ListItem constructor results in NOP. Use setArt.");
       if (!path.empty())
         item->SetPath(path);
     }
@@ -105,20 +105,12 @@ namespace XBMCAddon
 
     void ListItem::setIconImage(const String& iconImage)
     {
-      if (!item) return;
-      {
-        XBMCAddonUtils::GuiLock lock(languageHook, m_offscreen);
-        item->SetIconImage(iconImage);
-      }
+      CLog::Log(LOGWARNING, "setIconImage results in NOP. Use setArt.");
     }
 
     void ListItem::setThumbnailImage(const String& thumbFilename)
     {
-      if (!item) return;
-      {
-        XBMCAddonUtils::GuiLock lock(languageHook, m_offscreen);
-        item->SetArt("thumb", thumbFilename);
-      }
+      CLog::Log(LOGWARNING, "setThumbnailImage results in NOP. Use setArt.");
     }
 
     void ListItem::setArt(const Properties& dictionary)
@@ -130,10 +122,7 @@ namespace XBMCAddon
         {
           std::string artName = it->first;
           StringUtils::ToLower(artName);
-          if (artName == "icon")
-            item->SetIconImage(it->second);
-          else
-            item->SetArt(artName, it->second);
+          item->SetArt(artName, it->second);
         }
       }
     }
@@ -643,7 +632,7 @@ namespace XBMCAddon
             if (!StringUtils::StartsWithNoCase(exifkey, "exif:") || exifkey.length() < 6)
               continue;
 
-            int info = CPictureInfoTag::TranslateString(StringUtils::Mid(exifkey,5));
+            int info = CPictureInfoTag::TranslateString(StringUtils::Mid(exifkey, 5));
             item->GetPictureInfoTag()->SetInfo(info, value);
           }
         }
@@ -654,11 +643,10 @@ namespace XBMCAddon
     {
       XBMCAddonUtils::GuiLock lock(languageHook, m_offscreen);
       GetVideoInfoTag()->m_cast.clear();
-      for (std::vector<Properties>::const_iterator itt = actors.begin(); itt != actors.end(); ++itt)
+      for (std::vector<Properties>::const_iterator dictionary = actors.begin(); dictionary != actors.end(); ++dictionary)
       {
-        const XBMCAddon::Properties &dictionary = *itt;
         SActorInfo info;
-        for (ADDON::InfoMap::const_iterator it = dictionary.begin(); it != dictionary.end(); ++it)
+        for (ADDON::InfoMap::const_iterator it = (*dictionary).begin(); it != (*dictionary).end(); ++it)
         {
           const String& key = it->first;
           const String& value = it->second;
@@ -679,13 +667,12 @@ namespace XBMCAddon
     {
       XBMCAddonUtils::GuiLock lock(languageHook, m_offscreen);
       GetVideoInfoTag()->m_fanart.Clear();
-      for (std::vector<Properties>::const_iterator itt = images.begin(); itt != images.end(); ++itt)
+      for (std::vector<Properties>::const_iterator dictionary = images.begin(); dictionary != images.end(); ++dictionary)
       {
-        const XBMCAddon::Properties &dictionary = *itt;
         std::string image;
         std::string preview;
         std::string colors;
-        for (XBMCAddon::Properties::const_iterator it = dictionary.begin(); it != dictionary.end(); ++it)
+        for (XBMCAddon::Properties::const_iterator it = (*dictionary).begin(); it != (*dictionary).end(); ++it)
         {
           const String& key = it->first;
           const String& value = it->second;
@@ -701,7 +688,7 @@ namespace XBMCAddon
       GetVideoInfoTag()->m_fanart.Pack();
     }
 
-    void ListItem::addAvailableArtwork(std::string url, std::string art_type, std::string referrer, std::string cache, bool post, bool isgz, int season)
+    void ListItem::addAvailableArtwork(std::string url, std::string art_type, std::string preview, std::string referrer, std::string cache, bool post, bool isgz, int season)
     {
       XBMCAddonUtils::GuiLock lock(languageHook, m_offscreen);
       GetVideoInfoTag()->m_strPictureURL.AddElement(url, art_type, referrer, cache, post, isgz, season);
@@ -821,12 +808,11 @@ namespace XBMCAddon
 
       std::vector<std::string> els;
       std::vector<XBMCAddon::xbmcgui::InfoLabelStringOrTuple> vecInfoLabel = alt.later();
-      for (std::vector<XBMCAddon::xbmcgui::InfoLabelStringOrTuple>::const_iterator it = vecInfoLabel.begin(); it != vecInfoLabel.end(); ++it)
+      for (std::vector<XBMCAddon::xbmcgui::InfoLabelStringOrTuple>::const_iterator el = vecInfoLabel.begin(); el != vecInfoLabel.end(); ++el)
       {
-        const XBMCAddon::xbmcgui::InfoLabelStringOrTuple &el = *it;
-        if (el.which() == second)
+        if ((*el).which() == second)
           throw WrongTypeException("When using \"%s\" you need to supply a string or list of strings for the value in the dictionary", tag.c_str());
-        els.push_back(el.former());
+        els.push_back((*el).former());
       }
       return els;
     }

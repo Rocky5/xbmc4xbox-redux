@@ -1,32 +1,20 @@
-#pragma once
-
 /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
+ *  Copyright (C) 2005-2018 Team Kodi
+ *  This file is part of Kodi - https://kodi.tv
  *
- *  This Program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *
- *  This Program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
- *  <http://www.gnu.org/licenses/>.
- *
+ *  SPDX-License-Identifier: GPL-2.0-or-later
+ *  See LICENSES/README.md for more information.
  */
 
+#pragma once
+
+#include "ServiceBroker.h"
 #include "cores/IPlayer.h"
+#include "interfaces/IAnnouncer.h"
+#include "interfaces/generic/ILanguageInvocationHandler.h"
 #include "threads/CriticalSection.h"
 #include "threads/Event.h"
 #include "threads/Thread.h"
-#include "interfaces/IAnnouncer.h"
-#include "interfaces/generic/ILanguageInvocationHandler.h"
-#include "ServiceBroker.h"
 
 #include <boost/shared_ptr.hpp>
 #include <vector>
@@ -70,9 +58,12 @@ public:
   virtual ~XBPython();
   virtual void OnPlayBackEnded();
   virtual void OnPlayBackStarted();
+  virtual void OnAVStarted(const CFileItem &file);
+  virtual void OnAVChange();
   virtual void OnPlayBackPaused();
   virtual void OnPlayBackResumed();
   virtual void OnPlayBackStopped();
+  virtual void OnPlayBackError();
   virtual void OnPlayBackSpeedChanged(int iSpeed);
   virtual void OnPlayBackSeek(int iTime, int seekOffset);
   virtual void OnPlayBackSeekChapter(int iChapter);
@@ -100,7 +91,7 @@ public:
   virtual bool OnScriptInitialized(ILanguageInvoker *invoker);
   virtual void OnScriptStarted(ILanguageInvoker *invoker);
   virtual void OnScriptAbortRequested(ILanguageInvoker *invoker);
-  virtual void OnScriptEnded(ILanguageInvoker *invoker);
+  virtual void OnExecutionEnded(ILanguageInvoker *invoker);
   virtual void OnScriptFinalized(ILanguageInvoker *invoker);
   virtual ILanguageInvoker* CreateInvoker();
 
@@ -123,7 +114,6 @@ private:
   bool              FileExist(const char* strFile);
 
   void*             m_mainThreadState;
-  ThreadIdentifier  m_ThreadId;
   bool              m_bInitialized;
   int               m_iDllScriptCounter; // to keep track of the total scripts running that need the dll
   unsigned int      m_endtime;

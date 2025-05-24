@@ -1,32 +1,20 @@
 /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
+ *  Copyright (C) 2005-2018 Team Kodi
+ *  This file is part of Kodi - https://kodi.tv
  *
- *  This Program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *
- *  This Program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
- *  <http://www.gnu.org/licenses/>.
- *
+ *  SPDX-License-Identifier: GPL-2.0-or-later
+ *  See LICENSES/README.md for more information.
  */
 
 #pragma once
-#include <limits.h>
-#include <vector>
 
 #include "AddonCallback.h"
-#include "Control.h"
 #include "AddonString.h"
-
+#include "Control.h"
 #include "swighelper.h"
+
+#include <limits.h>
+#include <vector>
 
 namespace XBMCAddon
 {
@@ -59,7 +47,7 @@ namespace XBMCAddon
       { }
 
 #ifndef SWIG
-      Action(const CAction& caction) { setFromCAction(caction); }
+      explicit Action(const CAction& caction) { setFromCAction(caction); }
 
       void setFromCAction(const CAction& caction);
 
@@ -96,7 +84,7 @@ namespace XBMCAddon
       /// ..
       /// def onAction(self, action):
       ///   if action.getId() == ACTION_PREVIOUS_MENU:
-      ///     print('action recieved: previous')
+      ///     print('action received: previous')
       /// ..
       /// ~~~~~~~~~~~~~
       ///
@@ -231,7 +219,7 @@ namespace XBMCAddon
        * the difference.
        * subclasses should use this constructor and not the other.
        */
-      Window(bool discrim);
+      explicit Window(bool discrim);
 
       virtual void deallocating();
 
@@ -249,7 +237,7 @@ namespace XBMCAddon
       void setWindow(InterceptorBase* _window);
 
       /**
-       * This is a helper method since poping the previous window id is a common
+       * This is a helper method since popping the previous window id is a common
        * function.
        */
       void popActiveWindowId();
@@ -265,7 +253,7 @@ namespace XBMCAddon
 #endif
 
     public:
-      Window(int existingWindowId = -1);
+      explicit Window(int existingWindowId = -1);
 
       virtual ~Window();
 
@@ -340,14 +328,14 @@ namespace XBMCAddon
       /// # Define own function where becomes called from Kodi
       /// def onAction(self, action):
       ///   if action.getId() == ACTION_PREVIOUS_MENU:
-      ///     print('action recieved: previous')
+      ///     print('action received: previous')
       ///     self.close()
       ///   if action.getId() == ACTION_SHOW_INFO:
-      ///     print('action recieved: show info')
+      ///     print('action received: show info')
       ///   if action.getId() == ACTION_STOP:
-      ///     print('action recieved: stop')
+      ///     print('action received: stop')
       ///   if action.getId() == ACTION_PAUSE:
-      ///     print('action recieved: pause')
+      ///     print('action received: pause')
       /// ..
       /// ~~~~~~~~~~~~~
       ///
@@ -376,7 +364,7 @@ namespace XBMCAddon
       /// **Example:**
       /// ~~~~~~~~~~~~~{.py}
       /// ..
-      /// # Define own funtion where becomes called from Kodi
+      /// # Define own function where becomes called from Kodi
       /// def onControl(self, control):
       ///   print("Window.onControl(control=[%s])"%control)
       /// ..
@@ -407,7 +395,7 @@ namespace XBMCAddon
       /// **Example:**
       /// ~~~~~~~~~~~~~{.py}
       /// ..
-      /// # Define own funtion where becomes called from Kodi
+      /// # Define own function where becomes called from Kodi
       /// def onClick(self,controlId):
       ///   if controlId == 10:
       ///     print("The control with Id 10 is clicked")
@@ -439,7 +427,7 @@ namespace XBMCAddon
       /// **Example:**
       /// ~~~~~~~~~~~~~{.py}
       /// ..
-      /// # Define own funtion where becomes called from Kodi
+      /// # Define own function where becomes called from Kodi
       /// def onDoubleClick(self,controlId):
       ///   if controlId == 10:
       ///     print("The control with Id 10 is double clicked")
@@ -470,7 +458,7 @@ namespace XBMCAddon
       /// **Example:**
       /// ~~~~~~~~~~~~~{.py}
       /// ..
-      /// # Define own funtion where becomes called from Kodi
+      /// # Define own function where becomes called from Kodi
       ///  def onDoubleClick(self,controlId):
       ///    if controlId == 10:
       ///      print("The control with Id 10 is focused")
@@ -499,7 +487,7 @@ namespace XBMCAddon
       /// **Example:**
       /// ~~~~~~~~~~~~~{.py}
       /// ..
-      /// # Define own funtion where becomes called from Kodi
+      /// # Define own function where becomes called from Kodi
       /// def onInit(self):
       ///   print("Window.onInit method called from Kodi")
       /// ..
@@ -640,9 +628,12 @@ namespace XBMCAddon
       /// \ingroup python_xbmcgui_window
       /// @brief \python_func{ getHeight() }
       ///-----------------------------------------------------------------------
-      /// Returns the height of this screen.
+      /// Returns the height of this Window instance.
       ///
-      /// @return                       Screen height
+      /// @return                       Window height in pixels
+      ///
+      ///-----------------------------------------------------------------------
+      /// @python_v18 Function changed
       ///
       getHeight();
 #else
@@ -654,9 +645,12 @@ namespace XBMCAddon
       /// \ingroup python_xbmcgui_window
       /// @brief \python_func{ getWidth() }
       ///-----------------------------------------------------------------------
-      /// Returns the width of this screen.
+      /// Returns the width of this Window instance.
       ///
-      /// @return                       Screen width
+      /// @return                       Window width in pixels
+      ///
+      ///-----------------------------------------------------------------------
+      /// @python_v18 Function changed
       ///
       getWidth();
 #else
@@ -684,6 +678,9 @@ namespace XBMCAddon
       ///  |   7   | PAL 16:9   (720x576)
       ///  |   8   | PAL60 4:3  (720x480)
       ///  |   9   | PAL60 16:9 (720x480)
+      ///
+      ///-----------------------------------------------------------------------
+      /// @python_v18 Deprecated.
       ///
       getResolution();
 #else
@@ -727,6 +724,9 @@ namespace XBMCAddon
       /// win.setCoordinateResolution(0)
       /// ..
       /// ~~~~~~~~~~~~~
+      ///-----------------------------------------------------------------------
+      /// @python_v18 Deprecated.
+      ///
       setCoordinateResolution(...);
 #else
       SWIGHIDDENVIRTUAL void setCoordinateResolution(long res);

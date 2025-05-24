@@ -1,35 +1,19 @@
 /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
+ *  Copyright (C) 2005-2018 Team Kodi
+ *  This file is part of Kodi - https://kodi.tv
  *
- *  This Program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *
- *  This Program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
- *  <http://www.gnu.org/licenses/>.
- *
+ *  SPDX-License-Identifier: GPL-2.0-or-later
+ *  See LICENSES/README.md for more information.
  */
 
 //! @todo Need a uniform way of returning an error status
 
-#if (defined HAVE_CONFIG_H) && (!defined TARGET_WINDOWS)
-  #include "config.h"
-#endif
 #include "xbox/Network.h"
 
 #include "ModuleXbmc.h"
 
 #include "Application.h"
 #include "messaging/ApplicationMessenger.h"
-#include "utils/URIUtils.h"
 #include "aojsonrpc.h"
 #include "guilib/LocalizeStrings.h"
 #include "GUIInfoManager.h"
@@ -45,6 +29,7 @@
 #include "settings/Settings.h"
 #include "guilib/TextureManager.h"
 #include "Util.h"
+#include "input/ButtonTranslator.h"
 #include "storage/MediaManager.h"
 #include "utils/LangCodeExpander.h"
 #include "utils/StringUtils.h"
@@ -52,17 +37,14 @@
 #include "AddonUtils.h"
 
 #include "LanguageHook.h"
+#include "Exception.h"
 
 #include "threads/SystemClock.h"
-#include "Exception.h"
 #include <vector>
 #include "utils/log.h"
 
+using namespace KODI;
 using namespace KODI::MESSAGING;
-
-#ifdef TARGET_POSIX
-#include "linux/XMemUtils.h"
-#endif
 
 namespace XBMCAddon
 {
@@ -106,23 +88,36 @@ namespace XBMCAddon
       XBMC_TRACE;
       if (! function)
         return;
+
+      // builtins is no anarchy
+      // enforce some rules here
+      // DialogBusy must not be activated, it is modal dialog
+      std::string execute;
+      std::vector<std::string> params;
+      CUtil::SplitExecFunction(function, execute, params);
+      StringUtils::ToLower(execute);
+      if (StringUtils::EqualsNoCase(execute, "activatewindow") ||
+          StringUtils::EqualsNoCase(execute, "closedialog"))
+      {
+        int win = CButtonTranslator::TranslateWindow(params[0]);
+        if (win == WINDOW_DIALOG_BUSY)
+        {
+          CLog::Log(LOGWARNING, "addons must not activate DialogBusy");
+          return;
+        }
+      }
+
       if (wait)
         CApplicationMessenger::Get().SendMsg(TMSG_EXECUTE_BUILT_IN, -1, -1, nullptr, function);
       else
         CApplicationMessenger::Get().PostMsg(TMSG_EXECUTE_BUILT_IN, -1, -1, nullptr, function);
     }
 
-    String executehttpapi(const char* httpcommand) 
-    {
-      XBMC_TRACE;
-      THROW_UNIMP("executehttpapi");
-    }
-
     String executeJSONRPC(const char* jsonrpccommand)
     {
       XBMC_TRACE;
-      DelayedCallGuard dg;
 #ifdef HAS_JSONRPC
+      DelayedCallGuard dg;
       String ret;
 
       if (! jsonrpccommand)

@@ -1,34 +1,22 @@
- /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
+/*
+ *  Copyright (C) 2005-2018 Team Kodi
+ *  This file is part of Kodi - https://kodi.tv
  *
- *  This Program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *
- *  This Program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
- *  <http://www.gnu.org/licenses/>.
- *
+ *  SPDX-License-Identifier: GPL-2.0-or-later
+ *  See LICENSES/README.md for more information.
  */
 
 #include "WindowXML.h"
 
+#include "WindowException.h"
 #include "WindowInterceptor.h"
-#include "guilib/GUIWindowManager.h"
-#include "guilib/TextureManager.h"
+#include "addons/Addon.h"
 #include "addons/Skin.h"
 #include "filesystem/File.h"
-#include "utils/URIUtils.h"
+#include "guilib/GUIWindowManager.h"
+#include "guilib/TextureManager.h"
 #include "utils/StringUtils.h"
-#include "addons/Addon.h"
-#include "WindowException.h"
+#include "utils/URIUtils.h"
 
 // These #defs are for WindowXML
 #define CONTROL_BTNVIEWASICONS  2
@@ -46,7 +34,7 @@ namespace XBMCAddon
 
     /**
      * This class extends the Interceptor<CGUIMediaWindow> in order to
-     *  add behavior for a few more virtual functions that were unneccessary
+     *  add behavior for a few more virtual functions that were unnecessary
      *  in the Window or WindowDialog.
      */
 #define checkedb(methcall) ( window.isNotNull() ? xwin-> methcall : false )
@@ -83,7 +71,7 @@ namespace XBMCAddon
       // CGUIMediaWindow
       virtual void GetContextButtons(int itemNumber, CContextButtons &buttons)
       { XBMC_TRACE; if (up()) CGUIMediaWindow::GetContextButtons(itemNumber,buttons); else xwin->GetContextButtons(itemNumber,buttons); }
-      virtual bool Update(const std::string &strPath)
+      virtual bool Update(const std::string &strPath, bool)
       { XBMC_TRACE; return up() ? CGUIMediaWindow::Update(strPath) : xwin->Update(strPath); }
       virtual void SetupShares() { XBMC_TRACE; if(up()) CGUIMediaWindow::SetupShares(); else checkedv(SetupShares()); }
 
@@ -97,12 +85,14 @@ namespace XBMCAddon
     WindowXML::WindowXML(const String& xmlFilename,
                          const String& scriptPath,
                          const String& defaultSkin,
-                         const String& defaultRes) :
+                         const String& defaultRes,
+                         bool isMedia) :
       Window(true)
     {
       XBMC_TRACE;
       RESOLUTION_INFO res;
       std::string strSkinPath = g_SkinInfo->GetSkinPath(xmlFilename, &res);
+      m_isMedia = isMedia;
 
       if (!XFILE::CFile::Exists(strSkinPath))
       {
@@ -272,6 +262,13 @@ namespace XBMCAddon
       A(m_vecItems)->SetProperty(key, value);
     }
 
+    void WindowXML::setContent(const String& value)
+    {
+      XBMC_TRACE;
+      XBMCAddonUtils::GuiLock lock(languageHook, false);
+      A(m_vecItems)->SetContent(value);
+    }
+
     int WindowXML::getCurrentContainerId()
     {
       XBMC_TRACE;
@@ -323,7 +320,7 @@ namespace XBMCAddon
       case GUI_MSG_FOCUSED:
         {
           if (A(m_viewControl).HasControl(message.GetControlId()) &&
-              A(m_viewControl).GetCurrentControl() != (int)message.GetControlId())
+              A(m_viewControl).GetCurrentControl() != message.GetControlId())
           {
             A(m_viewControl).SetFocused();
             return true;
@@ -363,9 +360,9 @@ namespace XBMCAddon
             return true;
           }
 
-          if(iControl && iControl != (int)interceptor->GetID()) // pCallbackWindow &&  != this->GetID())
+          if(iControl && iControl != interceptor->GetID()) // pCallbackWindow &&  != this->GetID())
           {
-            CGUIControl* controlClicked = (CGUIControl*)interceptor->GetControl(iControl);
+            CGUIControl* controlClicked = interceptor->GetControl(iControl);
 
             // The old python way used to check list AND SELECITEM method
             //   or if its a button, radiobutton.
@@ -405,7 +402,7 @@ namespace XBMCAddon
       return A(CGUIMediaWindow::OnMessage(message));
     }
 
-    void WindowXML::AllocResources(bool forceLoad /*= FALSE */)
+    void WindowXML::AllocResources(bool forceLoad /*= false */)
     {
       XBMC_TRACE;
       std::string tmpDir = URIUtils::GetDirectory(ref(window)->GetProperty("xmlfile").asString());
@@ -420,7 +417,7 @@ namespace XBMCAddon
       g_TextureManager.RemoveTexturePath(m_mediaDir);
     }
 
-    void WindowXML::FreeResources(bool forceUnLoad /*= FALSE */)
+    void WindowXML::FreeResources(bool forceUnLoad /*= false */)
     {
       XBMC_TRACE;
 
@@ -439,7 +436,7 @@ namespace XBMCAddon
     {
       XBMC_TRACE;
       // Hook Over calling  CGUIMediaWindow::OnClick(iItem) results in it trying to PLAY the file item
-      // which if its not media is BAD and 99 out of 100 times undesireable.
+      // which if its not media is BAD and 99 out of 100 times undesirable.
       return false;
     }
 
@@ -459,19 +456,7 @@ namespace XBMCAddon
     bool WindowXML::LoadXML(const String &strPath, const String &strLowerPath)
     {
       XBMC_TRACE;
-      // load our window
-      CXBMCTinyXML xmlDoc;
-
-      std::string strPathLower = strPath;
-      StringUtils::ToLower(strPathLower);
-      if (!xmlDoc.LoadFile(strPath) && !xmlDoc.LoadFile(strPathLower) && !xmlDoc.LoadFile(strLowerPath))
-      {
-        // fail - can't load the file
-        CLog::Log(LOGERROR, "%s: Unable to load skin file %s", __FUNCTION__, strPath.c_str());
-        return false;
-      }
-
-      return interceptor->Load(xmlDoc.RootElement());
+      return A(CGUIWindow::LoadXML(strPath, strLowerPath));
     }
 
     void WindowXML::SetupShares()

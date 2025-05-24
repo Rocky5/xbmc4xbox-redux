@@ -1,34 +1,23 @@
 /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
+ *  Copyright (C) 2005-2018 Team Kodi
+ *  This file is part of Kodi - https://kodi.tv
  *
- *  This Program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *
- *  This Program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
- *  <http://www.gnu.org/licenses/>.
- *
+ *  SPDX-License-Identifier: GPL-2.0-or-later
+ *  See LICENSES/README.md for more information.
  */
 
 #pragma once
 
-#include <Python.h>
-#include <string>
-#include <stdint.h>
-#include "libPython/XBPythonDll.h"
-
-#include "interfaces/legacy/Exception.h"
 #include "interfaces/legacy/AddonClass.h"
+#include "interfaces/legacy/Exception.h"
 #include "interfaces/legacy/Window.h"
 #include "commons/typeindex.h"
+
+#include <stdint.h>
+#include <string>
+
+#include <Python.h>
+#include "libPython/XBPythonDll.h"
 
 namespace PythonBindings
 {
@@ -53,7 +42,7 @@ namespace PythonBindings
     PyTypeObject pythonType;
     const XbmcCommons::type_index typeIndex;
 
-    TypeInfo(const std::type_info& ti);
+    explicit TypeInfo(const std::type_info& ti);
 #ifdef _XBOX
     void reset();
 #endif
@@ -82,9 +71,9 @@ namespace PythonBindings
   {
     if (pythonObj == NULL || pythonObj == Py_None)
       return NULL;
-    if (((PyHolder*)pythonObj)->magicNumber != XBMC_PYTHON_TYPE_MAGIC_NUMBER || !PyObject_TypeCheck(pythonObj, (PyTypeObject*)(&(typeToCheck->pythonType))))
+    if (reinterpret_cast<PyHolder*>(pythonObj)->magicNumber != XBMC_PYTHON_TYPE_MAGIC_NUMBER || !PyObject_TypeCheck(pythonObj, const_cast<PyTypeObject*>((&(typeToCheck->pythonType)))))
       throw XBMCAddon::WrongTypeException("Incorrect type passed to \"%s\", was expecting a \"%s\".",methodNameForErrorString,typenameForErrorString);
-    return ((PyHolder*)pythonObj)->pSelf;
+    return reinterpret_cast<PyHolder*>(pythonObj)->pSelf;
   }
 
   bool isParameterRightType(const char* passedType, const char* expectedType, const char* methodNamespacePrefix, bool tryReverse = true);
@@ -105,7 +94,7 @@ namespace PythonBindings
                                    const char* methodNameForErrorString)
   {
     return (pythonObj == NULL || pythonObj == Py_None) ? NULL :
-      doretrieveApiInstance(((PyHolder*)pythonObj),((PyHolder*)pythonObj)->typeInfo, expectedType, methodNamespacePrefix, methodNameForErrorString);
+      doretrieveApiInstance(reinterpret_cast<const PyHolder*>(pythonObj),reinterpret_cast<const PyHolder*>(pythonObj)->typeInfo, expectedType, methodNamespacePrefix, methodNameForErrorString);
   }
 
   /**

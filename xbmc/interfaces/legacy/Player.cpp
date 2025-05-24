@@ -1,35 +1,26 @@
 /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
+ *  Copyright (C) 2005-2018 Team Kodi
+ *  This file is part of Kodi - https://kodi.tv
  *
- *  This Program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *
- *  This Program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
- *  <http://www.gnu.org/licenses/>.
- *
+ *  SPDX-License-Identifier: GPL-2.0-or-later
+ *  See LICENSES/README.md for more information.
  */
 
 #include "Player.h"
+
+#include "AddonUtils.h"
+#include "Application.h"
+#include "GUIInfoManager.h"
+#include "GUIUserMessages.h"
 #include "ListItem.h"
 #include "PlayList.h"
 #include "PlayListPlayer.h"
-#include "settings/MediaSettings.h"
-#include "Application.h"
+#include "cores/IPlayer.h"
+#include "guilib/GUIWindowManager.h"
 #include "messaging/ApplicationMessenger.h"
-#include "GUIInfoManager.h"
-#include "AddonUtils.h"
+#include "settings/MediaSettings.h"
 #include "utils/LangCodeExpander.h"
 #include "utils/log.h"
-#include "cores/IPlayer.h"
 
 #include <boost/make_shared.hpp>
 
@@ -207,8 +198,26 @@ namespace XBMCAddon
 
     void Player::OnPlayBackStarted()
     {
+      // We only have fileItem due to us having to
+      // implement the interface, we can't send it to python
+      // as we're not able to serialize it.
       XBMC_TRACE;
-      invokeCallback(new CallbackFunction<Player>(this,&Player::onPlayBackStarted));
+      invokeCallback(new CallbackFunction<Player>(this, &Player::onPlayBackStarted));
+    }
+
+    void Player::OnAVStarted(const CFileItem &file)
+    {
+      // We only have fileItem due to us having to
+      // implement the interface, we can't send it to python
+      // as we're not able to serialize it.
+      XBMC_TRACE;
+      invokeCallback(new CallbackFunction<Player>(this, &Player::onAVStarted));
+    }
+
+    void Player::OnAVChange()
+    {
+      XBMC_TRACE;
+      invokeCallback(new CallbackFunction<Player>(this, &Player::onAVChange));
     }
 
     void Player::OnPlayBackEnded()
@@ -221,6 +230,12 @@ namespace XBMCAddon
     {
       XBMC_TRACE;
       invokeCallback(new CallbackFunction<Player>(this,&Player::onPlayBackStopped));
+    }
+
+    void Player::OnPlayBackError()
+    {
+      XBMC_TRACE;
+      invokeCallback(new CallbackFunction<Player>(this,&Player::onPlayBackError));
     }
 
     void Player::OnPlayBackPaused()
@@ -247,10 +262,10 @@ namespace XBMCAddon
       invokeCallback(new CallbackFunction<Player,int>(this,&Player::onPlayBackSpeedChanged,speed));
     }
 
-    void Player::OnPlayBackSeek(int time, int seekOffset)
+    void Player::OnPlayBackSeek(int64_t time, int64_t seekOffset)
     {
       XBMC_TRACE;
-      invokeCallback(new CallbackFunction<Player,int,int>(this,&Player::onPlayBackSeek,time,seekOffset));
+      invokeCallback(new CallbackFunction<Player,int,int>(this,&Player::onPlayBackSeek,static_cast<int>(time),static_cast<int>(seekOffset)));
     }
 
     void Player::OnPlayBackSeekChapter(int chapter)
@@ -264,12 +279,27 @@ namespace XBMCAddon
       XBMC_TRACE;
     }
 
+    void Player::onAVStarted()
+    {
+      XBMC_TRACE;
+    }
+
+    void Player::onAVChange()
+    {
+      XBMC_TRACE;
+    }
+
     void Player::onPlayBackEnded()
     {
       XBMC_TRACE;
     }
 
     void Player::onPlayBackStopped()
+    {
+      XBMC_TRACE;
+    }
+
+    void Player::onPlayBackError()
     {
       XBMC_TRACE;
     }
@@ -328,10 +358,16 @@ namespace XBMCAddon
       return false;
     }
 
+    bool Player::isExternalPlayer()
+    {
+      XBMC_TRACE;
+      return false;
+    }
+
     String Player::getPlayingFile()
     {
       XBMC_TRACE;
-      if (!g_application.m_pPlayer->IsPlaying())
+      if (g_application.m_pPlayer && !g_application.m_pPlayer->IsPlaying())
         throw PlayerException("XBMC is not playing any file");
 
       return g_application.CurrentFile();
@@ -361,6 +397,16 @@ namespace XBMCAddon
         return new InfoTagMusic(*tag);
 
       return new InfoTagMusic();
+    }
+
+    void Player::updateInfoTag(const XBMCAddon::xbmcgui::ListItem* item)
+    {
+      XBMC_TRACE;
+      if (!g_application.IsPlaying())
+        throw PlayerException("Kodi is not playing any file");
+
+      CGUIMessage msg(GUI_MSG_NOTIFY_ALL, 0, 0, GUI_MSG_UPDATE_ITEM, 0, item->item);
+      g_windowManager.SendMessage(msg);
     }
 
     double Player::getTotalTime()

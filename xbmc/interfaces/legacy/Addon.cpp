@@ -1,31 +1,21 @@
 /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
+ *  Copyright (C) 2005-2018 Team Kodi
+ *  This file is part of Kodi - https://kodi.tv
  *
- *  This Program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *
- *  This Program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
- *  <http://www.gnu.org/licenses/>.
- *
+ *  SPDX-License-Identifier: GPL-2.0-or-later
+ *  See LICENSES/README.md for more information.
  */
 
 #include "Addon.h"
-#include "LanguageHook.h"
 
+#include "GUIUserMessages.h"
+#include "LanguageHook.h"
+#include "Exception.h"
 #include "ServiceBroker.h"
 #include "addons/AddonManager.h"
 #include "addons/GUIDialogAddonSettings.h"
 #include "guilib/GUIWindowManager.h"
-#include "GUIUserMessages.h"
+#include "guilib/LocalizeStrings.h"
 #include "utils/StringUtils.h"
 
 using namespace ADDON;
@@ -37,6 +27,26 @@ namespace XBMCAddon
     String Addon::getDefaultId() { return languageHook == NULL ? emptyString : languageHook->GetAddonId(); }
 
     String Addon::getAddonVersion() { return languageHook == NULL ? emptyString : languageHook->GetAddonVersion(); }
+
+    bool Addon::UpdateSettingInActiveDialog(const char* id, const String& value)
+    {
+      ADDON::AddonPtr addon(pAddon);
+      if (!g_windowManager.IsWindowActive(WINDOW_DIALOG_ADDON_SETTINGS))
+        return false;
+
+      CGUIDialogAddonSettings* dialog = dynamic_cast<CGUIDialogAddonSettings*>(g_windowManager.GetWindow(WINDOW_DIALOG_ADDON_SETTINGS));
+      if (dialog->GetCurrentID() != addon->ID())
+        return false;
+
+      CGUIMessage message(GUI_MSG_SETTING_UPDATED, 0, 0);
+      std::vector<std::string> params;
+      params.push_back(id);
+      params.push_back(value);
+      message.SetStringParams(params);
+      g_windowManager.SendThreadMessage(message, WINDOW_DIALOG_ADDON_SETTINGS);
+
+      return true;
+    }
 
     Addon::Addon(const char* cid)
     {
@@ -72,30 +82,63 @@ namespace XBMCAddon
       return pAddon->GetSetting(id);
     }
 
+    bool Addon::getSettingBool(const char* id)
+    {
+      THROW_UNIMP("getSettingBool");
+      return false;
+    }
+
+    int Addon::getSettingInt(const char* id)
+    {
+      THROW_UNIMP("getSettingInt");
+      return 0;
+    }
+
+    double Addon::getSettingNumber(const char* id)
+    {
+      THROW_UNIMP("getSettingNumber");
+      return 0;
+    }
+
+    String Addon::getSettingString(const char* id)
+    {
+      THROW_UNIMP("getSettingString");
+      return "";
+    }
+
     void Addon::setSetting(const char* id, const String& value)
     {
       DelayedCallGuard dcguard(languageHook);
       ADDON::AddonPtr addon(pAddon);
-      bool save=true;
-      if (g_windowManager.IsWindowActive(WINDOW_DIALOG_ADDON_SETTINGS))
-      {
-        CGUIDialogAddonSettings* dialog = (CGUIDialogAddonSettings*)g_windowManager.GetWindow(WINDOW_DIALOG_ADDON_SETTINGS);
-        if (dialog->GetCurrentID() == addon->ID())
-        {
-          CGUIMessage message(GUI_MSG_SETTING_UPDATED,0,0);
-          std::vector<std::string> params;
-          params.push_back(id);
-          params.push_back(value);
-          message.SetStringParams(params);
-          g_windowManager.SendThreadMessage(message,WINDOW_DIALOG_ADDON_SETTINGS);
-          save=false;
-        }
-      }
-      if (save)
+      if (!UpdateSettingInActiveDialog(id, value))
       {
         addon->UpdateSetting(id, value);
         addon->SaveSettings();
       }
+    }
+
+    bool Addon::setSettingBool(const char* id, bool value)
+    {
+      THROW_UNIMP("setSettingBool");
+      return false;
+    }
+
+    bool Addon::setSettingInt(const char* id, int value)
+    {
+      THROW_UNIMP("setSettingInt");
+      return false;
+    }
+
+    bool Addon::setSettingNumber(const char* id, double value)
+    {
+      THROW_UNIMP("setSettingNumber");
+      return false;
+    }
+
+    bool Addon::setSettingString(const char* id, const String& value)
+    {
+      THROW_UNIMP("setSettingString");
+      return false;
     }
 
     void Addon::openSettings()

@@ -1,33 +1,22 @@
- /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
+/*
+ *  Copyright (C) 2005-2018 Team Kodi
+ *  This file is part of Kodi - https://kodi.tv
  *
- *  This Program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *
- *  This Program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
- *  <http://www.gnu.org/licenses/>.
- *
+ *  SPDX-License-Identifier: GPL-2.0-or-later
+ *  See LICENSES/README.md for more information.
  */
 
 #include "Window.h"
+
+#include "Application.h"
+#include "WindowException.h"
 #include "WindowInterceptor.h"
 #include "guilib/GUIButtonControl.h"
 #include "guilib/GUIEditControl.h"
 #include "guilib/GUIRadioButtonControl.h"
 #include "guilib/GUIWindowManager.h"
-#include "Application.h"
 #include "messaging/ApplicationMessenger.h"
 #include "utils/Variant.h"
-#include "WindowException.h"
 
 using namespace KODI::MESSAGING;
 
@@ -49,7 +38,7 @@ namespace XBMCAddon
     {
       CCriticalSection* lock;
     public:
-      inline MaybeLock(CCriticalSection* p_lock) : lock(p_lock) { if (lock) lock->lock(); }
+      inline explicit MaybeLock(CCriticalSection* p_lock) : lock(p_lock) { if (lock) lock->lock(); }
       inline ~MaybeLock() { if (lock) lock->unlock(); }
     };
 
@@ -270,7 +259,7 @@ namespace XBMCAddon
       MaybeLock lock(gc);
 
       // check if control exists
-      CGUIControl* pGUIControl = (CGUIControl*)ref(window)->GetControl(iControlId);
+      CGUIControl* pGUIControl = ref(window)->GetControl(iControlId);
       if (!pGUIControl)
       {
         // control does not exist.
@@ -360,7 +349,7 @@ namespace XBMCAddon
       }
 
       if (!pControl)
-        // throw an exeption
+        // throw an exception
         throw WindowException("Unknown control type for python");
 
       // we have a valid control here, fill in all the 'Control' data
@@ -378,7 +367,7 @@ namespace XBMCAddon
 
       // It got this far so means the control isn't actually in the vector of controls
       // so lets add it to save doing all that next time
-      vecControls.push_back(AddonClass::Ref<Control>(pControl));
+      vecControls.push_back(pControl);
 
       // return the control with increased reference (+1)
       return pControl;
@@ -594,13 +583,17 @@ namespace XBMCAddon
     long Window::getHeight()
     {
       XBMC_TRACE;
-      return g_graphicsContext.GetHeight();
+      SingleLockWithDelayGuard gslock(g_graphicsContext, languageHook);
+      RESOLUTION_INFO resInfo = ref(window)->GetCoordsRes();
+      return resInfo.iHeight;
     }
 
     long Window::getWidth()
     {
       XBMC_TRACE;
-      return g_graphicsContext.GetWidth();
+      SingleLockWithDelayGuard gslock(g_graphicsContext, languageHook);
+      RESOLUTION_INFO resInfo = ref(window)->GetCoordsRes();
+      return resInfo.iWidth;
     }
 
     long Window::getResolution()
@@ -612,11 +605,7 @@ namespace XBMCAddon
     void Window::setCoordinateResolution(long res)
     {
       XBMC_TRACE;
-      if (res < RES_HDTV_1080i || res > RES_AUTORES)
-        throw WindowException("Invalid resolution.");
-
-      SingleLockWithDelayGuard gslock(g_graphicsContext,languageHook);
-      ref(window)->SetCoordsRes(g_graphicsContext.GetResInfo());
+      throw WindowException("not implemented.");
     }
 
     void Window::setProperty(const char* key, const String& value)
@@ -685,7 +674,7 @@ namespace XBMCAddon
 
         while (bModal && !g_application.m_bStop)
         {
-//! @todo garbear added this code to the pythin window.cpp class and
+//! @todo garbear added this code to the python window.cpp class and
 //!  commented in XBPyThread.cpp. I'm not sure how to handle this
 //! in this native implementation.
 //          // Check if XBPyThread::stop() raised a SystemExit exception
@@ -744,13 +733,13 @@ namespace XBMCAddon
       pControl->iControlLeft = pControl->iControlId;
       pControl->iControlRight = pControl->iControlId;
 
-      pControl->pGUIControl->SetAction(ACTION_MOVE_UP,    pControl->iControlUp);
-      pControl->pGUIControl->SetAction(ACTION_MOVE_DOWN,  pControl->iControlDown);
-      pControl->pGUIControl->SetAction(ACTION_MOVE_LEFT,  pControl->iControlLeft);
-      pControl->pGUIControl->SetAction(ACTION_MOVE_RIGHT, pControl->iControlRight);
+      pControl->pGUIControl->SetAction(ACTION_MOVE_UP,    CGUIAction(pControl->iControlUp));
+      pControl->pGUIControl->SetAction(ACTION_MOVE_DOWN,  CGUIAction(pControl->iControlDown));
+      pControl->pGUIControl->SetAction(ACTION_MOVE_LEFT,  CGUIAction(pControl->iControlLeft));
+      pControl->pGUIControl->SetAction(ACTION_MOVE_RIGHT, CGUIAction(pControl->iControlRight));
 
-      // add control to list and allocate recources for the control
-      vecControls.push_back(AddonClass::Ref<Control>(pControl));
+      // add control to list and allocate resources for the control
+      vecControls.push_back(pControl);
       pControl->pGUIControl->AllocResources();
 
       // This calls the CGUIWindow parent class to do the final add

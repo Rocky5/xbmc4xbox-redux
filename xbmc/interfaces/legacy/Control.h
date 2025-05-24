@@ -1,35 +1,22 @@
 /*
- *      Copyright (C) 2005-2013 Team XBMC
- *      http://xbmc.org
+ *  Copyright (C) 2005-2018 Team Kodi
+ *  This file is part of Kodi - https://kodi.tv
  *
- *  This Program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2, or (at your option)
- *  any later version.
- *
- *  This Program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XBMC; see the file COPYING.  If not, see
- *  <http://www.gnu.org/licenses/>.
- *
+ *  SPDX-License-Identifier: GPL-2.0-or-later
+ *  See LICENSES/README.md for more information.
  */
 
 #pragma once
 
-#include <vector>
-
+#include "Alternative.h"
+#include "ListItem.h"
+#include "Tuple.h"
 #include "guilib/GUIControl.h"
 #include "guilib/GUIFont.h"
 #include "guilib/Key.h"
-
-#include "Alternative.h"
-#include "Tuple.h"
-#include "ListItem.h"
 #include "swighelper.h"
+
+#include <vector>
 
 
 // hardcoded offsets for button controls (and controls that use button controls)
@@ -75,7 +62,7 @@ namespace XBMCAddon
     protected:
       Control() : iControlId(0), iParentId(0), dwPosX(0), dwPosY(0), dwWidth(0),
                   dwHeight(0), iControlUp(0), iControlDown(0), iControlLeft(0),
-                  iControlRight(0), pGUIControl(NULL) {}
+                  iControlRight(0), pGUIControl(nullptr) {}
 
     public:
       virtual ~Control();
@@ -277,6 +264,28 @@ namespace XBMCAddon
       setVisible(...);
 #else
       virtual void setVisible(bool visible);
+#endif
+
+      // isVisible() Method
+#ifdef DOXYGEN_SHOULD_USE_THIS
+      /// \ingroup python_xbmcgui_control
+      /// @brief \python_func{ isVisible() }
+      ///-----------------------------------------------------------------------
+      /// Get the control's visible/hidden state.
+      ///
+      ///-----------------------------------------------------------------------
+      /// @python_v18 New function added.
+      ///
+      /// **Example:**
+      /// ~~~~~~~~~~~~~{.py}
+      /// ...
+      /// if self.button.isVisible():
+      ///     ...
+      /// ~~~~~~~~~~~~~
+      ///
+      isVisible(...);
+#else
+      virtual bool isVisible();
 #endif
 
       // setVisibleCondition() Method
@@ -897,7 +906,7 @@ namespace XBMCAddon
     /// | XBFONT_JUSTIFIED  | 0x00000010 | Justify text
     /// @param focusTexture         [opt] string - filename for focus texture.
     /// @param noFocusTexture       [opt] string - filename for no focus texture.
-    /// @param isPassword           [opt] bool - True=mask text value with `****`.
+    /// @param isPassword           [opt] bool - True=mask text value with `****`(deprecated, use setType()).
     ///
     /// @note You can use the above as keywords for arguments and skip certain
     /// optional arguments.\n
@@ -908,6 +917,7 @@ namespace XBMCAddon
     ///
     ///
     ///-------------------------------------------------------------------------
+    /// @python_v18 Deprecated **isPassword**
     ///
     /// **Example:**
     /// ~~~~~~~~~~~~~{.py}
@@ -1055,6 +1065,43 @@ namespace XBMCAddon
       bool bIsPassword;
 
       SWIGHIDDENVIRTUAL CGUIControl* Create();
+#endif
+
+      // setType() Method
+#ifdef DOXYGEN_SHOULD_USE_THIS
+      /// \ingroup python_xbmcgui_control_edit
+      /// @brief \python_func{ setType(type, heading) }
+      ///-----------------------------------------------------------------------
+      /// Sets the type of this edit control.
+      ///
+      /// @param type              integer - type of the edit control.
+      /// | Param                            | Definition                                  |
+      /// |----------------------------------|:--------------------------------------------|
+      /// | xbmcgui.INPUT_TYPE_TEXT          | (standard keyboard)
+      /// | xbmcgui.INPUT_TYPE_NUMBER        | (format: #)
+      /// | xbmcgui.INPUT_TYPE_DATE          | (format: DD/MM/YYYY)
+      /// | xbmcgui.INPUT_TYPE_TIME          | (format: HH:MM)
+      /// | xbmcgui.INPUT_TYPE_IPADDRESS     | (format: #.#.#.#)
+      /// | xbmcgui.INPUT_TYPE_PASSWORD      | (input is masked)
+      /// | xbmcgui.INPUT_TYPE_PASSWORD_MD5  | (input is masked, return md5 hash of input)
+      /// | xbmcgui.INPUT_TYPE_SECONDS       | (format: SS or MM:SS or HH:MM:SS or MM min)
+      /// @param heading           string or unicode - heading that will be used for to numeric or
+      ///                                              keyboard dialog when the edit control is clicked.
+      ///
+      ///
+      ///-----------------------------------------------------------------------
+      /// @python_v18 New function added.
+      ///
+      /// **Example:**
+      /// ~~~~~~~~~~~~~{.py}
+      /// ...
+      /// self.edit.setType(xbmcgui.INPUT_TYPE_TIME, 'Please enter the time')
+      /// ...
+      /// ~~~~~~~~~~~~~
+      ///
+      setType(...);
+#else
+      virtual void setType(int type, const String& heading);
 #endif
     };
     /// @}
@@ -1240,13 +1287,39 @@ namespace XBMCAddon
       ///-----------------------------------------------------------------------
       /// Clear all ListItems in this control list.
       ///
+      /// @warning Calling `reset()` will destroy any `ListItem` objects in the
+      ///          `ControlList` if not hold by any other class. Make sure you
+      ///          you don't call `addItems()` with the previous `ListItem` references
+      ///          after calling `reset()`. If you need to preserve the `ListItem` objects after
+      ///          `reset()` make sure you store them as members of your `WindowXML` class (see examples).
+      ///
       ///
       ///-----------------------------------------------------------------------
       ///
-      /// **Example:**
+      /// **Examples:**
       /// ~~~~~~~~~~~~~{.py}
       /// ...
       /// cList.reset()
+      /// ...
+      /// ~~~~~~~~~~~~~
+      ///
+      /// The below example shows you how you can reset the `ControlList` but this time avoiding `ListItem` object
+      /// destruction. The example assumes `self` as a `WindowXMLDialog` instance containing a `ControlList`
+      /// with id = 800. The class preserves the `ListItem` objects in a class member variable.
+      ///
+      /// ~~~~~~~~~~~~~{.py}
+      /// ...
+      /// # Get all the ListItem objects in the control
+      /// self.list_control = self.getControl(800) # ControlList object
+      /// self.listitems = [self.list_control.getListItem(item) for item in range(0, self.list_control.size())]
+      /// # Reset the ControlList control
+      /// self.list_control.reset()
+      /// #
+      /// # do something with your ListItem objects here (e.g. sorting.)
+      /// # ...
+      /// #
+      /// # Add them again to the ControlList
+      /// self.list_control.addItems(self.listitems)
       /// ...
       /// ~~~~~~~~~~~~~
       ///
@@ -2168,7 +2241,7 @@ namespace XBMCAddon
       /// ~~~~~~~~~~~~~{.py}
       /// ...
       /// # getPercent()
-      /// print self.progress.getPercent()
+      /// print(self.progress.getPercent())
       /// ...
       /// ~~~~~~~~~~~~~
       ///
@@ -2800,7 +2873,7 @@ namespace XBMCAddon
       /// **Example:**
       /// ~~~~~~~~~~~~~{.py}
       /// ...
-      /// print self.slider.getPercent()
+      /// print(self.slider.getPercent())
       /// ...
       /// ~~~~~~~~~~~~~
       ///
@@ -2831,6 +2904,112 @@ namespace XBMCAddon
       setPercent(...);
 #else
       virtual void setPercent(float pct);
+#endif
+
+#ifdef DOXYGEN_SHOULD_USE_THIS
+      ///
+      /// \ingroup python_xbmcgui_control_slider
+      /// @brief \python_func{ getInt() }
+      ///-----------------------------------------------------------------------
+      /// Returns the value of the slider.
+      ///
+      /// @return                   int - value of slider
+      ///
+      ///
+      ///-----------------------------------------------------------------------
+      /// @python_v18 New function added.
+      ///
+      /// **Example:**
+      /// ~~~~~~~~~~~~~{.py}
+      /// ...
+      /// print(self.slider.getInt())
+      /// ...
+      /// ~~~~~~~~~~~~~
+      ///
+      getInt();
+#else
+      virtual int getInt();
+#endif
+
+#ifdef DOXYGEN_SHOULD_USE_THIS
+      ///
+      /// \ingroup python_xbmcgui_control_slider
+      /// @brief \python_func{ setInt(value, min, delta, max) }
+      ///-----------------------------------------------------------------------
+      /// Sets the range, value and step size of the slider.
+      ///
+      /// @param value              int - value of slider
+      /// @param min                int - min of slider
+      /// @param delta              int - step size of slider
+      /// @param max                int - max of slider
+      ///
+      ///
+      ///-----------------------------------------------------------------------
+      /// @python_v18 New function added.
+      ///
+      /// **Example:**
+      /// ~~~~~~~~~~~~~{.py}
+      /// ...
+      /// self.slider.setInt(450, 200, 10, 900)
+      /// ...
+      /// ~~~~~~~~~~~~~
+      ///
+      setInt(...);
+#else
+      virtual void setInt(int value, int min, int delta, int max);
+#endif
+
+#ifdef DOXYGEN_SHOULD_USE_THIS
+      ///
+      /// \ingroup python_xbmcgui_control_slider
+      /// @brief \python_func{ getFloat() }
+      ///-----------------------------------------------------------------------
+      /// Returns the value of the slider.
+      ///
+      /// @return                   float - value of slider
+      ///
+      ///
+      ///-----------------------------------------------------------------------
+      /// @python_v18 New function added.
+      ///
+      /// **Example:**
+      /// ~~~~~~~~~~~~~{.py}
+      /// ...
+      /// print(self.slider.getFloat())
+      /// ...
+      /// ~~~~~~~~~~~~~
+      ///
+      getFloat();
+#else
+      virtual float getFloat();
+#endif
+
+#ifdef DOXYGEN_SHOULD_USE_THIS
+      ///
+      /// \ingroup python_xbmcgui_control_slider
+      /// @brief \python_func{ setFloat(value, min, delta, max) }
+      ///-----------------------------------------------------------------------
+      /// Sets the range, value and step size of the slider.
+      ///
+      /// @param value              float - value of slider
+      /// @param min                float - min of slider
+      /// @param delta              float - step size of slider
+      /// @param max                float - max of slider
+      ///
+      ///
+      ///-----------------------------------------------------------------------
+      /// @python_v18 New function added.
+      ///
+      /// **Example:**
+      /// ~~~~~~~~~~~~~{.py}
+      /// ...
+      /// self.slider.setFloat(15.0, 10.0, 1.0, 20.0)
+      /// ...
+      /// ~~~~~~~~~~~~~
+      ///
+      setFloat(...);
+#else
+      virtual void setFloat(float value, float min, float delta, float max);
 #endif
 
 #ifndef SWIG
