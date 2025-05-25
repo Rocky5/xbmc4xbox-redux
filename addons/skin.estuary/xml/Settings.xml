@@ -119,11 +119,6 @@
 					<icon>icons/settings/media.png</icon>
 				</item>
 				<item>
-					<label>$LOCALIZE[14205]</label>
-					<onclick>ActivateWindow(PVRSettings)</onclick>
-					<icon>icons/settings/livetv.png</icon>
-				</item>
-				<item>
 					<label>$LOCALIZE[14208]</label>
 					<onclick>ActivateWindow(ServiceSettings)</onclick>
 					<icon>icons/settings/network.png</icon>
@@ -149,31 +144,20 @@
 					<icon>icons/settings/system.png</icon>
 				</item>
 				<item>
-					<label>LibreELEC</label>
-					<onclick>RunAddon(service.libreelec.settings)</onclick>
-					<icon>icons/settings/libreelec.png</icon>
-					<visible>System.HasAddon(service.libreelec.settings)</visible>
-				</item>
-				<item>
 					<label>$LOCALIZE[138]</label>
 					<onclick>ActivateWindow(systeminfo)</onclick>
 					<icon>icons/settings/sysinfo.png</icon>
-				</item>
-				<item>
-					<label>$LOCALIZE[31067]</label>
-					<onclick>ActivateWindow(eventlog)</onclick>
-					<icon>icons/settings/eventlog.png</icon>
 				</item>
 				<item>
 					<label>$LOCALIZE[10003]</label>
 					<onclick>ActivateWindow(filemanager)</onclick>
 					<icon>icons/settings/filemanager.png</icon>
 				</item>
-				<!-- <item>
+				<item>
 					<label>$LOCALIZE[24001]</label>
 					<onclick>ActivateWindow(addonbrowser)</onclick>
 					<icon>icons/settings/addons.png</icon>
-				</item> -->
+				</item>
 			</content>
 		</control>
 		<include content="TopBar">
