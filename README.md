@@ -24,7 +24,16 @@
   Welcome to XBMC Home Theater Software!
 </h1>
 
-XBMC4Xbox is a free and open source media player software made solely for the first-generation Xbox video-game console. The software was forked from the XBMC project (now known as Kodi and formerly known as Xbox Media Player) after XBMC removed support for the Xbox console. Other than the audio / video playback and media center functionality, XBMC4Xbox also has the ability to catalog and launch original Xbox games, and homebrew applications such as console emulators from the Xbox's built-in harddrive. 
+XBMC4Xbox is a free and open source media player software made solely for the first-generation Xbox video-game console. The software was forked from the XBMC project (now known as Kodi and formerly known as Xbox Media Player) after XBMC removed support for the Xbox console. Other than the audio / video playback and media center functionality, XBMC4Xbox also has the ability to catalog and launch original Xbox games, and homebrew applications such as console emulators from the Xbox's built-in harddrive.
+
+## Download links
+This softwer is in alpha and currently we are only providing nightly releases.
+
+**Regular version (Nightly)**: [Download Link](https://github.com/antonic901/xbmc4xbox-redux/releases/download/nightly/XBMC4XBOX.zip)
+
+**Gamers version (Nightly)**: [Download Link](https://github.com/antonic901/xbmc4xbox-redux/releases/download/nightly-gamers/XBMC4XBOX.zip)
+
+**Regular version** is following `master` branch of Kodi. **Gamers version** is regular version with advanced programs library. In short, advanced programs library is rewrite of video library specifically tuned up for games. If you ever wanted XBMC-Emustation, XBMC4Gamers and XBMC4Xbox inside one dashboard use gamers version.
 
 ## Give your media the love it deserves
 XBMC is your all-in-one solution for enjoying almost all popular audio, video, and gaming formats. Whether you're streaming multimedia from anywhere in your home or directly from the internet, XBMC handles it effortlessly, supporting virtually any protocol available.
@@ -50,20 +59,43 @@ XBMC is created by users for users and **we welcome every contribution**. There 
 
 * **Spread the word:** Share XBMC with the world! Tell your friends and family about how XBMC creates an amazing entertainment experience.
 
-## Building
-XBMC is coded using official XDK (Xbox Development Kit).
-
 ## Requirements
- - PC or [Virtual Machine](https://www.virtualbox.org/) with Windows XP SP3
- - Microsoft Visual C++ 2003 with [XDK (Xbox Development Kit)](https://xbox.fandom.com/wiki/Xbox_Development_Kit)
+ - PC or [Virtual Machine](https://www.virtualbox.org/) with Windows XP SP3 or Windows 11
+ - Microsoft Visual Studio .NET 2003 with [XDK (Xbox Development Kit)](https://xbox.fandom.com/wiki/Xbox_Development_Kit)
+ - [Java 1.8](https://www.openlogic.com/openjdk-downloads)
+ - [SWIG](https://www.swig.org/)
+ - [Doxygen](https://www.doxygen.nl/)
 
-Unfortunately I can't share any of those software because both Microsoft Visual Studio C++ 2003 and Xbox Development Kit are Microsot's property. But on this [link](https://www.youtube.com/watch?v=YN2t-D0cj48) you can find a great tutorial from MVG on how to convert retail consoles to debug kits. I suggest you to use CerBios with flag "debug = enabled" in cerbios.ini file. You then just need to find DEBUG Dash which you will copy to your Xbox and you are ready to go.
+Unfortunately I can't share any of those software because both Microsoft Visual Studio .NET 2003 and Xbox Development Kit are Microsoft's property.
 
-## How to build
- - Clone this repository
- - Open Build.bat
- - Both times choose option 1 and hit enter
- - After build is finished, inside BUILD folder you will have XBMC4Xbox ready to be installed on Xbox
+## Building from source
+Before building XBMC, make `java` is properly installed and accessible within CMD. To do that open CMD and run:
+
+```
+java -version
+openjdk version "1.8.0_452"
+OpenJDK Runtime Environment (build 1.8.0_452-b09)
+OpenJDK 64-Bit Server VM (build 25.452-b09, mixed mode)
+```
+
+After that, download `doxygen` and `swig` tools from this [link](https://www.dropbox.com/scl/fi/5ymtc9cqnjjpx7gw8i6zz/BuildDependencies.zip?rlkey=o2rygnv6lrv18zm01v8q5azq3&st=k51dwl2y&dl=1). Unzip archive and put `BuildDependencies` inside `tools` folder.
+
+First step is to generate Python binding code. You can do that by navigating to `tools->codegenerator` and running generator script:
+```bash
+.\GenerateWIN.bat
+```
+
+Second step is to generate dummy `svn_rev.h` file. To do that simply call script:
+```bash
+.\update_svn_rev.bat
+```
+
+Finally run build script:
+```bash
+.\Build.bat noprompt build1
+```
+
+If everything went well, inside BUILD folder you will find XBMC ready to be installed on Xbox. Rename BUILD folder to XBMC and use FTP to transfer files to Xbox.
 
 ## Acknowledgements
 XBMC couldn't exist without
