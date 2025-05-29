@@ -191,17 +191,17 @@ public:
   float GetScalingPixelRatio() const;
 
   void InvertFinalCoords(float &x, float &y) const;
-  inline float ScaleFinalXCoord(float x, float y) const { return m_finalTransform.TransformXCoord(x, y, 0); }
-  inline float ScaleFinalYCoord(float x, float y) const { return m_finalTransform.TransformYCoord(x, y, 0); }
-  inline float ScaleFinalZCoord(float x, float y) const { return m_finalTransform.TransformZCoord(x, y, 0); }
-  inline void ScaleFinalCoords(float &x, float &y, float &z) const { m_finalTransform.TransformPosition(x, y, z); }
+  inline float ScaleFinalXCoord(float x, float y) const { return m_finalTransform.matrix.TransformXCoord(x, y, 0); }
+  inline float ScaleFinalYCoord(float x, float y) const { return m_finalTransform.matrix.TransformYCoord(x, y, 0); }
+  inline float ScaleFinalZCoord(float x, float y) const { return m_finalTransform.matrix.TransformZCoord(x, y, 0); }
+  inline void ScaleFinalCoords(float &x, float &y, float &z) const { m_finalTransform.matrix.TransformPosition(x, y, z); }
   bool RectIsAngled(float x1, float y1, float x2, float y2) const;
 
-  inline float GetGUIScaleX() const { return m_guiScaleX; };
-  inline float GetGUIScaleY() const { return m_guiScaleY; };
+  inline float GetGUIScaleX() const { return m_finalTransform.scaleX; }
+  inline float GetGUIScaleY() const { return m_finalTransform.scaleY; }
   inline DWORD MergeAlpha(color_t color) const
   {
-    color_t alpha = m_finalTransform.TransformAlpha((color >> 24) & 0xff);
+    color_t alpha = m_finalTransform.matrix.TransformAlpha((color >> 24) & 0xff);
     if (alpha > 255) alpha = 255;
     return ((alpha << 24) & 0xff000000) | (color & 0xffffff);
   }
@@ -245,34 +245,34 @@ public:
   void ClipRect(CRect &vertex, CRect &texture, CRect *diffuse = NULL);
   inline void AddGUITransform()
   {
-    m_groupTransform.push(m_guiTransform);
-    UpdateFinalTransform(m_groupTransform.top());
+    m_transforms.push(m_finalTransform);
+    m_finalTransform = m_guiTransform;
   }
   inline TransformMatrix AddTransform(const TransformMatrix &matrix)
   {
-    ASSERT(!m_groupTransform.empty());
-    TransformMatrix absoluteMatrix = m_groupTransform.empty() ? matrix : m_groupTransform.top() * matrix;
-    m_groupTransform.push(absoluteMatrix);
-    UpdateFinalTransform(absoluteMatrix);
-    return absoluteMatrix;
+    m_transforms.push(m_finalTransform);
+    m_finalTransform.matrix *= matrix;
+    return m_finalTransform.matrix;
   }
   inline void SetTransform(const TransformMatrix &matrix)
   {
-    // TODO: We only need to add it to the group transform as other transforms may be added on top of this one later on
-    //       Once all transforms are cached then this can be removed and UpdateFinalTransform can be called directly
-    ASSERT(!m_groupTransform.empty());
-    m_groupTransform.push(matrix);
-    UpdateFinalTransform(m_groupTransform.top());
+   m_transforms.push(m_finalTransform);
+   m_finalTransform.matrix = matrix;
+  }
+  inline void SetTransform(const TransformMatrix &matrix, float scaleX, float scaleY)
+  {
+    m_transforms.push(m_finalTransform);
+    m_finalTransform.matrix = matrix;
+    m_finalTransform.scaleX = scaleX;
+    m_finalTransform.scaleY = scaleY;
   }
   inline void RemoveTransform()
   {
-    ASSERT(!m_groupTransform.empty());
-    if (!m_groupTransform.empty())
-      m_groupTransform.pop();
-    if (!m_groupTransform.empty())
-      UpdateFinalTransform(m_groupTransform.top());
-    else
-      UpdateFinalTransform(TransformMatrix());
+    if (!m_transforms.empty())
+    {
+      m_finalTransform = m_transforms.top();
+      m_transforms.pop();
+    }
   }
 
   CRect generateAABB(const CRect &rect) const;
@@ -296,21 +296,29 @@ protected:
   RESOLUTION m_Resolution;
 
 private:
+  class UITransform
+  {
+  public:
+    UITransform() : matrix(), scaleX(1.0f), scaleY(1.0f) {};
+    UITransform(const TransformMatrix &m, const float sX = 1.0f, const float sY = 1.0f) : matrix(m), scaleX(sX), scaleY(sY) { };
+    void Reset() { matrix.Reset(); scaleX = scaleY = 1.0f; };
+
+    TransformMatrix matrix;
+    float scaleX;
+    float scaleY;
+  };
   void UpdateCameraPosition(const CPoint &camera);
   // this method is indirectly called by the public SetVideoResolution
   // it only works when called from mainthread (thats what SetVideoResolution ensures)
   void SetVideoResolutionInternal(RESOLUTION res, BOOL NeedZ, bool forceClear);
-  void UpdateFinalTransform(const TransformMatrix &matrix);
   RESOLUTION_INFO m_windowResolution;
-  float m_guiScaleX;
-  float m_guiScaleY;
   std::stack<CPoint> m_cameras;
   std::stack<CPoint> m_origins;
   std::stack<CRect>  m_clipRegions;
 
-  TransformMatrix m_guiTransform;
-  TransformMatrix m_finalTransform;
-  std::stack<TransformMatrix> m_groupTransform;
+  UITransform m_guiTransform;
+  UITransform m_finalTransform;
+  std::stack<UITransform> m_transforms;
 
   CRect m_scissors;
 

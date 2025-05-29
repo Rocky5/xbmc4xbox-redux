@@ -53,8 +53,7 @@ CGraphicContext::CGraphicContext(void) :
   m_maxTextureSize(4096),
   m_strMediaDir(""),
   m_bCalibrating(false),
-  m_Resolution(RES_INVALID),
-  m_guiScaleX(m_guiScaleY = 1.0f)
+  m_Resolution(RES_INVALID)
   /*m_windowResolution(RES_INVALID)*/
 {
 }
@@ -774,12 +773,10 @@ void CGraphicContext::SetScalingResolution(const RESOLUTION_INFO &res, bool need
 {
   m_windowResolution = res;
   if (needsScaling && m_Resolution != RES_INVALID)
-    GetGUIScaling(res, m_guiScaleX, m_guiScaleY, &m_guiTransform);
+    GetGUIScaling(res, m_guiTransform.scaleX, m_guiTransform.scaleY, &m_guiTransform.matrix);
   else
   {
     m_guiTransform.Reset();
-    m_guiScaleX = 1.0f;
-    m_guiScaleY = 1.0f;
   }
   // reset our origin and camera
   while (m_origins.size())
@@ -790,7 +787,7 @@ void CGraphicContext::SetScalingResolution(const RESOLUTION_INFO &res, bool need
   m_cameras.push(CPoint(0.5f*m_iScreenWidth, 0.5f*m_iScreenHeight));
 
   // and reset the final transform
-  UpdateFinalTransform(m_guiTransform);
+  m_finalTransform = m_guiTransform;
 }
 
 void CGraphicContext::SetRenderingResolution(const RESOLUTION_INFO &res, bool needsScaling)
@@ -801,30 +798,16 @@ void CGraphicContext::SetRenderingResolution(const RESOLUTION_INFO &res, bool ne
   Unlock();
 }
 
-void CGraphicContext::UpdateFinalTransform(const TransformMatrix &matrix)
-{
-  m_finalTransform = matrix;
-  // We could set the world transform here to GPU-ize the animation system.
-  // trouble is that we require the resulting x,y coords to be rounded to
-  // the nearest pixel (vertex shader perhaps?)
-}
-
 void CGraphicContext::InvertFinalCoords(float &x, float &y) const
 {
-  m_finalTransform.InverseTransformPosition(x, y);
+  m_finalTransform.matrix.InverseTransformPosition(x, y);
 }
 
 float CGraphicContext::GetScalingPixelRatio() const
 {
   // assume the resolutions are different - we want to return the aspect ratio of the video resolution
   // but only once it's been corrected for the skin -> screen coordinates scaling
-  float winWidth = (float)m_windowResolution.iWidth;
-  float winHeight = (float)m_windowResolution.iHeight;
-  float outWidth = (float)CDisplaySettings::Get().GetResolutionInfo(m_Resolution).iWidth;
-  float outHeight = (float)CDisplaySettings::Get().GetResolutionInfo(m_Resolution).iHeight;
-  float outPR = GetPixelRatio(m_Resolution);
-
-  return outPR * (outWidth / outHeight) / (winWidth / winHeight);
+  return GetResInfo().fPixelRatio * (m_finalTransform.scaleY / m_finalTransform.scaleX);
 }
 
 void CGraphicContext::SetCameraPosition(const CPoint &camera)
@@ -919,9 +902,9 @@ void CGraphicContext::UpdateCameraPosition(const CPoint &camera)
 
 bool CGraphicContext::RectIsAngled(float x1, float y1, float x2, float y2) const
 { // need only test 3 points, as they must be co-planer
-  if (m_finalTransform.TransformZCoord(x1, y1, 0)) return true;
-  if (m_finalTransform.TransformZCoord(x2, y2, 0)) return true;
-  if (m_finalTransform.TransformZCoord(x1, y2, 0)) return true;
+  if (m_finalTransform.matrix.TransformZCoord(x1, y1, 0)) return true;
+  if (m_finalTransform.matrix.TransformZCoord(x2, y2, 0)) return true;
+  if (m_finalTransform.matrix.TransformZCoord(x1, y2, 0)) return true;
   return false;
 }
 
