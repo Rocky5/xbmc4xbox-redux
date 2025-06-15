@@ -201,9 +201,10 @@ bool CApplicationPlayer::HasRDS() const
   return false;
 }
 
-bool CApplicationPlayer::IsPaused()
+bool CApplicationPlayer::IsPaused() const
 {
-  return (GetPlaySpeed() == 0);
+  boost::shared_ptr<IPlayer> player = GetInternal();
+  return (player && player->IsPaused());
 }
 
 bool CApplicationPlayer::IsPlaying() const
@@ -212,9 +213,9 @@ bool CApplicationPlayer::IsPlaying() const
   return (player && player->IsPlaying());
 }
 
-bool CApplicationPlayer::IsPausedPlayback()
+bool CApplicationPlayer::IsPausedPlayback() const
 {
-  return (IsPlaying() && (GetPlaySpeed() == 0));
+  return (IsPlaying() && IsPaused());
 }
 
 bool CApplicationPlayer::IsPlayingAudio() const
