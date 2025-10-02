@@ -5949,6 +5949,7 @@ void CApplication::CreateUserDirs() const
   CDirectory::Create("special://temp/");
 #endif
   CDirectory::Create("special://temp/temp"); // temp directory for python and dllGetTempPathA
+  CDirectory::Create("special://temp/archive_cache"); // temp directory for cached VFS paths
 }
 
 bool CApplication::SetLanguage(const std::string &strLanguage)
