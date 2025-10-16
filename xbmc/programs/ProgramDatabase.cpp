@@ -47,6 +47,9 @@ void CProgramDatabase::CreateTables()
 
   columns += ")";
   m_pDS->exec(columns);
+
+  CLog::Log(LOGINFO, "create trainers table");
+  m_pDS->exec("CREATE TABLE trainers (idTrainer integer primary key, idTitle integer, strTrainerPath text, strSettings text, Active integer)\n");
 }
 
 void CProgramDatabase::CreateAnalytics()
