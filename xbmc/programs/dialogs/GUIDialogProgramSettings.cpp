@@ -297,7 +297,7 @@ void CGUIDialogProgramSettings::OnSettingChanged(const CSetting *setting)
 void CGUIDialogProgramSettings::SetupView()
 {
   CGUIDialogSettingsManualBase::SetupView();
-  SetHeading(38996);
+  SetHeading(10004);
 
   SET_CONTROL_HIDDEN(CONTROL_SETTINGS_CANCEL_BUTTON);
   SET_CONTROL_LABEL(CONTROL_SETTINGS_OKAY_BUTTON, 518);
