@@ -8,7 +8,6 @@
 
 #include "ProgramInfoTag.h"
 
-#include "Util.h"
 #include "settings/AdvancedSettings.h"
 #include "utils/Archive.h"
 #include "utils/StringUtils.h"
@@ -287,18 +286,7 @@ void CProgramInfoTag::ParseNative(const TiXmlElement* program, bool prioritise)
   if (XMLUtils::GetString(program, "system", value))
     m_strSystem = value;
 
-  if (URIUtils::HasExtension(m_strFileNameAndPath, ".xbe"))
-  {
-    unsigned int xbeID = CUtil::GetXbeID(m_strFileNameAndPath);
-    std::stringstream ss;
-    ss << std::hex << std::uppercase << xbeID;
-    m_strUniqueID = ss.str();
-  }
-  else if (false)
-  {
-    // TODO: How to get MD5 or similar hash for ROM files?
-  }
-  else if (XMLUtils::GetString(program, "uniqueid", value))
+  if (XMLUtils::GetString(program, "uniqueid", value))
     m_strUniqueID = value;
 
   XMLUtils::GetInt(program, "playcount", m_playCount);

@@ -10,6 +10,7 @@
 
 #include "FileItem.h"
 #include "TextureCache.h"
+#include "Util.h"
 #include "dialogs/GUIDialogExtendedProgressBar.h"
 #include "filesystem/Directory.h"
 #include "filesystem/File.h"
@@ -204,6 +205,18 @@ namespace PROGRAM
         tag.SetSystem("xbox");
       if (tag.m_strTitle.empty())
         tag.SetTitle(strTemp);
+
+      if (item->IsXBE())
+      {
+        unsigned int xbeID = CUtil::GetXbeID(item->GetPath());
+        std::stringstream ss;
+        ss << std::hex << std::uppercase << xbeID;
+        tag.SetUniqueID(ss.str());
+      }
+      else
+      {
+        // TODO: How to get MD5 or similar hash for ROM files?
+      }
 
       CFileItemPtr pItem(new CFileItem(tag));
       GetArtwork(pItem.get());
