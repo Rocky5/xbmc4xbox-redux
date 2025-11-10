@@ -29,11 +29,7 @@ XBMC4Xbox is a free and open source media player software made solely for the fi
 ## Download links
 This softwer is in alpha and currently we are only providing nightly releases.
 
-**Regular version (Nightly)**: [Download Link](https://github.com/antonic901/xbmc4xbox-redux/releases/download/nightly/XBMC4XBOX.zip)
-
-**Gamers version (Nightly)**: [Download Link](https://github.com/antonic901/xbmc4xbox-redux/releases/download/nightly-gamers/XBMC4XBOX.zip)
-
-**Regular version** is following `master` branch of Kodi. **Gamers version** is regular version with advanced programs library. In short, advanced programs library is rewrite of video library specifically tuned up for games. If you ever wanted XBMC-Emustation, XBMC4Gamers and XBMC4Xbox inside one dashboard use gamers version.
+**XBMC (Nightly)**: [Download Link](https://github.com/antonic901/xbmc4xbox-redux/releases/download/nightly/XBMC4XBOX.zip)
 
 ## Give your media the love it deserves
 XBMC is your all-in-one solution for enjoying almost all popular audio, video, and gaming formats. Whether you're streaming multimedia from anywhere in your home or directly from the internet, XBMC handles it effortlessly, supporting virtually any protocol available.
