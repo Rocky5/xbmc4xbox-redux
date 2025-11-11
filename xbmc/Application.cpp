@@ -977,6 +977,8 @@ HRESULT CApplication::Create(HWND hWnd)
 
   CLog::Log(LOGINFO, "Drives are mapped");
 
+  CreateUserDirs();
+
   // Initialize default Settings - don't move
   CLog::Log(LOGNOTICE, "load settings...");
   if (!CSettings::GetInstance().Initialize())
@@ -5922,8 +5924,6 @@ void CApplication::InitDirectoriesXbox()
   CSpecialProtocol::SetXBMCBinAddonPath("Q:\\addons");
 
   g_advancedSettings.m_logFolder = "special://home/";
-
-  CreateUserDirs();
 }
 
 void CApplication::CreateUserDirs() const
