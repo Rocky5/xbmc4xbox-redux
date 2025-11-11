@@ -478,6 +478,7 @@ void CFileItem::Archive(CArchive& ar)
     ar >> iType;
     if (iType == 1)
       ar >> *GetProgramInfoTag();
+    ar >> iType;
     if (iType == 1)
       ar >> *GetVideoInfoTag();
     ar >> iType;
