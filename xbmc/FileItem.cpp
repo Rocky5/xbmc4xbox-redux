@@ -2714,6 +2714,8 @@ bool CFileItemList::AlwaysCache() const
   // some database folders are always cached
   if (IsMusicDb())
     return CMusicDatabaseDirectory::CanCache(GetPath());
+  if (IsProgramDb())
+    return true; // always cache
   if (IsVideoDb())
     return CVideoDatabaseDirectory::CanCache(GetPath());
   if (IsEPG())
