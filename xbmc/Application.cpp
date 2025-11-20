@@ -85,6 +85,7 @@
 #include "settings/SkinSettings.h"
 #include "guilib/LocalizeStrings.h"
 #include "utils/SeekHandler.h"
+#include "guiinfo/GUIInfoLabels.h"
 
 #include "input/KeyboardLayoutManager.h"
 
@@ -243,6 +244,12 @@ using namespace ANNOUNCEMENT;
 using namespace KODI::MESSAGING;
 
 using namespace KODI::MESSAGING::HELPERS;
+
+#define MB_BYTES (1024 * 1024)
+#define KB_BYTES 1024
+#define SIZE_64MB 64
+#define SIZE_128MB 128
+#define SIZE_256MB 256
 
 // uncomment this if you want to use release libs in the debug build.
 // Atm this saves you 7 mb of memory
@@ -722,10 +729,10 @@ HRESULT CApplication::Create(HWND hWnd)
   // set MTRRDefType memory type to write-back as done in other XBox apps - seems a bit of a hack as really the def type
   // should be uncachable and the mtrr/mask for ram instead set up for 128MB with writeback as is done in cromwell.
   m_128MBHack = false;
-  MEMORYSTATUS status;
-  GlobalMemoryStatus( &status );
+  MEMORYSTATUS stat;
+  GlobalMemoryStatus(&stat);
   // if we have more than 64MB free
-  if( status.dwTotalPhys > 67108864 )
+  if((stat.dwTotalPhys / MB_BYTES) > SIZE_64MB)
   {
     __asm
     {
@@ -954,7 +961,7 @@ HRESULT CApplication::Create(HWND hWnd)
         
         char extendDriveLetter = CIoSupport::GetExtendedPartitionDriveLetter(cDriveLetter-EXTEND_DRIVE_BEGIN);
         CLog::Log(LOGNOTICE, "  map extended drive %c:", extendDriveLetter);
-		
+
         sprintf(szDevice, "Harddisk0\\Partition%u", i);
 
         CIoSupport::RemapDriveLetter(extendDriveLetter, szDevice);
@@ -1972,8 +1979,7 @@ void CApplication::RenderNoPresent()
     // free memory if we got les then 10megs free ram
     MEMORYSTATUS stat;
     GlobalMemoryStatus(&stat);
-    DWORD dwMegFree = (DWORD)(stat.dwAvailPhys / (1024 * 1024));
-    if (dwMegFree <= 10)
+    if (stat.dwAvailPhys / MB_BYTES <= 10)
     {
       g_TextureManager.Flush();
     }
@@ -2052,13 +2058,28 @@ void CApplication::RenderMemoryStatus()
 
   if (!m_debugLayout)
   {
-    CGUIFont *font13 = g_fontManager.GetDefaultFont();
-    CGUIFont *font13border = g_fontManager.GetDefaultFont(true);
-    if (font13)
-      m_debugLayout = new CGUITextLayout(font13, true, 0, font13border);
+    CGUIFont *debugInfoFont = g_fontManager.LoadTTF("arial", "arial.ttf", 0xFFFFFFFF, 0xFF000000, 24, 0, false, 1.0f, 1.0f, nullptr, true);
+    if (!debugInfoFont)
+    {
+      CLog::Log(LOGERROR, "CApplication::RenderMemoryStatus() - Unable to load arial.ttf");
+      return;
+    }
+    else
+      m_debugLayout = new CGUITextLayout(debugInfoFont, true, 0, debugInfoFont);
   }
-  if (!m_debugLayout)
-    return;
+  
+  static int yShift = 20;
+  static int xShift = 20;
+  static unsigned int lastShift = time(NULL);
+  time_t now = time(NULL);
+
+  if (now - lastShift > 10)
+  {
+    yShift *= -1;
+    if (now % 5 == 0)
+      xShift *= -1;
+    lastShift = now;
+  }
 
 #if !defined(_DEBUG) && !defined(PROFILE)
   if (LOG_LEVEL_DEBUG_FREEMEM <= g_advancedSettings.m_logLevel)
@@ -2067,16 +2088,64 @@ void CApplication::RenderMemoryStatus()
     // reset the window scaling and fade status
     RESOLUTION res = g_graphicsContext.GetVideoResolution();
     g_graphicsContext.SetRenderingResolution(g_graphicsContext.GetResInfo(), false);
+    CStdString separator = " - ";
 
     CStdString info;
+    CStdString memStats;
     MEMORYSTATUS stat;
     GlobalMemoryStatus(&stat);
-    info.Format("FreeMem %d/%d KB, FPS %2.1f, CPU %2.0f%%", stat.dwAvailPhys/1024, stat.dwTotalPhys/1024, g_infoManager.GetFPS(), (1.0f - m_idleThread.GetRelativeUsage())*100);
-    
+
+    CTemperature m_gpuTemp = CFanController::Instance()->GetGPUTemp();
+    CTemperature m_cpuTemp = CFanController::Instance()->GetCPUTemp();
+
+    int availKB = stat.dwAvailPhys / KB_BYTES;
+    int totalMB = stat.dwTotalPhys / MB_BYTES;
+    int availMB = stat.dwAvailPhys / MB_BYTES;
+
+    if (totalMB >= SIZE_256MB)
+    {
+      int free256 = availMB;
+      int free128 = std::max(0, availMB - (SIZE_256MB - SIZE_128MB));
+      int free64  = std::max(0, availMB - (SIZE_256MB - SIZE_64MB));
+
+      memStats.AppendFormat("%d/%d MB - ", free256, SIZE_256MB);
+      memStats.AppendFormat("%d/%d MB - ", free128, SIZE_128MB);
+      memStats.AppendFormat("%d/%d MB",  free64,  SIZE_64MB);
+    }
+    else if (totalMB >= SIZE_128MB)
+    {
+      int free128 = availMB;
+      int free64  = std::max(0, availMB - (SIZE_128MB - SIZE_64MB));
+
+      memStats.AppendFormat("%d/%d MB - ", free128, SIZE_128MB);
+      memStats.AppendFormat("%d/%d MB",  free64,  SIZE_64MB);
+    }
+    else 
+      memStats.AppendFormat("%d/%d MB", availMB, SIZE_64MB);
+
+    memStats.AppendFormat(" %s %d KB", separator.c_str(), availKB);
+
+    info.Format(
+      "FreeMem %s"
+      " %s "
+      "CPU %s (%2.0f%%)"
+      " %s "
+      "GPU %s"
+      " %s "
+      "FPS %2.1f",
+      memStats.c_str(), // FreeMem %s
+      separator.c_str(), // %s
+      m_cpuTemp.IsValid() ? g_langInfo.GetTemperatureAsString(m_cpuTemp) : "?", (1.0f - g_application.m_idleThread.GetRelativeUsage()) * 100, // CPU %d%s (%2.0f%%)
+      separator.c_str(), // %s
+      m_gpuTemp.IsValid() ? g_langInfo.GetTemperatureAsString(m_gpuTemp) : "?", // GPU %d%s
+      separator.c_str(), // %s
+      std::max(0.0f, std::min(g_infoManager.GetFPS(), 60.0f)) // FPS %2.1f
+    );
+
     if(g_SkinInfo->IsDebugging())
     {
       if (!info.IsEmpty())
-        info += "\n";
+        info.Empty();
       CGUIWindow *window = g_windowManager.GetWindow(g_windowManager.GetFocusedWindow());
       CGUIWindow *pointer = g_windowManager.GetWindow(105);
       CPoint point;
@@ -2089,14 +2158,14 @@ void CApplication::RenderMemoryStatus()
           windowName += " (" + window->GetProperty("xmlfile").asString() + ")";
         else
           windowName = window->GetProperty("xmlfile").asString();
-        info += "Window: " + windowName + "  ";
+        info.AppendFormat("Window: %s ", windowName.c_str());
         // transform the mouse coordinates to this window's coordinates
         g_graphicsContext.SetScalingResolution(window->GetCoordsRes(), true);
         point.x *= g_graphicsContext.GetGUIScaleX();
         point.y *= g_graphicsContext.GetGUIScaleY();
         g_graphicsContext.SetRenderingResolution(g_graphicsContext.GetResInfo(), false);
       }
-      info.AppendFormat("Mouse: (%d,%d)  ", (int)point.x, (int)point.y);
+      info.AppendFormat("Mouse: (%d,%d) ", (int)point.x, (int)point.y);
       if (window)
       {
         CGUIControl *control = window->GetFocusedControl();
@@ -2104,8 +2173,9 @@ void CApplication::RenderMemoryStatus()
           info.AppendFormat("Focused: %i (%s)", control->GetID(), CGUIControlFactory::TranslateControlType(control->GetControlType()).c_str());
       }
     }
-    float x = 0.04f * g_graphicsContext.GetWidth() + CDisplaySettings::Get().GetResolutionInfo(res).Overscan.left;
-    float y = 0.04f * g_graphicsContext.GetHeight() + CDisplaySettings::Get().GetResolutionInfo(res).Overscan.top;
+
+    float x = xShift + 0.04f * g_graphicsContext.GetWidth() + CDisplaySettings::Get().GetResolutionInfo(res).Overscan.left;
+    float y = yShift + 0.04f * g_graphicsContext.GetWidth() + CDisplaySettings::Get().GetResolutionInfo(res).Overscan.top;
 
     m_debugLayout->Update(info);
     m_debugLayout->RenderOutline(x, y, 0xffffffff, 0xff000000, 0, 0);

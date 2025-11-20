@@ -315,6 +315,8 @@ void CAdvancedSettings::Initialize()
   m_subtitlesExtensions = ".utf|.utf8|.utf-8|.sub|.srt|.smi|.rt|.txt|.ssa|.text|.ssa|.aqt|.jss|.ass|.idx|.ifo|.rar|.zip";
   // internal music extensions
   m_musicExtensions += "|.sidstream|.oggstream|.nsfstream|.asapstream|.cdda";
+  
+  m_textExtensions = ".bat|.cfg|.csv|.h|.hpp|.htm|.html|.ini|.java|.js|.json|.kt|.log|.lua|.nfo|.php|.pl|.ps1|.rb|.sh|.sql|.swift|.tex|.ts|.txt|.xml|.yaml|.yml";
 
   m_logLevelHint = m_logLevel = LOG_LEVEL_NORMAL;
   m_extraLogLevels = 0;
@@ -665,6 +667,11 @@ void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
   if (pExts)
     GetCustomExtensions(pExts, m_videoExtensions);
 
+  // text based file extensions
+  pExts = pRootElement->FirstChildElement("textextensions");
+  if (pExts)
+    GetCustomExtensions(pExts, m_textExtensions);
+
   m_vecTokens.clear();
   CLangInfo::LoadTokens(pRootElement->FirstChild("sorttokens"),m_vecTokens);
 
@@ -866,6 +873,7 @@ void CAdvancedSettings::Clear()
   m_pictureExtensions.clear();
   m_musicExtensions.clear();
   m_videoExtensions.clear();
+  m_textExtensions.clear();
   m_programExtensions.clear();
   m_discStubExtensions.clear();
   m_subtitlesExtensions.clear();

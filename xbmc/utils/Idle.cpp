@@ -40,14 +40,6 @@ void CIdleThread::Process()
 {
   while (!m_bStop)
   {
-    __asm
-    {
-      hlt
-      hlt
-      hlt
-      hlt
-      hlt
-      hlt
-    }
+    __asm { hlt }
   }
 }

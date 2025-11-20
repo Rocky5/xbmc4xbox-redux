@@ -29,6 +29,7 @@
 #include "dialogs/GUIDialogBusy.h"
 #include "dialogs/GUIDialogContextMenu.h"
 #include "dialogs/GUIDialogMediaSource.h"
+#include "dialogs/GUIDialogTextViewer.h"
 #include "GUIPassword.h"
 #include "GUIUserMessages.h"
 #include "interfaces/generic/ScriptInvocationManager.h"
@@ -48,6 +49,7 @@
 #include "storage/MediaManager.h"
 #include "settings/MediaSourceSettings.h"
 #include "settings/Settings.h"
+#include "settings/AdvancedSettings.h"
 #include "guilib/LocalizeStrings.h"
 #include "threads/Thread.h"
 #include "utils/StringUtils.h"
@@ -303,6 +305,8 @@ bool CGUIWindowFileManager::OnMessage(CGUIMessage& message)
     {
       SetInitialPath(message.GetStringParam());
       message.SetStringParam("");
+	  
+      m_textExtensions = g_advancedSettings.m_textExtensions; // grab extensions so they aren't spammed on each click
 
       return CGUIWindow::OnMessage(message);
     }
@@ -578,6 +582,8 @@ void CGUIWindowFileManager::OnClick(int iList, int iItem)
     return;
   }
 
+  CStdString strExtension = URIUtils::GetExtension(pItem->GetPath());
+
   if (!pItem->m_bIsFolder && pItem->IsFileFolder(EFILEFOLDER_MASK_ALL))
   {
     XFILE::IFileDirectory *pFileDirectory = NULL;
@@ -617,6 +623,21 @@ void CGUIWindowFileManager::OnClick(int iList, int iItem)
   {
     CURL pathToUrl = URIUtils::CreateArchivePath("rar", pItem->GetURL(), "");
     Update(iList, pathToUrl.Get());
+  }
+  else if (strExtension && strstr(m_textExtensions, strExtension.ToLower())) // Open txt based files
+  {
+    CStdString fileData = CUtil::ReadFileToString(pItem->GetPath());
+    if (!fileData.IsEmpty())
+    {
+      CGUIDialogTextViewer* dialogTextViewer = (CGUIDialogTextViewer*)g_windowManager.GetWindow(WINDOW_DIALOG_TEXT_VIEWER);
+      if (dialogTextViewer)
+      {
+        dialogTextViewer->SetHeading(pItem->GetPath());
+        dialogTextViewer->SetText(fileData);
+        dialogTextViewer->Open();
+      }
+    }
+    return;
   }
   else
   {

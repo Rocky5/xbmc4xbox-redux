@@ -92,6 +92,8 @@ public:
   static bool GetXBEDescription(const std::string& strFileName, std::string& strDescription);
   static bool SetXBEDescription(const CStdString& strFileName, const CStdString& strDescription);
   static DWORD GetXbeID( const CStdString& strFilePath);
+  
+  static CStdString ReadFileToString(const CStdString& path);
 
   /*! \brief retrieve MD5sum of a file
    \param strPath - path to the file to MD5sum

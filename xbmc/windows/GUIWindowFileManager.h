@@ -96,6 +96,7 @@ protected:
   CFileItem* m_Directory[2];
   std::string m_strParentPath[2];
   CDirectoryHistory m_history[2];
+  CStdString m_textExtensions;
 
   int m_errorHeading, m_errorLine;
 };

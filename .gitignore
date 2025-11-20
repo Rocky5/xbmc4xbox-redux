@@ -15,3 +15,4 @@ titleimage.h
 titleimage.xbx
 *.ncb
 *.suo
+/Xbox_FTP.ini
