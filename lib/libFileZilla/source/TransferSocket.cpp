@@ -657,6 +657,7 @@ void CTransferSocket::OnReceive(int nErrorCode)
 				SetEndOfFile(m_hFile);
 				SetFilePointer(m_hFile, -2*1024*1024, 0, FILE_CURRENT);
 				m_nPreAlloc = 2*1024*1024 / (128*1024);
+			}
 			DWORD numwritten;
 			if (!WriteFile(m_hFile, m_pBuffer, 128*1024 + m_nAlign, &numwritten, 0) || numwritten != 128*1024 + m_nAlign)
 			{
